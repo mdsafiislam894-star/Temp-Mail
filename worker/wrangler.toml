@@ -1,0 +1,11 @@
+name = "tempmail-forwarder"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+BOT_URL = "https://YOUR-APP.onrender.com"   # বটের PUBLIC_URL
+
+# Secrets (wrangler secret put ...):
+#   INBOUND_SECRET       (বটের .env এর INBOUND_SECRET-এর সমান)
+#   TELEGRAM_BOT_TOKEN   (ফলব্যাক — বট ডাউন থাকলে সরাসরি টেলিগ্রামে পাঠাবে)
+#   TELEGRAM_CHAT_ID

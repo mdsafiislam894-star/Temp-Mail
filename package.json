@@ -1,0 +1,18 @@
+{
+  "name": "telegram-tempmail-bot",
+  "version": "2.0.0",
+  "description": "24/7 Multi-Domain Temp Mail Bot — Titan IMAP, Cloudflare Worker, Gmail connect & Telegram Mini App",
+  "main": "index.js",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "grammy": "^1.35.0",
+    "imapflow": "^1.0.171",
+    "mailparser": "^3.7.2"
+  }
+}
