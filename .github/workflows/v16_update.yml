@@ -927,7 +927,7 @@ jobs:
             const gmCount = (S~gm || [])~length;
             const listBody = gmCount ? '<div style="margin-top:8px">' + S~gm~map((g) => {
               const isSel = g~email === active;
-              const isExp = gmState~openGmItem === g~email;
+              const isExp = gmState~openGmItem === g~email; 
               return '<div class="gm-item ' + (isSel ? 'sel' : '') + '">' +
                 '<div class="gm-item-top" data-act="togGmItem" data-e="' + esc(g~email) + '">' +
                   '<div class="gb" style="width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;background:#fff">' + gSvg + '</div>' +
