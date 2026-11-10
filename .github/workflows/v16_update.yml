@@ -950,7 +950,7 @@ jobs:
                 '<span style="font-size:12px;font-weight:800;color:var(--mute)">📮 GMAIL লগইন ও অটো 2FA বট (ট্যাপে খুলুন/লুকান)</span>' +
                 '<button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button>' +
               '</div>' +
-              accCard('gm-auto2fa', '🤖', 'অটো 2FA অন ও ভল্ট সেটআপ (Full Auto Bot)', 'নিজে নিজেই 2FA কোড বের করে ভেরিফাই ও 2-Step অন করবে', a2faBadge, a2faBody, true) + +
+              accCard('gm-auto2fa', '🤖', 'অটো 2FA অন ও ভল্ট সেটআপ (Full Auto Bot)', 'নিজে নিজেই 2FA কোড বের করে ভেরিফাই ও 2-Step অন করবে', a2faBadge, a2faBody +, true) + +
               accCard('gm-oauth', gSvg, 'Continue with Gmail (১-ক্লিকে)', 'গুগল পপআপে লগইন ও অটো ব্রাউজার লগআউট', 'OAuth', oauthBody, false) +
               accCard('gm-phone', '🌐', 'ওয়ান-টাইম লগইন (Email + Password)', 'ইমেইল ও পাসওয়ার্ড দিয়ে ওয়ান-টাইম ব্রাউজার লগইন', '1-Time', phoneBody, false) +
               accCard('gm-app', '🔑', 'App Password লগইন (১৬-ডিজিট)', '১৬-অক্ষরের App Password দিয়ে সরাসরি IMAP কানেক্ট', 'IMAP', appBody, false) +
