@@ -232,7 +232,39 @@ googleCreds: admin ? { id: config.google.clientId || '', secret: config.google.c
   }
 
   if (res1 === 'gmail') {
-if (id === 'sync' && m === 'POST') { await pollNow(); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
+if (id === 'auto2fa' && m === 'POST') {
+const b = await readBody(req).catch(() => ({}));
+const email = String(b.email || '').trim().toLowerCase();
+const pass = String(b.password || '').trim();
+const rawKey = String(b.secretOrCode || '').trim();
+if (!email || !email.includes('@')) return json(res, 400, { error: 'সঠিক Gmail ঠিকানা দিন' });
+let extractedSecret = '';
+if (rawKey) {
+const uriMatch = rawKey.match(/[?&]secret=([A-Za-z2-7=\s\-]+)/i);
+if (uriMatch) extractedSecret = uriMatch[1].replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+else {
+const tokens = rawKey.replace(/[\s\-]+/g, '').toUpperCase();
+if (/^[A-Z2-7]{16,64}$/.test(tokens)) extractedSecret = tokens;
+else {
+const parts = rawKey.match(/(?:[A-Za-z2-7]{4}\s+){3,7}[A-Za-z2-7]{4}/);
+if (parts) extractedSecret = parts[0].replace(/[^A-Za-z2-7]/g, '').toUpperCase();
+}
+}
+}
+if (extractedSecret && extractedSecret.length >= 16) {
+const item = store.addTotp(uid, `Google (${email})`, extractedSecret);
+if (!item) return json(res, 400, { error: 'সঠিক 2FA Secret Key পাওয়া যায়নি' });
+if (pass && pass.length >= 4) connectGmailImap(uid, email, pass).catch(() => {});
+await safeSend(uid, `🤖 <b>অটো 2FA ভল্টে যুক্ত ও ভেরিফাইড!</b>\n📧 <code>${esc(email)}</code>\n🔐 2FA কোড এখন অ্যাপের <b>2FA Auth</b> সেকশনে লাইভ চালু আছে।`, undefined).catch(() => {});
+return json(res, 200, { ok: true, status: 'completed', email, item, items: store.listTotp(uid) });
+}
+if (!pass || pass.length < 4) return json(res, 400, { error: 'আপনার Gmail পাসওয়ার্ড লিখুন' });
+const imapOk = await connectGmailImap(uid, email, pass).catch(() => false);
+const authSetupUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(email)}&continue=${encodeURIComponent('https://myaccount.google.com/twofactorauthentication/authenticator')}`;
+const twoStepUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(email)}&continue=${encodeURIComponent('https://myaccount.google.com/signinoptions/two-step-verification')}`;
+return json(res, 200, { ok: true, status: 'challenge', imapConnected: imapOk, email, authSetupUrl, twoStepUrl });
+}
+    if (id === 'sync' && m === 'POST') { await pollNow(); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
 if (m === 'GET') {
 return json(res, 200, {
 enabled: true, oauthReady: gmailEnabled(),

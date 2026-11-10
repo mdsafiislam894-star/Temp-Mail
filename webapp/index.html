@@ -640,6 +640,34 @@ header.top-mail-bar{padding:9px 10px!important;border-radius:16px!important}
 nav#tabs{width:calc(100% - 14px)!important;padding:4px!important}
 nav#tabs button{padding:7px 4px 6px!important;font-size:10px!important}
 }
+.acc-card{border-radius:20px!important;margin-bottom:10px!important;padding:0!important;overflow:hidden!important;background:linear-gradient(165deg,var(--gl1),var(--gl2))!important;border:1px solid var(--glb)!important;box-shadow:inset 0 1px 0 var(--glh),0 6px 18px var(--shadow)!important;transition:border-color .22s,box-shadow .22s!important;width:100%!important;box-sizing:border-box!important}
+.acc-card.open{border-color:color-mix(in srgb,var(--g1) 55%,var(--glb))!important;box-shadow:inset 0 1px 0 var(--glh),0 10px 26px var(--shadow)!important}
+.acc-head{width:100%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;padding:12px 14px!important;text-align:left!important;background:transparent!important;color:var(--tx)!important;cursor:pointer!important;box-sizing:border-box!important}
+.acc-head:active{background:var(--card2)!important}
+.acc-hl{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;flex:1 1 0%!important}
+.acc-ic{width:36px!important;height:36px!important;border-radius:11px!important;display:grid!important;place-items:center!important;font-size:17px!important;background:color-mix(in srgb,var(--g1) 16%,var(--card2))!important;border:1px solid color-mix(in srgb,var(--g1) 30%,transparent)!important;flex:0 0 auto!important}
+.acc-card.open .acc-ic{background:var(--grad)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 4px 12px color-mix(in srgb,var(--g1) 40%,transparent)!important}
+.acc-tx{min-width:0!important;flex:1 1 0%!important}
+.acc-tx b{display:block!important;font-size:13.5px!important;font-weight:800!important;color:var(--tx)!important;line-height:1.25!important;word-break:break-word!important}
+.acc-tx small{display:block!important;font-size:11px!important;font-weight:600!important;color:var(--mute)!important;margin-top:2px!important;line-height:1.25!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.acc-hr{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important}
+.acc-bdg{padding:3px 8px!important;border-radius:999px!important;font:800 10.5px ui-monospace,Menlo,monospace!important;background:color-mix(in srgb,var(--g1) 18%,var(--card2))!important;color:var(--tx)!important;white-space:nowrap!important}
+.acc-chev{width:26px!important;height:26px!important;border-radius:8px!important;display:grid!important;place-items:center!important;background:var(--card2)!important;color:var(--mute)!important;font-size:12px!important;font-weight:900!important;transition:transform .24s cubic-bezier(.22,1,.36,1),background .2s,color .2s!important}
+.acc-card.open .acc-chev{transform:rotate(180deg)!important;background:color-mix(in srgb,var(--g1) 22%,var(--card2))!important;color:var(--tx)!important}
+.acc-body{padding:2px 14px 14px!important;border-top:1px solid var(--line)!important;width:100%!important;box-sizing:border-box!important;animation:in .2s ease}
+.acc-body[hidden]{display:none!important}
+.ot-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;padding:8px 11px!important;border-radius:11px!important;background:rgba(34,197,94,.1)!important;border:1px solid rgba(34,197,94,.3)!important;margin-bottom:4px!important;cursor:pointer!important;font-size:11.5px!important;font-weight:700!important;color:var(--tx)!important;width:100%!important;box-sizing:border-box!important}
+.ot-row span{flex:1 1 0%!important;min-width:0!important;line-height:1.3!important}
+.ot-row b{flex:0 0 auto!important;color:var(--okt)!important;font-weight:800!important;white-space:nowrap!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(34,197,94,.15)!important}
+.field,.pw-wrap,.btn{max-width:100%!important;box-sizing:border-box!important}
+.btn{white-space:normal!important;line-height:1.25!important;text-align:center!important}
+.gm-item{padding:0!important;margin-bottom:8px!important;border-radius:15px!important;overflow:hidden!important;border:1px solid var(--line)!important;background:var(--card2)!important;width:100%!important;box-sizing:border-box!important}
+.gm-item.sel{border:1.5px solid #22c55e!important;box-shadow:0 4px 14px rgba(34,197,94,.16)!important}
+.gm-item-top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;padding:10px 12px!important;width:100%!important;box-sizing:border-box!important;cursor:pointer!important}
+.gm-item-acts{display:grid!important;grid-template-columns:repeat(2,1fr)!important;gap:6px!important;padding:9px 12px 11px!important;width:100%!important;box-sizing:border-box!important;border-top:1px dashed var(--line)!important}
+.gm-item-acts[hidden]{display:none!important}
+.gm-act{padding:7px 8px!important;border-radius:10px!important;font-size:11.5px!important;font-weight:800!important;text-align:center!important;background:var(--card)!important;color:var(--tx)!important;border:1px solid var(--line)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.gm-act.del{background:rgba(239,68,68,.14)!important;color:#ef4444!important;border-color:rgba(239,68,68,.3)!important}
 </style>
 </head>
 <body>
@@ -709,28 +737,7 @@ nav#tabs button{padding:7px 4px 6px!important;font-size:10px!important}
         <button class="btn pri block shine" data-act="gen"><svg class="i s"><use href="#i-bolt"/></svg>Generate</button></div>
       <div id="addrs"></div>
     </section>
-    <section id="v-gmail" class="view">
-<div class="glass card gm-card">
-<div class="gm-top">
-<div class="gm-top-l">
-<div class="gb"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg></div>
-<div><h3>Gmail কানেক্ট ও সিলেক্ট সিস্টেম</h3><small>Continue with Google, ওয়ান-টাইম লগইন ও App Password</small></div>
-</div>
-<button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button>
-</div>
-<button type="button" class="gbtn-sm" data-act="gmailGo"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg> Continue with Gmail (১-ক্লিকে)</button>
-<div class="ot-row" data-act="togOneTime" id="otRow">
-<span>🔒 ওয়ান-টাইম ব্রাউজার মোড (লগইন শেষে ব্রাউজার থেকে রিমুভ)</span>
-<b id="otStatus">চালু ✓</b>
-</div>
-<div class="gm-modes" id="gmModes">
-<button type="button" class="on" data-act="gmMode" data-m="phone">🌐 ওয়ান-টাইম লগইন (Email+Pass)</button>
-<button type="button" data-act="gmMode" data-m="app_pass">🔑 App Password (১৬-ডিজিট)</button>
-</div>
-<div class="gm-form" id="gmWizard"></div>
-</div>
-<div id="gmails"></div>
-</section>
+    <section id="v-gmail" class="view"><div id="gmailHub"></div></section>
     <section id="v-settings" class="view"><div id="setBox"></div></section>
     <section id="v-admin" class="view"><div id="adminBox"></div></section>
   </main>
@@ -804,7 +811,7 @@ function applyTheme(id) {
 }
 try { document.documentElement.dataset.skin = localStorage.getItem('skin') || 'glass'; applyTheme(localStorage.getItem('theme') || 'auto'); } catch (e) { applyTheme('auto'); }
 
-const S = { settings: { notify: true, otpOnly: false, style: 'smart', theme: 'auto', skin: 'glass', ttl: 0, muted: [] }, ttl: 0, adm: null, admSub: 'overview', uq: '', swiped: false, brand: '', me: null, msgs: [], filter: 'all', q: '', addrs: [], dom: 0, tab: 'inbox', known: null, domains: [], gm: null, gmailOn: false, tz: 'Asia/Dhaka', stop: false };
+const S = { settings: { notify: true, otpOnly: false, style: 'smart', theme: 'auto', skin: 'glass', ttl: 0, muted: [] }, ttl: 0, adm: null, admSub: '', uq: '', swiped: false, brand: '', me: null, msgs: [], filter: 'all', q: '', addrs: [], dom: 0, tab: 'inbox', known: null, domains: [], gm: null, gmailOn: false, tz: 'Asia/Dhaka', stop: false };
 const TABS = ['addr', 'inbox', 'gmail', 'settings', 'admin'];
 
 async function api(path, o = {}) {
@@ -892,6 +899,50 @@ let last = '', i = 0, html = '';
   updateOtpVault();
 }
 let lastPendingOtp = null;
+window.addEventListener('focus', async () => {
+if (gmState && gmState.a2faStep === 'challenge') {
+try {
+const clip = await navigator.clipboard.readText();
+if (clip) {
+const clean = clip.replace(/[\s\-]+/g, '').toUpperCase();
+const isUri = /otpauth:\/\/totp/i.test(clip);
+const isBase32 = /^[A-Z2-7]{16,64}$/.test(clean);
+if (isUri || isBase32) {
+gmState.a2faKey = clip.trim();
+if ($('#a2faKeyInput')) $('#a2faKeyInput').value = gmState.a2faKey;
+completeAuto2fa(gmState.a2faKey);
+}
+}
+} catch (e) {}
+}
+});
+async function completeAuto2fa(rawKey) {
+const key = String(rawKey || ($('#a2faKeyInput') && $('#a2faKeyInput').value) || gmState.a2faKey || '').trim();
+if (!key) return toast('⚠️ রিকভারি কোড বা Setup Key দিন');
+const cleanDigits = key.replace(/[\s\-]+/g, '');
+if (/^\d{6,10}$/.test(cleanDigits)) {
+try { await navigator.clipboard.writeText(cleanDigits); } catch (e) { trySyncCopy(cleanDigits); }
+toast('✅ ভেরিফিকেশন/রিকভারি কোড কপি হয়েছে — গুগল পেজে ভেরিফাই হয়ে গেলে Setup Key কপি করুন');
+const u = gmState.a2faUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
+tg && tg.openLink ? tg.openLink(u) : window.open(u, '_blank');
+return;
+}
+toast('⏳ 2FA ভল্টে সেভ ও ৬-ডিজিট কোড তৈরি হচ্ছে…');
+try {
+const r = await api('gmail/auto2fa', { method: 'POST', body: { email: gmState.a2faEmail, password: gmState.a2faPass, secretOrCode: key } });
+if (r && r.item) {
+S.totp = mergeTotpLists(r.items || [r.item], S.totp);
+syncTotpLocal();
+const code = generateTotp(r.item.secret);
+gmState.a2faCode = code;
+gmState.a2faStep = 'done';
+try { await navigator.clipboard.writeText(code); } catch (e) { trySyncCopy(code); }
+note('success');
+toast('✅ 2FA সেভ ও ৬-ডিজিট কোড কপি হয়েছে: ' + code);
+renderGmWizard();
+}
+} catch (e) { toast('⚠️ ' + e.message); }
+}
 function trySyncCopy(text) {
 let ok = false;
 try {
@@ -1074,7 +1125,13 @@ async function loadSpark() {
 }
 
 /* ---------- gmail ---------- */
-let gmWatch, gmState = { mode: 'phone', email: '', pass: '', oneTime: true, showPw: false };
+let gmWatch, gmState = { mode: 'phone', email: '', pass: '', appPass: '', oneTime: true, showPw: false, a2faEmail: '', a2faPass: '', a2faStep: 'init', a2faKey: '', a2faUrl: '', a2faTwoStepUrl: '', a2faCode: '', openGmItem: '' };
+S.acc = S.acc || {};
+function accCard(id, icon, title, sub, badge, bodyHtml, defOpen = false) {
+  if (S.acc[id] === undefined) S.acc[id] = Boolean(defOpen);
+  const isOpen = Boolean(S.acc[id]);
+  return '<div class="acc-card ' + (isOpen ? 'open' : '') + '" id="ac-' + id + '"><button type="button" class="acc-head" data-act="acc" data-id="' + id + '"><div class="acc-hl"><div class="acc-ic">' + icon + '</div><div class="acc-tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div><div class="acc-hr">' + (badge ? '<span class="acc-bdg">' + badge + '</span>' : '') + '<span class="acc-chev">▾</span></div></button><div class="acc-body" id="ab-' + id + '"' + (isOpen ? '' : ' hidden') + '>' + bodyHtml + '</div></div>';
+}
 function syncGmailLocal(list) {
 try {
 if (Array.isArray(list)) {
@@ -1104,52 +1161,36 @@ return r ? JSON.parse(r) : [];
 } catch (e) { return []; }
 }
 function renderGmWizard() {
-const box = $('#gmWizard'); if (!box) return;
-const otSt = $('#otStatus');
-if (otSt) {
-otSt.textContent = gmState.oneTime ? 'চালু ✓' : 'বন্ধ';
-otSt.style.color = gmState.oneTime ? 'var(--okt)' : 'var(--mute)';
+const hub = $('#gmailHub'); if (!hub) return;
+const pwType = gmState.showPw ? 'text' : 'password', pwEye = gmState.showPw ? '🙈' : '👁';
+const oauthBody = '<button type="button" class="gbtn-sm" data-act="gmailGo">' + G + ' Continue with Gmail (১-ক্লিকে কানেক্ট)</button><div class="ot-row" data-act="togOneTime"><span>🔒 ওয়ান-টাইম সেশন (লগইন শেষে ব্রাউজার থেকে অটো রিমুভ)</span><b>' + (gmState.oneTime ? 'চালু ✓' : 'বন্ধ') + '</b></div>';
+const phoneBody = '<div style="margin-top:8px"><input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="gmPass" type="' + pwType + '" placeholder="আপনার Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><button type="button" class="btn pri block shine" data-act="gmBrowserLogin">🚀 ওয়ান-টাইম লগইন করুন (Auto Browser Logout) ↗</button></div>';
+let a2faBody = '';
+if (gmState.a2faStep === 'challenge') {
+a2faBody = '<div style="margin-top:8px;padding:10px 11px;border-radius:13px;background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.35);margin-bottom:8px"><b style="font-size:12.5px;display:block;margin-bottom:3px">🛡️ গুগল সিকিউরিটি চ্যালেঞ্জ (Prompt / কোড / ক্যাপচা)</b><small style="font-size:11px;color:var(--tx2);display:block;line-height:1.35">১. ফোনে <b>Google Prompt (Yes)</b> বা <b>ক্যাপচা</b> এলে নিচের বাটনে ট্যাপ করে কমপ্লিট করুন।<br>২. রিকভারি কোড, ভেরিফিকেশন কোড অথবা 2FA Setup Key পেলে নিচের বক্সে দিন (কপি করলে অ্যাপ নিজে থেকেই অটো ডিটেক্ট করবে)!</small></div><button type="button" class="btn pri block shine" data-act="a2faOpenAuth" style="margin-bottom:7px">🧩 প্রম্পট / ক্যাপচা কমপ্লিট ও 2FA অন পেজ ↗</button><input class="field" id="a2faKeyInput" placeholder="রিকভারি কোড / ভেরিফিকেশন কোড বা Setup Key দিন" value="' + esc(gmState.a2faKey) + '" autocomplete="off"><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ok block shine" data-act="a2faComplete" style="flex:2">⚡ কোড সাবমিট ও অটো 2FA সেভ করুন</button><button type="button" class="btn ghost sm" data-act="a2faReset" style="flex:1">↩ পরিবর্তন</button></div>';
+} else if (gmState.a2faStep === 'done') {
+a2faBody = '<div style="margin-top:8px;padding:12px;border-radius:14px;background:rgba(34,197,94,.14);border:1.5px solid rgba(34,197,94,.45);text-align:center"><b style="color:var(--okt);font-size:13.5px;display:block">✅ 2FA ভল্টে সেভ ও কোড অটো-কপি হয়েছে!</b><div style="font:900 22px ui-monospace,Menlo,monospace;color:var(--okt);margin:6px 0;letter-spacing:2px">' + esc(gmState.a2faCode || '------') + '</div><small style="display:block;color:var(--tx2);font-size:11px;margin-bottom:8px">কোডটি আপনার ক্লিপবোর্ডে কপি করা আছে — গুগলে Verify বক্সে পেস্ট করে Turn On চাপুন।</small><div style="display:flex;gap:6px"><button type="button" class="btn ok block" data-act="a2faOpenAuth" style="flex:2">🌐 গুগলে Verify ও Turn On সম্পন্ন করুন ↗</button><button type="button" class="btn ghost sm" data-act="a2faReset" style="flex:1">🔄 নতুন</button></div></div>';
+} else {
+a2faBody = '<div style="margin-top:8px"><input class="field" id="a2faEmail" type="email" placeholder="Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.a2faEmail || gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="a2faPass" type="' + pwType + '" placeholder="Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.a2faPass || gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><input class="field" id="a2faKeyInit" placeholder="ঐচ্ছিক: ইতিমধ্যে 2FA Setup Key থাকলে দিন (না থাকলে খালি রাখুন)" value="' + esc(gmState.a2faKey) + '" autocomplete="off"><button type="button" class="btn ok block shine" data-act="a2faStart">🤖 অটো 2FA चालू ও ভল্টে সেভ করুন</button></div>';
 }
-const pwType = gmState.showPw ? 'text' : 'password';
-const pwEye = gmState.showPw ? '🙈' : '👁';
-if (gmState.mode === 'app_pass') {
-box.innerHTML =
-'<input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
-'<div class="pw-wrap"><input class="field" id="gmPass" type="' + pwType + '" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" value="' + esc(gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div>' +
-'<div style="display:flex;gap:7px">' +
-'<button type="button" class="btn ok block shine" data-act="gmSubmitApp" style="flex:2">⚡ কানেক্ট ও ভেরিফাই করুন</button>' +
-'<button type="button" class="btn ghost sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="flex:1">🔑 কোড নিন ↗</button>' +
-'</div>';
-return;
-}
-box.innerHTML =
-'<input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
-'<div class="pw-wrap"><input class="field" id="gmPass" type="' + pwType + '" placeholder="আপনার Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div>' +
-'<button type="button" class="btn pri block shine" data-act="gmBrowserLogin">🚀 ওয়ান-টাইম লগইন করুন (Auto Browser Logout) ↗</button>';
+const appBody = '<div style="margin-top:8px"><input class="field" id="gmAppEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="gmAppPass" type="' + pwType + '" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" value="' + esc(gmState.appPass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ok block shine" data-act="gmSubmitApp" style="flex:2">⚡ কানেক্ট ও ভেরিফাই করুন</button><button type="button" class="btn ghost sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="flex:1">🔑 কোড নিন ↗</button></div></div>';
+const active = getActiveMail(), gmCount = (S.gm || []).length;
+const listBody = gmCount ? '<div style="margin-top:8px">' + S.gm.map((g) => {
+const isSel = g.email === active, isExp = gmState.openGmItem === g.email;
+return '<div class="gm-item ' + (isSel ? 'sel' : '') + '"><div class="gm-item-top" data-act="togGmItem" data-e="' + esc(g.email) + '"><div class="gb" style="width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;background:#fff">' + G + '</div><div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (isSel ? '<b style="color:var(--okt)">ব্যবহৃত হচ্ছে</b> • ' : '') + (g.lastError ? '<span style="color:#f59e0b">' + esc(g.lastError) + '</span>' : (g.status === 'expired' ? 'টোকেন শেষ' : 'সক্রিয় • ট্যাপে অপশন')) + '</small></div><button type="button" class="act-pill ' + (isSel ? 'on' : '') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✓ Active' : '🎯 Use') + '</button></div><div class="gm-item-acts"' + (isExp ? '' : ' hidden') + '><button type="button" class="gm-act ' + (isSel ? 'active' : 'use') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✅ ব্যবহৃত হচ্ছে' : '🎯 সিলেক্ট করুন') + '</button><button type="button" class="gm-act" data-act="copy" data-v="' + esc(g.email) + '">📋 মেইল কপি</button><button type="button" class="gm-act" data-act="filterMail" data-v="' + esc(g.email) + '">📥 ইনবক্স দেখুন</button><button type="button" class="gm-act" data-act="a2faForEmail" data-e="' + esc(g.email) + '">🤖 অটো 2FA</button><button type="button" class="gm-act del" style="grid-column:span 2" data-act="gmailDel" data-e="' + esc(g.email) + '">🗑 অ্যাকাউন্ট রিমুভ করুন</button></div></div>';
+}).join('') + '</div>' : '<div class="empty" style="padding:16px 10px"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
+hub.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:0 2px"><span style="font-size:12px;font-weight:800;color:var(--mute)">📮 GMAIL লগইন ও অটোমেশন (ট্যাপে খুলুন/লুকান)</span><button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button></div>' +
+accCard('gm-oauth', G, 'Continue with Gmail (১-ক্লিকে)', 'গুগল পপআপে লগইন ও অটো ব্রাউজার লগআউট', 'OAuth', oauthBody, false) +
+accCard('gm-phone', '🌐', 'ওয়ান-টাইম লগইন (Email + Password)', 'ইমেইল ও পাসওয়ার্ড দিয়ে ওয়ান-টাইম ব্রাউজার লগইন', '1-Time', phoneBody, false) +
+accCard('gm-auto2fa', '🤖', 'অটো 2FA অন ও ভল্ট সেটআপ', '2FA না থাকলে অটো 2FA চালু, ভল্টে সেভ ও ৬-ডিজিট ভেরিফাই', 'Auto 2FA', a2faBody, false) +
+accCard('gm-app', '🔑', 'App Password লগইন (১৬-ডিজিট)', '১৬-অক্ষরের App Password দিয়ে সরাসরি IMAP কানেক্ট', 'IMAP', appBody, false) +
+accCard('gm-list', '📮', 'যুক্ত করা Gmail অ্যাকাউন্টসমূহ', 'সিলেক্ট করে ব্যবহার, কপি বা ইনবক্স ফিল্টার করুন', gmCount + ' টি', listBody, gmCount > 0);
 }
 async function loadGmail() {
 renderGmWizard();
 try {
 const d = await api('gmail'); S.gm = d.accounts || []; S.gmailOn = d.enabled;
-syncGmailLocal(S.gm);
-renderMailSwitcher();
-const active = getActiveMail();
-$('#gmails').innerHTML = S.gm.length ? '<div class="day" style="display:flex;justify-content:space-between;align-items:center"><span>যুক্ত করা Gmail (' + S.gm.length + ') • সিলেক্ট করে ব্যবহার করুন</span><button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button></div>' + S.gm.map((g) => {
-const isSel = g.email === active;
-return '<div class="glass gm-item ' + (isSel ? 'sel' : '') + '">' +
-'<div class="gm-item-top">' +
-'<div class="gb" style="width:32px;height:32px;flex:none">' + G + '</div>' +
-'<div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (g.lastError ? '<span style="color:#f59e0b">' + esc(g.lastError) + '</span>' : (g.status === 'expired' ? 'টোকেন শেষ — আবার যুক্ত করুন' : '🟢 সক্রিয় • লাইভ OTP ও লিংক')) + '</small></div>' +
-'</div>' +
-'<div class="gm-item-acts">' +
-'<button type="button" class="gm-act ' + (isSel ? 'active' : 'use') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✅ ব্যবহৃত হচ্ছে' : '🎯 সিলেক্ট করুন (Use)') + '</button>' +
-'<button type="button" class="gm-act" data-act="copy" data-v="' + esc(g.email) + '">📋 কপি</button>' +
-'<button type="button" class="gm-act" data-act="filterMail" data-v="' + esc(g.email) + '">📥 মেইল দেখুন</button>' +
-'<button type="button" class="ic d" style="width:30px;height:30px;flex:none" data-act="gmailDel" data-e="' + esc(g.email) + '" aria-label="remove">' + ic('trash', 's') + '</button>' +
-'</div>' +
-'</div>';
-}).join('')
-: '<div class="empty" style="padding:22px 12px"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
+syncGmailLocal(S.gm); renderMailSwitcher(); renderGmWizard();
 } catch (e) { toast('⚠️ ' + e.message); }
 }
 function gmailSheet() { setTab('gmail'); }
@@ -1400,44 +1441,83 @@ function tickTotp() {
 setInterval(tickTotp, 1000);
 
 function renderAdmin() {
-  const d = S.adm; if (!d) return;
-  if (S.admSub === 'mails') S.admSub = 'overview';
-  const sub = S.admSub, st = d.stats;
-  const totpCnt = (S.totp || []).length;
-  let h = profileBarHtml() +
-    '<div class="adm-hero">' +
-      '<div class="adm-hero-l"><div class="av" style="background:var(--grad);color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--g1) 40%,transparent)">' + ic('crown') + '</div><div><h2>Control Panel</h2><small>' + (d.openAccess ? '🔓 Open Access Active' : '🔒 Approval Mode') + ' • Node ' + esc(d.system.node) + '</small></div></div>' +
-      '<button type="button" class="act-pill on" data-act="asub" data-k="totp">🔐 ' + totpCnt + ' 2FA</button>' +
-    '</div>';
-  h += '<div class="adm-dock">' +
-    '<button type="button" class="adm-btn wide ' + (sub === 'overview' ? 'on' : '') + '" data-act="asub" data-k="overview"><div class="ab-ic">📊</div><div class="ab-tx"><b>Overview</b><small>লাইভ স্ট্যাটাস ও সার্ভার</small></div></button>' +
-    '<button type="button" class="adm-btn wide ' + (sub === 'totp' ? 'on' : '') + '" data-act="asub" data-k="totp"><div class="ab-ic">🔐</div><div class="ab-tx"><b>2FA Auth</b><small>লাইভ অথেটিকেটর কোড</small></div><span class="ab-cnt">' + totpCnt + '</span></button>' +
-    '<button type="button" class="adm-btn ' + (sub === 'users' ? 'on' : '') + '" data-act="asub" data-k="users"><div class="ab-ic">👥</div><div class="ab-tx"><b>Users</b><small>' + st.users + ' জন ইউজার</small></div></button>' +
-    '<button type="button" class="adm-btn ' + (sub === 'tools' ? 'on' : '') + '" data-act="asub" data-k="tools"><div class="ab-ic">🛠</div><div class="ab-tx"><b>Tools</b><small>OAuth ও ব্রডকাস্ট</small></div></button>' +
-    '<button type="button" class="adm-btn ' + (sub === 'profile' ? 'on' : '') + '" data-act="asub" data-k="profile"><div class="ab-ic">🎨</div><div class="ab-tx"><b>Style</b><small>থিম ও সেটিংস</small></div></button>' +
-  '</div>';
-  if (sub === 'overview') {
-    const mx = Math.max(1, ...d.activity);
-    h += '<div class="stats">' + [['users', st.users, '👥 মোট ইউজার'], ['totp', totpCnt, '🔐 সেভ করা 2FA'], ['today', st.today, '📅 আজকের মেইল'], ['tit', d.titan.online, '🖥 Titan Online']].map(([k, v, l]) => '<div class="glass stat"><b class="cu" data-n="' + v + '">0</b><span>' + l + '</span></div>').join('') + '</div>' +
-      '<div class="glass card"><h3>' + ic('clock') + 'গত ২৪ ঘণ্টার মেইল অ্যাক্টিভিটি</h3><div class="big-chart">' + d.activity.map((v, i) => '<i style="height:' + Math.max(5, Math.round(v / mx * 100)) + '%;animation-delay:' + i * 0.02 + 's" title="' + v + '"></i>').join('') + '</div><div class="sparkc"><span>২৪ ঘ আগে</span><span>এখন</span></div></div>' +
-      '<div class="glass card"><h3>' + ic('cpu') + 'সার্ভার ও সিস্টেম স্ট্যাটাস</h3><div class="sys"><div><small>Uptime</small><b>' + fmtUp(d.system.uptime) + '</b></div><div><small>Memory</small><b>' + d.system.rss + ' MB</b></div><div><small>অ্যাড্রেস / মেইল</small><b>' + st.addresses + ' / ' + st.messages + '</b></div><div><small>Gmail সংযুক্ত</small><b>' + st.gmail + (d.gmailEnabled ? ' (সক্রিয়)' : '') + '</b></div></div></div>' +
-      '<div class="glass card"><h3>' + ic('mail') + 'Titan IMAP সার্ভার</h3>' + (d.titan.accounts.length ? d.titan.accounts.map((t) => '<div class="trow"><i class="dot ' + (t.online ? '' : 'off') + '"></i><span>' + esc(t.user) + '</span><small style="color:var(--okt);font-weight:800">' + (t.online ? '🟢 ONLINE' : '🔴 OFFLINE') + '</small></div>').join('') : '<p class="hint">কোনো Titan অ্যাকাউন্ট সেট নেই</p>') + '</div>' +
-      '<div class="glass card"><h3>' + ic('at') + 'সক্রিয় ডোমেইন</h3>' + d.domains.map((x) => '<span class="dom-chip">🌐 ' + esc(x) + '</span>').join('') + '</div>';
-  } else if (sub === 'totp') {
-    h += '<div class="glass card totp-add-card"><h3>🔐 লাইভ 2FA জেনারেটর ও ভল্ট</h3><div class="totp-add-grid"><input class="field" id="totpName" placeholder="নাম (যেমন: Google)" autocomplete="off"><input class="field" id="totpSecret" placeholder="১৬/৩২ ডিজিটের 2FA Key দিন" autocomplete="off" autocapitalize="characters" spellcheck="false"></div><div id="totpLiveBox" class="totp-live-box" data-act="copy" data-v="" data-totp-sec="" style="display:none"><div><small style="color:var(--mute);font-weight:800;display:block;font-size:10.5px">⚡ লাইভ কোড (ট্যাপে কপি)</small><span class="totp-code" style="font-size:20px">--- ---</span> <span class="totp-next-lbl" style="margin-left:6px">পরবর্তী: <b class="totp-next">--- ---</b></span></div><div class="totp-ring-wrap"><svg class="totp-ring" viewBox="0 0 36 36"><circle class="totp-ring-bg" cx="18" cy="18" r="15"/><circle class="totp-ring-fg" cx="18" cy="18" r="15"/></svg><span class="totp-rem">30s</span></div></div><button type="button" class="btn ok block shine" data-act="totpAdd" style="padding:9px 12px;font-size:13px;border-radius:12px">➕ Authenticator-এ সেভ করুন</button></div>' +
-    (totpCnt > 2 ? '<div class="glass search" style="margin-bottom:12px"><svg class="i s"><use href="#i-search"/></svg><input id="totpQ" placeholder="সেভ করা 2FA অ্যাকাউন্ট খুঁজুন…" value="' + esc(S.totpQ || '') + '" autocomplete="off"></div>' : '') +
-    '<div class="day" style="display:flex;justify-content:space-between;align-items:center"><span>🔐 সেভ করা লাইভ 2FA অ্যাকাউন্টসমূহ (' + totpCnt + ')</span><small style="color:var(--mute);font-weight:700">✏️ রিনেম • ট্যাপে কপি</small></div>' +
-    '<div id="totpList">' + renderTotpListHtml() + '</div>';
-  } else if (sub === 'profile') { renderSettings(true); h += $('#setBox').innerHTML; } else if (sub === 'users') {
-    h += '<div class="glass search"><svg class="i s"><use href="#i-search"/></svg><input id="uq" placeholder="ইউজার খুঁজুন (নাম / @username / ID)" value="' + esc(S.uq) + '" autocomplete="off"></div><div id="ulist"></div>';
-  } else {
-    h += '<div class="glass card"><h3>' + ic('mail') + 'Gmail OAuth সেটআপ</h3><p class="hint" style="margin-top:0">Redirect URI: <code>' + esc(d.callbackUrl || '') + '</code></p><input class="field" id="gcid" placeholder="GOOGLE_CLIENT_ID" value="' + esc(d.googleClientId || '') + '"><input class="field" id="gcsec" placeholder="GOOGLE_CLIENT_SECRET" value="' + esc(d.googleClientSecret || '') + '"><button class="btn ok block" data-act="saveGoogle">' + ic('check', 's') + 'Google OAuth সেভ করুন</button></div>' + '<div class="glass card"><h3>' + ic('send') + 'ব্রডকাস্ট</h3><textarea class="field" id="bct" maxlength="3000" placeholder="সব approved ইউজারকে মেসেজ…"></textarea><button class="btn pri block" data-act="bc">' + ic('send', 's') + 'পাঠান</button></div>' +
-      '<div class="glass row2" data-act="access"><div id="accLbl"><b>' + (d.openAccess ? '🔓 Open Access' : '🔒 Approval Mode') + '</b><small>' + (d.openAccess ? 'যে কেউ অনুমোদন ছাড়া ব্যবহার করতে পারবে' : 'নতুন ইউজারের জন্য আপনার অনুমোদন লাগবে') + '</small></div><button type="button" class="tog ' + (d.openAccess ? 'on' : '') + '" data-act="access" aria-label="toggle"></button></div>' +
-      '<div class="glass card"><h3>' + ic('refresh') + 'রক্ষণাবেক্ষণ</h3><button class="btn ghost block" data-act="sweep">⏳ মেয়াদ-শেষ অ্যাড্রেস এখনই চেক করুন</button><p class="hint">মেয়াদ-শেষ অ্যাড্রেস ' + st.expired + 'টি • ব্যান ' + st.banned + ' জন</p></div>';
-  }
-  $('#adminBox').innerHTML = h;
-  if (sub === 'overview') $$('.cu').forEach((el) => { const n = Number(el.dataset.n); el.textContent = '0'; countTo(el, n); });
-  if (sub === 'users') { fillUsers(); const q = $('#uq'); q.addEventListener('input', (e) => { S.uq = e.target.value; fillUsers(); }); }
+const d = S.adm; if (!d) return;
+if (S.admSub === 'mails') S.admSub = 'overview';
+const sub = S.admSub || '', st = d.stats;
+const totpCnt = (S.totp || []).length;
+let h = profileBarHtml() +
+'<div class="adm-hero">' +
+'<div class="adm-hero-l"><div class="av" style="background:var(--grad);color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--g1) 40%,transparent)">' + ic('crown') + '</div><div><h2>Control Panel</h2><small>' + (d.openAccess ? '🔓 Open Access' : '🔒 Approval') + ' • বাটনে ট্যাপে খুলুন/লুকান</small></div></div>' +
+'<button type="button" class="act-pill ' + (sub === 'totp' ? 'on' : '') + '" data-act="asub" data-k="totp">🔐 ' + totpCnt + ' 2FA</button>' +
+'</div>';
+h += '<div class="adm-dock">' +
+'<button type="button" class="adm-btn wide ' + (sub === 'overview' ? 'on' : '') + '" data-act="asub" data-k="overview"><div class="ab-ic">📊</div><div class="ab-tx"><b>Overview</b><small>স্ট্যাটাস ও সার্ভার</small></div></button>' +
+'<button type="button" class="adm-btn wide ' + (sub === 'totp' ? 'on' : '') + '" data-act="asub" data-k="totp"><div class="ab-ic">🔐</div><div class="ab-tx"><b>2FA Auth</b><small>লাইভ অথেটিকেটর</small></div><span class="ab-cnt">' + totpCnt + '</span></button>' +
+'<button type="button" class="adm-btn ' + (sub === 'users' ? 'on' : '') + '" data-act="asub" data-k="users"><div class="ab-ic">👥</div><div class="ab-tx"><b>Users</b><small>' + st.users + ' জন</small></div></button>' +
+'<button type="button" class="adm-btn ' + (sub === 'tools' ? 'on' : '') + '" data-act="asub" data-k="tools"><div class="ab-ic">🛠</div><div class="ab-tx"><b>Tools</b><small>OAuth ও ব্রডকাস্ট</small></div></button>' +
+'<button type="button" class="adm-btn ' + (sub === 'profile' ? 'on' : '') + '" data-act="asub" data-k="profile"><div class="ab-ic">🎨</div><div class="ab-tx"><b>Style</b><small>থিম ও সেটিংস</small></div></button>' +
+'</div>';
+if (sub === 'overview') {
+const mx = Math.max(1, ...d.activity);
+const kpiHtml = '<div class="stats" style="margin-top:8px">' + [['users', st.users, '👥 মোট ইউজার'], ['totp', totpCnt, '🔐 সেভ করা 2FA'], ['today', st.today, '📅 আজকের মেইল'], ['tit', d.titan.online, '🖥 Titan Online']].map(([k, v, l]) => '<div class="glass stat"><b class="cu" data-n="' + v + '">' + v + '</b><span>' + l + '</span></div>').join('') + '</div>';
+const sysHtml = '<div class="sys" style="margin-top:8px"><div><small>Uptime</small><b>' + fmtUp(d.system.uptime) + '</b></div><div><small>Memory</small><b>' + d.system.rss + ' MB</b></div><div><small>অ্যাড্রেস / মেইল</small><b>' + st.addresses + ' / ' + st.messages + '</b></div><div><small>Gmail সংযুক্ত</small><b>' + st.gmail + '</b></div></div>' +
+'<div style="margin-top:10px">' + (d.titan.accounts.length ? d.titan.accounts.map((t) => '<div class="trow"><i class="dot ' + (t.online ? '' : 'off') + '"></i><span>' + esc(t.user) + '</span><small style="color:var(--okt);font-weight:800">' + (t.online ? '🟢 ONLINE' : '🔴 OFFLINE') + '</small></div>').join('') : '') + '</div>';
+const chartHtml = '<div class="big-chart" style="margin-top:8px">' + d.activity.map((v, i) => '<i style="height:' + Math.max(5, Math.round(v / mx * 100)) + '%" title="' + v + '"></i>').join('') + '</div><div class="sparkc"><span>২৪ ঘ আগে</span><span>এখন</span></div>';
+h += accCard('adm-kpi', '📊', 'লাইভ পরিসংখ্যান ও ওভারভিউ', 'ইউজার, 2FA, আজকের মেইল ও Titan', st.today + ' আজ', kpiHtml, true) +
+accCard('adm-sys', '🖥', 'সার্ভার ও Titan IMAP স্ট্যাটাস', 'Uptime, Memory ও ডোমেইন স্ট্যাটাস', fmtUp(d.system.uptime), sysHtml, false) +
+accCard('adm-chart', '📈', 'গত ২৪ ঘণ্টার মেইল অ্যাক্টিভিটি', 'ঘণ্টাভিত্তিক ইনকামিং মেইল গ্রাফ', '24h', chartHtml, false);
+} else if (sub === 'totp') {
+const addTotpHtml =
+'<div class="totp-add-grid">' +
+'<input class="field" id="totpName" placeholder="নাম (যেমন: Google)" autocomplete="off">' +
+'<input class="field" id="totpSecret" placeholder="১৬/৩২ ডিজিটের 2FA Key দিন" autocomplete="off" autocapitalize="characters" spellcheck="false">' +
+'</div>' +
+'<div id="totpLiveBox" class="totp-live-box" data-act="copy" data-v="" data-totp-sec="" style="display:none">' +
+'<div><small style="color:var(--mute);font-weight:800;display:block;font-size:10.5px">⚡ লাইভ কোড (ট্যাপে কপি)</small><span class="totp-code" style="font-size:20px">--- ---</span> <span class="totp-next-lbl" style="margin-left:6px">পরবর্তী: <b class="totp-next">--- ---</b></span></div>' +
+'<div class="totp-ring-wrap"><svg class="totp-ring" viewBox="0 0 36 36"><circle class="totp-ring-bg" cx="18" cy="18" r="15"/><circle class="totp-ring-fg" cx="18" cy="18" r="15"/></svg><span class="totp-rem">30s</span></div>' +
+'</div>' +
+'<button type="button" class="btn ok block shine" data-act="totpAdd" style="padding:9px 12px;font-size:13px;border-radius:12px">➕ Authenticator-এ সেভ করুন</button>';
+const listTotpHtml =
+'<div style="margin-top:8px">' +
+(totpCnt > 2 ? '<div class="glass search" style="margin-bottom:10px"><svg class="i s"><use href="#i-search"/></svg><input id="totpQ" placeholder="সেভ করা 2FA অ্যাকাউন্ট খুঁজুন…" value="' + esc(S.totpQ || '') + '" autocomplete="off"></div>' : '') +
+'<div id="totpList">' + renderTotpListHtml() + '</div></div>';
+h += accCard('adm-totp-add', '➕', 'নতুন 2FA কোড জেনারেটর ও সেভ', 'Secret Key বসালেই লাইভ কোড ও ভল্টে সেভ', 'Add 2FA', addTotpHtml, totpCnt === 0) +
+accCard('adm-totp-list', '🔐', 'সেভ করা লাইভ 2FA ভল্ট', 'ট্যাপে কপি • ✏️ রিনেম/আপডেট • 🗑 ডিলিট', totpCnt + ' টি', listTotpHtml, true);
+} else if (sub === 'profile') {
+const s = S.settings;
+const skinHtml = '<div class="skins" style="margin-top:8px">' + SKINS.map((k) => '<button class="skn ' + (s.skin === k.id ? 'on' : '') + '" data-act="skin" data-s="' + k.id + '"><i class="pv pv-' + k.id + '"><u></u><u></u></i><b>' + k.n + '</b><small>' + k.sub + '</small></button>').join('') + '</div>';
+const themeHtml = '<div class="themes" style="margin-top:8px">' + THEMES.map((t) => '<button class="swt ' + (s.theme === t.id ? 'on' : '') + '" data-act="theme" data-t="' + t.id + '"><i style="background:' + t.bg + '"><b style="background:' + t.g + '"></b></i>' + esc(t.n) + '</button>').join('') + '</div>';
+const togHtml = '<div style="margin-top:8px">' +
+tog('lite', prefs.lite, '🚀 লাইট মোড', 'পুরোনো ফোনে আরও স্মুদ পারফরম্যান্স') +
+tog('notify', s.notify, '🔔 বটে নোটিফিকেশন', 'নতুন মেইল এলে টেলিগ্রামে জানাবে') +
+tog('otpOnly', s.otpOnly, '🔐 শুধু OTP / লিংক', 'অন্য মেইলের নোটিফিকেশন বন্ধ থাকবে') +
+tog('autoCopy', prefs.autoCopy, '📋 OTP অটো-কপি', 'নতুন কোড এলে ক্লিপবোর্ডে কপি হবে') +
+tog('haptics', prefs.haptics, '📳 হ্যাপটিক', 'ট্যাপে ভাইব্রেশন ফিডব্যাক') + '</div>';
+const ttlStyleHtml = '<div style="margin-top:8px"><small style="display:block;font-weight:800;color:var(--mute);margin-bottom:6px">⏳ নতুন মেইলের ডিফল্ট মেয়াদ</small><div class="seg">' + TTL_OPT.map(([m, l]) => '<button class="' + (s.ttl === m ? 'on' : '') + '" data-act="dttl" data-m="' + m + '">' + l + '</button>').join('') + '</div>' +
+'<small style="display:block;font-weight:800;color:var(--mute);margin:10px 0 6px">💬 বটের কার্ড স্টাইল</small><div class="seg">' + ['smart', 'rich', 'compact'].map((x) => '<button class="' + (s.style === x ? 'on' : '') + '" data-act="sty" data-s="' + x + '">' + x + '</button>').join('') + '</div><div class="sty-pv">' + preview(s.style) + '</div></div>';
+const testCleanHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">' +
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ok block" data-act="testmail">🧪 টেস্ট OTP পাঠান</button><button class="btn ghost block" data-act="exportMails">📥 ব্যাকআপ (TXT)</button></div>' +
+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost block" data-act="readall">✅ সব পঠিত</button><button class="btn bad block" data-act="clearall">🧹 সব মেইল মুছুন</button></div></div>';
+h += accCard('st-skin', '🎛', 'ডিজাইন স্টাইল (Glass / Claude / Mix)', 'অ্যাপের ইন্টারফেস লেআউট পরিবর্তন করুন', s.skin, skinHtml, false) +
+accCard('st-theme', '🎨', 'রং ও থিম প্যালেট (Dark & Light)', 'ডার্ক বা লাইট কালার থিম বেছে নিন', s.theme, themeHtml, false) +
+accCard('st-togs', '⚙️', 'স্মার্ট ফিচার ও অটো-কপি সেটিংস', 'নোটিফিকেশন, OTP ফিল্টার ও অটো-কপি টগল', 'Toggles', togHtml, false) +
+accCard('st-ttl', '💬', 'ডিফল্ট মেয়াদ ও বট কার্ড স্টাইল', 'মেইলের মেয়াদ এবং টেলিগ্রাম কার্ড ডিজাইন', s.style, ttlStyleHtml, false) +
+accCard('st-tools', '⚡', 'প্রো টেস্ট, ব্যাকআপ ও ইনবক্স ক্লিনআপ', 'টেস্ট OTP মেইল, ব্যাকআপ ও ইনবক্স ক্লিয়ার', 'Tools', testCleanHtml, false);
+} else if (sub === 'users') {
+const accessHtml = '<div style="margin-top:8px"><div class="glass row2" data-act="access" style="margin-bottom:0"><div id="accLbl"><b>' + (d.openAccess ? '🔓 Open Access চালু' : '🔒 Approval Mode চালু') + '</b><small>' + (d.openAccess ? 'যে কেউ অনুমোদন ছাড়া ব্যবহার করতে পারবে' : 'নতুন ইউজারের জন্য আপনার অনুমোদন লাগবে') + '</small></div><button type="button" class="tog ' + (d.openAccess ? 'on' : '') + '" data-act="access" aria-label="toggle"></button></div></div>';
+const usrListHtml = '<div style="margin-top:8px"><div class="glass search"><svg class="i s"><use href="#i-search"/></svg><input id="uq" placeholder="ইউজার খুঁজুন (নাম / @username / ID)" value="' + esc(S.uq) + '" autocomplete="off"></div><div id="ulist"></div></div>';
+h += accCard('usr-access', '🔓', 'অ্যাক্সেস কন্ট্রোল মোড', 'Open Access অথবা Admin Approval মোড', d.openAccess ? 'Open' : 'Locked', accessHtml, false) +
+accCard('usr-list', '👥', 'রেজিস্টার্ড ইউজার লিস্ট', 'ইউজারের ওপর ট্যাপ করে মেসেজ বা কন্ট্রোল করুন', st.users + ' জন', usrListHtml, true);
+} else if (sub === 'tools') {
+const oauthHtml = '<div style="margin-top:8px"><p class="hint" style="margin-top:0;word-break:break-all">Redirect URI: <code>' + esc(d.callbackUrl || '') + '</code></p><input class="field" id="gcid" placeholder="GOOGLE_CLIENT_ID" value="' + esc(d.googleClientId || '') + '"><input class="field" id="gcsec" placeholder="GOOGLE_CLIENT_SECRET" value="' + esc(d.googleClientSecret || '') + '"><button class="btn ok block" data-act="saveGoogle">' + ic('check', 's') + 'Google OAuth সেভ ও লাইভ আপডেট করুন</button></div>';
+const bcHtml = '<div style="margin-top:8px"><textarea class="field" id="bct" maxlength="3000" placeholder="সব approved ইউজারকে মেসেজ…" style="min-height:76px"></textarea><button class="btn pri block" data-act="bc">' + ic('send', 's') + 'ব্রডকাস্ট পাঠান</button></div>';
+const maintHtml = '<div style="margin-top:8px"><button class="btn ghost block" data-act="sweep">⏳ মেয়াদ-শেষ অ্যাড্রেস এখনই চেক করুন</button><p class="hint" style="margin-bottom:0">মেয়াদ-শেষ অ্যাড্রেস ' + st.expired + 'টি • ব্যান ' + st.banned + ' জন</p></div>';
+h += accCard('tl-oauth', '✉️', 'Gmail OAuth সেটআপ (Client ID & Secret)', 'নতুন Client ID ও Secret সেভ করলেই লাইভ আপডেট হবে', d.gmailEnabled ? 'Active' : 'Setup', oauthHtml, false) +
+accCard('tl-bc', '📢', 'ব্রডকাস্ট মেসেজ পাঠান', 'সব অনুমোদিত ইউজারকে একসাথে নোটিশ পাঠান', 'Broadcast', bcHtml, false) +
+accCard('tl-maint', '🧹', 'সার্ভার রক্ষণাবেক্ষণ ও ক্লিনআপ', 'মেয়াদ-শেষ হওয়া মেইল অ্যাড্রেস পরিষ্কার করুন', 'Sweep', maintHtml, false);
+}
+$('#adminBox').innerHTML = h;
+if (sub === 'users' && $('#ulist')) { fillUsers(); const q = $('#uq'); if (q) q.addEventListener('input', (e) => { S.uq = e.target.value; fillUsers(); }); }
 }
 function userSheet(id) {
   const u = S.adm && S.adm.users.find((x) => x.id === id); if (!u) return;
@@ -1515,6 +1595,68 @@ document.addEventListener('click', async (ev) => {
   try {
     if (a === 'copy') { ev.stopPropagation(); return copy(t.dataset.v, ev); }
 if (a === 'copyCur') { const cur = getActiveMail(); return cur ? copy(cur, ev) : generate(ev); }
+    if (a === 'acc') {
+const id = t.dataset.id;
+S.acc[id] = !S.acc[id];
+const card = $('#ac-' + id), body = $('#ab-' + id);
+if (card) card.classList.toggle('open', Boolean(S.acc[id]));
+if (body) body.hidden = !S.acc[id];
+hap();
+if (id === 'adm-totp-list' && S.acc[id]) tickTotp();
+return;
+}
+if (a === 'togGmItem') {
+const em = t.dataset.e;
+gmState.openGmItem = gmState.openGmItem === em ? '' : em;
+hap();
+return renderGmWizard();
+}
+if (a === 'a2faForEmail') {
+gmState.a2faEmail = t.dataset.e || '';
+gmState.a2faStep = 'init';
+S.acc['gm-auto2fa'] = true;
+hap('medium');
+renderGmWizard();
+setTimeout(() => $('#a2faPass') && $('#a2faPass').focus(), 80);
+return;
+}
+if (a === 'a2faStart') {
+const em = ($('#a2faEmail') && $('#a2faEmail').value || gmState.a2faEmail || '').trim().toLowerCase();
+const pw = ($('#a2faPass') && $('#a2faPass').value || gmState.a2faPass || '').trim();
+const initKey = ($('#a2faKeyInit') && $('#a2faKeyInit').value || '').trim();
+if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা দিন');
+gmState.a2faEmail = em; gmState.a2faPass = pw; gmState.a2faKey = initKey;
+if (initKey) return completeAuto2fa(initKey);
+if (!pw || pw.length < 4) return toast('⚠️ আপনার Gmail পাসওয়ার্ড দিন');
+hap('medium');
+try { await navigator.clipboard.writeText(pw); } catch (e) { trySyncCopy(pw); }
+toast('⏳ পাসওয়ার্ড কপি ও অটো 2FA সেশন শুরু হচ্ছে…');
+const r = await api('gmail/auto2fa', { method: 'POST', body: { email: em, password: pw } });
+gmState.a2faUrl = r.authSetupUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
+gmState.a2faTwoStepUrl = r.twoStepUrl || 'https://myaccount.google.com/signinoptions/two-step-verification';
+gmState.a2faStep = 'challenge';
+renderGmWizard();
+tg && tg.openLink ? tg.openLink(gmState.a2faUrl) : window.open(gmState.a2faUrl, '_blank');
+return;
+}
+if (a === 'a2faOpenAuth') {
+if (gmState.a2faPass && gmState.a2faStep !== 'done') {
+try { await navigator.clipboard.writeText(gmState.a2faPass); } catch (e) { trySyncCopy(gmState.a2faPass); }
+} else if (gmState.a2faCode) {
+try { await navigator.clipboard.writeText(gmState.a2faCode); } catch (e) { trySyncCopy(gmState.a2faCode); }
+}
+const u = gmState.a2faUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
+tg && tg.openLink ? tg.openLink(u) : window.open(u, '_blank');
+return;
+}
+if (a === 'a2faComplete') {
+return completeAuto2fa(($('#a2faKeyInput') && $('#a2faKeyInput').value) || '');
+}
+if (a === 'a2faReset') {
+gmState.a2faStep = 'init'; gmState.a2faKey = ''; gmState.a2faCode = '';
+hap();
+return renderGmWizard();
+}
     if (a === 'selectMail') { return selectMail(t.dataset.v); }
     if (a === 'filterMail') { S.q = t.dataset.v || ''; if ($('#q')) $('#q').value = S.q; setTab('inbox'); renderInbox(true); return toast('📥 মেইল ফিল্টার: ' + S.q); }
     if (a === 'togOneTime') { gmState.oneTime = !gmState.oneTime; hap(); renderGmWizard(); return toast(gmState.oneTime ? '🔒 ওয়ান-টাইম ব্রাউজার মোড চালু' : '🔓 সাধারণ ব্রাউজার মোড চালু'); }
