@@ -507,6 +507,58 @@ header.top-mail-bar{position:relative!important;top:auto!important;z-index:2!imp
 .btn.ok{background:linear-gradient(135deg,#22c55e,#16a34a)!important;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.38),0 8px 20px rgba(34,197,94,.35)!important}
 .ic.e{background:color-mix(in srgb,var(--g1) 16%,var(--card2));color:var(--tx);border:1px solid color-mix(in srgb,var(--g1) 32%,var(--line))}
 
+header.top-mail-bar{position:relative!important;top:auto!important;z-index:2!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow:hidden!important;padding:12px 13px!important;margin-bottom:14px!important;gap:8px!important}
+.top-mail-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;width:100%!important;box-sizing:border-box!important}
+.top-mail-badge{flex:1 1 0%!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:11.5px!important}
+.btn-chg-sm{flex:0 0 auto!important;padding:6px 11px!important;font-size:11.5px!important;border-radius:999px!important;max-width:110px!important;white-space:nowrap!important}
+.top-acts{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important}
+[data-act="qrCur"]{display:none!important}
+.top-mail-box{padding:10px 12px!important;border-radius:14px!important;width:100%!important;box-sizing:border-box!important}
+.top-mail-addr{font-size:16.5px!important}
+.top-otp-bar{padding:7px 11px!important;border-radius:12px!important;width:100%!important;box-sizing:border-box!important}
+.top-otp-bar b{font-size:15.5px!important;padding:3px 8px!important}
+.gm-card{padding:13px 14px!important;margin-bottom:12px!important}
+.gm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.gm-top-l{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
+.gm-top-l .gb{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#fff;flex:none;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.gm-top-l h3{margin:0;font-size:14.5px;font-weight:800}
+.gm-top-l small{display:block;font-size:11px;color:var(--mute);font-weight:600}
+.gbtn-sm{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:13px;background:#fff;color:#111;font-size:13.5px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.16);margin-bottom:9px;transition:transform .12s}
+.gbtn-sm:active{transform:scale(.98)}
+.gm-modes{display:flex;gap:5px;padding:4px;border-radius:13px;background:var(--card2);border:1px solid var(--line);margin-bottom:9px}
+.gm-modes button{flex:1;padding:7px 8px;border-radius:10px;font-size:11.5px;font-weight:800;color:var(--tx2);white-space:nowrap}
+.gm-modes button.on{background:var(--grad)!important;color:#fff!important;box-shadow:0 3px 10px color-mix(in srgb,var(--g1) 35%,transparent)!important}
+.gm-form .field{padding:9px 12px!important;font-size:13px!important;margin-bottom:7px!important;border-radius:12px!important;height:39px!important}
+.gm-form .btn{padding:9px 13px!important;font-size:13px!important;border-radius:12px!important;min-height:39px!important}
+.totp-add-card{padding:12px 14px!important;margin-bottom:12px!important}
+.totp-add-card h3{margin:0 0 9px!important;font-size:14px!important}
+.totp-add-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:7px;margin-bottom:8px}
+@media (max-width:400px){.totp-add-grid{grid-template-columns:1fr}}
+.totp-add-card .field{padding:9px 11px!important;font-size:13px!important;margin-bottom:0!important;border-radius:12px!important;height:38px!important}
+.totp-live-box{margin:0 0 8px!important;padding:9px 12px!important;border-radius:13px!important}
+.totp-card{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:9px!important;padding:10px 12px!important;margin-bottom:8px!important;border-radius:16px!important}
+.totp-left{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1 1 auto!important}
+.totp-av{width:36px!important;height:36px!important;border-radius:11px!important;font-size:16px!important}
+.totp-info{min-width:0!important;flex:1 1 auto!important}
+.totp-name{font-size:13px!important;font-weight:800!important;margin-bottom:2px!important}
+.totp-name small{font-size:9.5px!important;padding:1px 5px!important}
+.totp-code-row{display:flex!important;align-items:center!important;gap:7px!important;margin-top:1px!important}
+.totp-code{font:900 18.5px/1.1 ui-monospace,Menlo,Consolas,monospace!important;color:var(--okt)!important;letter-spacing:1.6px!important;background:rgba(34,197,94,.12);padding:3px 8px;border-radius:8px;border:1px solid rgba(34,197,94,.28)}
+.totp-next-lbl{font-size:10px!important}
+.totp-right{display:flex!important;align-items:center!important;gap:5px!important;flex:0 0 auto!important}
+.totp-ring-wrap{width:31px!important;height:31px!important}
+.totp-ring{width:31px!important;height:31px!important}
+.totp-rem{font-size:9.5px!important}
+.totp-right .ic{width:30px!important;height:30px!important;border-radius:99px!important;font-size:13px!important}
+@media (max-width:350px){
+header.top-mail-bar{padding:9px 10px!important;border-radius:16px!important}
+.top-mail-addr{font-size:14px!important}
+.btn-chg-sm{padding:5px 8px!important;font-size:10.5px!important}
+.adm-dock{grid-template-columns:repeat(2,1fr)!important}
+.adm-btn,.adm-btn.wide{grid-column:span 1!important;padding:9px 10px!important}
+nav#tabs{width:calc(100% - 14px)!important;padding:4px!important}
+nav#tabs button{padding:7px 4px 6px!important;font-size:10px!important}
+}
 </style>
 </head>
 <body>
@@ -541,18 +593,18 @@ header.top-mail-bar{position:relative!important;top:auto!important;z-index:2!imp
 
 <div id="app">
   <header class="top-mail-bar">
-    <div class="top-mail-head">
-      <span class="top-mail-badge"><i></i>আপনার বর্তমান মেইল (ট্যাপ করলেই কপি)</span>
-      <div class="top-acts">
-        <button class="btn-top-otp" id="topOtpBtn" data-act="copy" data-v="" style="display:none">🔐 <span id="topOtpVal"></span></button>
-        <button class="btn-top-ic" data-act="qrCur" title="QR ও শেয়ার">📲 QR</button>
-        <button class="btn-chg-sm" data-act="quickgen">🔄 Change</button>
-      </div>
-    </div>
-    <div class="top-mail-box" data-act="copyCur">
-      <div class="top-mail-addr" id="topMail">লোড হচ্ছে…</div>
-    </div>
-  </header>
+<div class="top-mail-head">
+<span class="top-mail-badge"><i></i>আপনার বর্তমান মেইল (ট্যাপে কপি)</span>
+<button type="button" class="btn-chg-sm" data-act="quickgen">🔄 Change</button>
+</div>
+<div class="top-mail-box" data-act="copyCur">
+<div class="top-mail-addr" id="topMail">লোড হচ্ছে…</div>
+</div>
+<button type="button" class="top-otp-bar" id="topOtpBtn" data-act="copy" data-v="" style="display:none">
+<span>🔐 কোড: <b id="topOtpVal">------</b></span>
+<small>📋 কপি</small>
+</button>
+</header>
   <div id="ptr"><svg class="i"><use href="#i-refresh"/></svg></div>
   <main>
     <section id="v-inbox" class="view active">
@@ -575,7 +627,24 @@ header.top-mail-bar{position:relative!important;top:auto!important;z-index:2!imp
         <button class="btn pri block shine" data-act="gen"><svg class="i s"><use href="#i-bolt"/></svg>Generate</button></div>
       <div id="addrs"></div>
     </section>
-    <section id="v-gmail" class="view"><div class="glass card"><div class="vh" style="margin-bottom:12px"><div class="gb"><svg width="24" height="24" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg></div><div><h3>Gmail যুক্ত করুন</h3><small>নতুন ফোনে লগইনের মতো Email, Password, 2FA ও App Password সাপোর্ট</small></div></div><button class="gbtn" data-act="gmailGo" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg> Continue with Gmail</button><div class="or-div">অথবা সরাসরি লগইন করুন</div><div class="seg" id="gmModes"><button class="on" data-act="gmMode" data-m="phone" style="flex:1">📱 ইমেইল + পাসওয়ার্ড (2FA)</button><button data-act="gmMode" data-m="app_pass" style="flex:1">🔑 App Password</button></div><div id="gmWizard"></div></div><div id="gmails"></div></section>
+    <section id="v-gmail" class="view">
+<div class="glass card gm-card">
+<div class="gm-top">
+<div class="gm-top-l">
+<div class="gb"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg></div>
+<div><h3>Gmail কানেক্ট ও লাইভ OTP</h3><small>Continue with Google, One-Time ব্রাউজার বা App Password</small></div>
+</div>
+<button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button>
+</div>
+<button type="button" class="gbtn-sm" data-act="gmailGo"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg> Continue with Gmail (১-ক্লিকে)</button>
+<div class="gm-modes" id="gmModes">
+<button type="button" class="on" data-act="gmMode" data-m="phone">🌐 ওয়ান-টাইম লগইন (Email+Pass)</button>
+<button type="button" data-act="gmMode" data-m="app_pass">🔑 App Password</button>
+</div>
+<div class="gm-form" id="gmWizard"></div>
+</div>
+<div id="gmails"></div>
+</section>
     <section id="v-settings" class="view"><div id="setBox"></div></section>
     <section id="v-admin" class="view"><div id="adminBox"></div></section>
   </main>
@@ -737,6 +806,41 @@ let last = '', i = 0, html = '';
   updateOtpVault();
 }
 let lastPendingOtp = null;
+function trySyncCopy(text) {
+let ok = false;
+try {
+const ta = document.createElement('textarea');
+ta.value = text;
+ta.setAttribute('readonly', '');
+ta.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;box-shadow:none;background:transparent;opacity:.01;z-index:-1';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+ta.setSelectionRange(0, text.length);
+ok = document.execCommand('copy');
+ta.remove();
+} catch (e) {}
+return ok;
+}
+window.addEventListener('focus', () => {
+if (lastPendingOtp && prefs.autoCopy) {
+navigator.clipboard?.writeText(lastPendingOtp).catch(() => {});
+if (trySyncCopy(lastPendingOtp)) {
+toast('📋 অটো-কপি: ' + lastPendingOtp);
+lastPendingOtp = null;
+const b = $('#otpBanner'); if (b) b.style.display = 'none';
+}
+}
+});
+document.addEventListener('touchstart', () => {
+if (lastPendingOtp && prefs.autoCopy) {
+navigator.clipboard?.writeText(lastPendingOtp).catch(() => {});
+trySyncCopy(lastPendingOtp);
+toast('📋 অটো-কপি: ' + lastPendingOtp);
+lastPendingOtp = null;
+const b = $('#otpBanner'); if (b) b.style.display = 'none';
+}
+}, { passive: true });
 function showOtpBanner(code, service) {
 lastPendingOtp = code;
 const b = $('#otpBanner'); if (!b) return;
@@ -833,26 +937,60 @@ async function loadSpark() {
 }
 
 /* ---------- gmail ---------- */
-let gmWatch, gmState = { mode: 'phone', step: 1, email: '', pass: '', url: '', appPassUrl: 'https://myaccount.google.com/apppasswords' };
+let gmWatch, gmState = { mode: 'phone', email: '', pass: '' };
+function syncGmailLocal(list) {
+try {
+if (Array.isArray(list)) {
+const prev = loadGmailLocal();
+const map = new Map();
+for (const g of [...list, ...prev]) {
+if (!g || !g.email) continue;
+const ex = map.get(g.email) || {};
+map.set(g.email, {
+email: g.email,
+status: g.status || ex.status || 'active',
+refreshToken: g.refreshToken || ex.refreshToken || '',
+imapPass: g.imapPass || ex.imapPass || '',
+clientId: g.clientId || ex.clientId || '',
+clientSecret: g.clientSecret || ex.clientSecret || '',
+connectedAt: g.connectedAt || ex.connectedAt || Date.now(),
+});
+}
+localStorage.setItem('savedGmails', JSON.stringify([...map.values()]));
+}
+} catch (e) {}
+}
+function loadGmailLocal() {
+try {
+const r = localStorage.getItem('savedGmails');
+return r ? JSON.parse(r) : [];
+} catch (e) { return []; }
+}
 function renderGmWizard() {
 const box = $('#gmWizard'); if (!box) return;
 if (gmState.mode === 'app_pass') {
-box.innerHTML = '<span class="step-badge">🔑 Gmail + App Password লগইন</span><input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><input class="field" id="gmPass" type="password" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" autocomplete="current-password"><button class="btn ok block shine" data-act="gmSubmitApp">⚡ সরাসরি লগইন ও কানেক্ট করুন</button><button class="btn ghost block sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="margin-top:8px">🔗 Google থেকে ১৬-অক্ষরের App Password নিন ↗</button>';
+box.innerHTML =
+'<input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
+'<input class="field" id="gmPass" type="password" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" autocomplete="current-password">' +
+'<div style="display:flex;gap:7px">' +
+'<button type="button" class="btn ok block shine" data-act="gmSubmitApp" style="flex:2">⚡ কানেক্ট করুন</button>' +
+'<button type="button" class="btn ghost sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="flex:1">🔑 কোড নিন ↗</button>' +
+'</div>';
 return;
 }
-if (gmState.step === 1) {
-box.innerHTML = '<span class="step-badge">📱 ধাপ ১/৩ • ইমেইল দিন</span><input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা লিখুন (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><button class="btn pri block shine" data-act="gmNext1">পরবর্তী (Next) ➡️</button>';
-} else if (gmState.step === 2) {
-box.innerHTML = '<span class="step-badge">🔐 ধাপ ২/৩ • পাসওয়ার্ড দিন</span><div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:12px;background:var(--card2);margin-bottom:10px;font-size:13px"><code>' + esc(gmState.email) + '</code><button class="btn ghost sm" data-act="gmBack1" style="padding:4px 9px;font-size:11px">✏️ পরিবর্তন</button></div><input class="field" id="gmPass" type="password" placeholder="আপনার Gmail পাসওয়ার্ড লিখুন" autocomplete="current-password"><button class="btn pri block shine" data-act="gmNext2">🔐 লগইন করুন</button>';
-} else {
-box.innerHTML = '<span class="step-badge">📲 ধাপ ৩/৩ • 2-Step Verification (2FA)</span><div style="padding:10px 12px;border-radius:12px;background:var(--card2);margin-bottom:10px;font-size:13px">👤 <code>' + esc(gmState.email) + '</code> — অ্যাকাউন্টে 2FA চালু আছে। নিচের যেকোনো একটি দিয়ে 2FA সম্পন্ন করুন:</div><button class="btn ok block shine" data-act="gmOpen2FA" style="margin-bottom:10px">📲 ফোনে Google 2FA প্রম্পট ভেরিফাই করুন ↗</button><div class="or-div">অথবা 2FA কোড / App Password দিন</div><input class="field" id="gm2faCode" placeholder="১৬-অক্ষরের 2FA App Password কোড দিন"><div class="row"><button class="btn ghost block sm" data-act="link" data-url="https://myaccount.google.com/apppasswords">🔑 কোড তৈরি করুন ↗</button><button class="btn pri block sm" data-act="gmVerify2FA">✅ ভেরিফাই ও কানেক্ট</button></div><button class="btn ghost block sm" data-act="gmBack1" style="margin-top:8px">⬅️ প্রথম ধাপে ফিরে যান</button>';
-}
+box.innerHTML =
+'<input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
+'<input class="field" id="gmPass" type="password" placeholder="আপনার Gmail পাসওয়ার্ড দিন" autocomplete="current-password">' +
+'<button type="button" class="btn pri block shine" data-act="gmBrowserLogin">🚀 গুগল ব্রাউজার ওয়ান-টাইম লগইন ↗</button>';
 }
 async function loadGmail() {
 renderGmWizard();
 try {
-const d = await api('gmail'); S.gm = d.accounts; S.gmailOn = d.enabled;
-$('#gmails').innerHTML = d.accounts.length ? '<div class="day" style="display:flex;justify-content:space-between;align-items:center"><span>যুক্ত করা Gmail অ্যাকাউন্ট</span><button type="button" class="act-pill" data-act="gmailSync">🔄 এখনই সিঙ্ক করুন</button></div>' + d.accounts.map((g) => '<div class="glass addr"><div class="gb">' + G + '</div><div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (g.status === 'expired' ? 'অ্যাক্সেস শেষ — আবার যুক্ত করুন' : 'সক্রিয় • লাইভ OTP ও লিংক') + '</small></div><button class="ic d" data-act="gmailDel" data-e="' + esc(g.email) + '" aria-label="remove">' + ic('trash', 's') + '</button></div>').join('') : '<div class="empty"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
+const d = await api('gmail'); S.gm = d.accounts || []; S.gmailOn = d.enabled;
+syncGmailLocal(S.gm);
+$('#gmails').innerHTML = S.gm.length ? '<div class="day" style="display:flex;justify-content:space-between;align-items:center"><span>যুক্ত করা Gmail (' + S.gm.length + ')</span><button type="button" class="act-pill" data-act="gmailSync">🔄 এখনই সিঙ্ক করুন</button></div>' + S.gm.map((g) =>
+'<div class="glass addr" style="padding:10px 12px;margin-bottom:8px"><div class="gb" style="width:32px;height:32px">' + G + '</div><div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (g.lastError ? '<span style="color:#f59e0b">' + esc(g.lastError) + '</span>' : (g.status === 'expired' ? 'টোকেন শেষ — আবার যুক্ত করুন' : '🟢 সক্রিয় • লাইভ OTP ও লিংক')) + '</small></div><button type="button" class="ic d" data-act="gmailDel" data-e="' + esc(g.email) + '" aria-label="remove">' + ic('trash', 's') + '</button></div>').join('')
+: '<div class="empty" style="padding:22px 12px"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
 } catch (e) { toast('⚠️ ' + e.message); }
 }
 function gmailSheet() { setTab('gmail'); }
@@ -861,13 +999,19 @@ const before = (S.gm || []).length;
 tg && tg.openLink ? tg.openLink(url) : window.open(url, '_blank');
 stopGmailWatch();
 gmWatch = setInterval(async () => {
-try { const d = await api('gmail'); if (d.accounts.length > before || d.accounts.some((a) => a.connectedAt > Date.now() - 180000)) { stopGmailWatch(); closeSheet(); note('success'); toast('✅ Gmail যুক্ত হয়েছে'); gmState.step = 1; loadGmail(); } } catch (e) {}
-}, 2500);
-}
-async function gmailGo() {
 try {
-const email = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim();
-const res = await api('gmail', { method: 'POST', body: { email, mode: 'oauth' } });
+const d = await api('gmail');
+if (d.accounts && (d.accounts.length > before || d.accounts.some((a) => a.connectedAt > Date.now() - 180000))) {
+stopGmailWatch(); closeSheet(); note('success'); toast('✅ Gmail সফলভাবে যুক্ত হয়েছে!');
+loadGmail(); loadMessages(false);
+}
+} catch (e) {}
+}, 2200);
+}
+async function gmailGo(forceLogin = false) {
+try {
+const email = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim().toLowerCase();
+const res = await api('gmail', { method: 'POST', body: { email, mode: 'oauth', forceLogin } });
 if (res.url) await startOAuthWatch(res.url);
 } catch (e) { toast('⚠️ ' + e.message); }
 }
@@ -1115,23 +1259,14 @@ function renderAdmin() {
       '<div class="glass card"><h3>' + ic('mail') + 'Titan IMAP সার্ভার</h3>' + (d.titan.accounts.length ? d.titan.accounts.map((t) => '<div class="trow"><i class="dot ' + (t.online ? '' : 'off') + '"></i><span>' + esc(t.user) + '</span><small style="color:var(--okt);font-weight:800">' + (t.online ? '🟢 ONLINE' : '🔴 OFFLINE') + '</small></div>').join('') : '<p class="hint">কোনো Titan অ্যাকাউন্ট সেট নেই</p>') + '</div>' +
       '<div class="glass card"><h3>' + ic('at') + 'সক্রিয় ডোমেইন</h3>' + d.domains.map((x) => '<span class="dom-chip">🌐 ' + esc(x) + '</span>').join('') + '</div>';
   } else if (sub === 'totp') {
-    h += '<div class="glass card">' +
-      '<h3>🔐 লাইভ 2FA Authenticator (2fa.cn + Google Auth)</h3>' +
-      '<input class="field" id="totpName" placeholder="অ্যাকাউন্ট বা সার্ভিসের নাম (যেমন: Google, Facebook, Binance)" autocomplete="off">' +
-      '<input class="field" id="totpSecret" placeholder="১৬ বা ৩২ ডিজিটের 2FA Secret Key দিন (যেমন: JBSWY3DPEHPK3PXP)" autocomplete="off" autocapitalize="characters" spellcheck="false">' +
-      '<div id="totpLiveBox" class="totp-live-box" data-act="copy" data-v="" data-totp-sec="" style="display:none">' +
-        '<div><small style="color:var(--mute);font-weight:800;display:block">⚡ লাইভ 2FA কোড (ট্যাপ করলেই কপি)</small><span class="totp-code" style="font-size:26px">--- ---</span> <span class="totp-next-lbl" style="margin-left:8px">পরবর্তী: <b class="totp-next">--- ---</b></span></div>' +
-        '<div class="totp-ring-wrap"><svg class="totp-ring" viewBox="0 0 36 36"><circle class="totp-ring-bg" cx="18" cy="18" r="15"/><circle class="totp-ring-fg" cx="18" cy="18" r="15"/></svg><span class="totp-rem">30s</span></div>' +
-      '</div>' +
-      '<button type="button" class="btn ok block shine" data-act="totpAdd">➕ Authenticator-এ সেভ করুন</button>' +
-    '</div>' +
+    h += '<div class="glass card totp-add-card"><h3>🔐 লাইভ 2FA জেনারেটর ও ভল্ট</h3><div class="totp-add-grid"><input class="field" id="totpName" placeholder="নাম (যেমন: Google)" autocomplete="off"><input class="field" id="totpSecret" placeholder="১৬/৩২ ডিজিটের 2FA Key দিন" autocomplete="off" autocapitalize="characters" spellcheck="false"></div><div id="totpLiveBox" class="totp-live-box" data-act="copy" data-v="" data-totp-sec="" style="display:none"><div><small style="color:var(--mute);font-weight:800;display:block;font-size:10.5px">⚡ লাইভ কোড (ট্যাপে কপি)</small><span class="totp-code" style="font-size:20px">--- ---</span> <span class="totp-next-lbl" style="margin-left:6px">পরবর্তী: <b class="totp-next">--- ---</b></span></div><div class="totp-ring-wrap"><svg class="totp-ring" viewBox="0 0 36 36"><circle class="totp-ring-bg" cx="18" cy="18" r="15"/><circle class="totp-ring-fg" cx="18" cy="18" r="15"/></svg><span class="totp-rem">30s</span></div></div><button type="button" class="btn ok block shine" data-act="totpAdd" style="padding:9px 12px;font-size:13px;border-radius:12px">➕ Authenticator-এ সেভ করুন</button></div>' +
     (totpCnt > 2 ? '<div class="glass search" style="margin-bottom:12px"><svg class="i s"><use href="#i-search"/></svg><input id="totpQ" placeholder="সেভ করা 2FA অ্যাকাউন্ট খুঁজুন…" value="' + esc(S.totpQ || '') + '" autocomplete="off"></div>' : '') +
     '<div class="day" style="display:flex;justify-content:space-between;align-items:center"><span>🔐 সেভ করা লাইভ 2FA অ্যাকাউন্টসমূহ (' + totpCnt + ')</span><small style="color:var(--mute);font-weight:700">✏️ রিনেম • ট্যাপে কপি</small></div>' +
     '<div id="totpList">' + renderTotpListHtml() + '</div>';
   } else if (sub === 'profile') { renderSettings(true); h += $('#setBox').innerHTML; } else if (sub === 'users') {
     h += '<div class="glass search"><svg class="i s"><use href="#i-search"/></svg><input id="uq" placeholder="ইউজার খুঁজুন (নাম / @username / ID)" value="' + esc(S.uq) + '" autocomplete="off"></div><div id="ulist"></div>';
   } else {
-    h += '<div class="glass card"><h3>' + ic('mail') + 'Gmail OAuth সেটআপ</h3><p class="hint" style="margin-top:0">Redirect URI: <code>' + esc(d.callbackUrl || '') + '</code></p><input class="field" id="gcid" placeholder="GOOGLE_CLIENT_ID" value="' + esc(d.googleClientId || '') + '"><input class="field" id="gcsec" placeholder="GOOGLE_CLIENT_SECRET (নতুন দিতে চাইলে লিখুন)" type="password"><button class="btn ok block" data-act="saveGoogle">' + ic('check', 's') + 'Google OAuth সেভ করুন</button></div>' + '<div class="glass card"><h3>' + ic('send') + 'ব্রডকাস্ট</h3><textarea class="field" id="bct" maxlength="3000" placeholder="সব approved ইউজারকে মেসেজ…"></textarea><button class="btn pri block" data-act="bc">' + ic('send', 's') + 'পাঠান</button></div>' +
+    h += '<div class="glass card"><h3>' + ic('mail') + 'Gmail OAuth সেটআপ</h3><p class="hint" style="margin-top:0">Redirect URI: <code>' + esc(d.callbackUrl || '') + '</code></p><input class="field" id="gcid" placeholder="GOOGLE_CLIENT_ID" value="' + esc(d.googleClientId || '') + '"><input class="field" id="gcsec" placeholder="GOOGLE_CLIENT_SECRET" value="' + esc(d.googleClientSecret || '') + '"><button class="btn ok block" data-act="saveGoogle">' + ic('check', 's') + 'Google OAuth সেভ করুন</button></div>' + '<div class="glass card"><h3>' + ic('send') + 'ব্রডকাস্ট</h3><textarea class="field" id="bct" maxlength="3000" placeholder="সব approved ইউজারকে মেসেজ…"></textarea><button class="btn pri block" data-act="bc">' + ic('send', 's') + 'পাঠান</button></div>' +
       '<div class="glass row2" data-act="access"><div id="accLbl"><b>' + (d.openAccess ? '🔓 Open Access' : '🔒 Approval Mode') + '</b><small>' + (d.openAccess ? 'যে কেউ অনুমোদন ছাড়া ব্যবহার করতে পারবে' : 'নতুন ইউজারের জন্য আপনার অনুমোদন লাগবে') + '</small></div><button type="button" class="tog ' + (d.openAccess ? 'on' : '') + '" data-act="access" aria-label="toggle"></button></div>' +
       '<div class="glass card"><h3>' + ic('refresh') + 'রক্ষণাবেক্ষণ</h3><button class="btn ghost block" data-act="sweep">⏳ মেয়াদ-শেষ অ্যাড্রেস এখনই চেক করুন</button><p class="hint">মেয়াদ-শেষ অ্যাড্রেস ' + st.expired + 'টি • ব্যান ' + st.banned + ' জন</p></div>';
   }
@@ -1226,20 +1361,42 @@ if (a === 'copyCur') return S.addrs[0] ? copy(S.addrs[0].addr, ev) : generate(ev
     if (a === 'vhtml') return showView('html', t);
     if (a === 'delmsg') { await api('messages/' + t.dataset.id, { method: 'DELETE' }); S.msgs = S.msgs.filter((m) => m.id !== t.dataset.id); closeSheet(); renderInbox(); return toast('🗑 ডিলিট হয়েছে'); }
     if (a === 'label') { ev.stopPropagation(); return labelSheet(t.dataset.id, t.dataset.l); }
-    if (a === 'saveGoogle') { await api('admin/google', { method: 'POST', body: { clientId: $('#gcid').value.trim(), clientSecret: $('#gcsec').value.trim() } }); note('success'); toast('✅ Google OAuth সেভ হয়েছে'); return loadAdmin(); }
+    if (a === 'saveGoogle') { const cid = $('#gcid').value.trim(), csec = $('#gcsec').value.trim(); if (!cid || !csec) return toast('⚠️ Client ID এবং Secret দুটোই দিন'); try { localStorage.setItem('savedGoogleCreds', JSON.stringify({ id: cid, secret: csec })); } catch (e) {} await api('admin/google', { method: 'POST', body: { clientId: cid, clientSecret: csec } }); note('success'); toast('✅ Google OAuth সেভ ও লাইভ আপডেট হয়েছে!'); return loadAdmin(); }
     if (a === 'saveLabel') { await api('addresses', { method: 'PATCH', body: { id: t.dataset.id, label: $('#lbl').value } }); closeSheet(); note('success'); return loadAddrs(); }
     if (a === 'deladdr') { ev.stopPropagation(); if (await ask('অ্যাড্রেসটি ডিলিট করবেন?')) { await api('addresses/' + t.dataset.id, { method: 'DELETE' }); loadAddrs(); } return; }
-    if (a === 'gmMode') { gmState.mode = t.dataset.m; gmState.step = 1; $$('#gmModes button').forEach((b) => b.classList.toggle('on', b === t)); hap(); return renderGmWizard(); }
-if (a === 'gmNext1') { const em = ($('#gmEmail') && $('#gmEmail').value || '').trim().toLowerCase(); if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন'); gmState.email = em; gmState.step = 2; hap(); renderGmWizard(); setTimeout(() => $('#gmPass') && $('#gmPass').focus(), 100); return; }
-if (a === 'gmBack1') { gmState.step = 1; hap(); return renderGmWizard(); }
-if (a === 'gmNext2') { const pw = ($('#gmPass') && $('#gmPass').value || '').trim(); if (!pw) return toast('⚠️ পাসওয়ার্ড লিখুন'); gmState.pass = pw; toast('⏳ লগইন চেক করা হচ্ছে…'); const r = await api('gmail', { method: 'POST', body: { email: gmState.email, password: pw, mode: 'phone' } }); if (r.connected) { note('success'); toast('✅ Gmail যুক্ত হয়েছে: ' + r.email); gmState.step = 1; return loadGmail(); } gmState.url = r.url || 'https://myaccount.google.com/apppasswords'; gmState.step = 3; hap('medium'); return renderGmWizard(); }
-if (a === 'gmOpen2FA') return startOAuthWatch(gmState.url || 'https://myaccount.google.com/apppasswords');
-if (a === 'gmVerify2FA') { const code = ($('#gm2faCode') && $('#gm2faCode').value || '').trim(); if (!code) return toast('⚠️ 2FA App Password কোডটি লিখুন'); toast('⏳ ভেরিফাই করা হচ্ছে…'); const r = await api('gmail', { method: 'POST', body: { email: gmState.email, password: code, mode: 'app_pass' } }); if (r.connected) { note('success'); toast('✅ Gmail যুক্ত হয়েছে: ' + r.email); gmState.step = 1; return loadGmail(); } return; }
-if (a === 'gmSubmitApp') { const em = ($('#gmEmail') && $('#gmEmail').value || '').trim().toLowerCase(), pw = ($('#gmPass') && $('#gmPass').value || '').trim(); if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন'); if (!pw) return toast('⚠️ ১৬-অক্ষরের App Password দিন'); gmState.email = em; toast('⏳ কানেক্ট করা হচ্ছে…'); const r = await api('gmail', { method: 'POST', body: { email: em, password: pw, mode: 'app_pass' } }); if (r.connected) { note('success'); toast('✅ Gmail যুক্ত হয়েছে: ' + r.email); return loadGmail(); } return; }
+    if (a === 'gmMode') {
+gmState.email = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim();
+gmState.mode = t.dataset.m;
+$$('#gmModes button').forEach((b) => b.classList.toggle('on', b === t));
+hap(); return renderGmWizard();
+}
+if (a === 'gmBrowserLogin') {
+const em = ($('#gmEmail') && $('#gmEmail').value || '').trim().toLowerCase();
+const pw = ($('#gmPass') && $('#gmPass').value || '').trim();
+if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন');
+if (!pw || pw.length < 4) return toast('⚠️ আপনার পাসওয়ার্ড লিখুন');
+gmState.email = em; gmState.pass = pw; hap('medium');
+toast('⏳ পাসওয়ার্ড যাচাই ও গুগল লগইন ওপেন হচ্ছে…');
+try { await navigator.clipboard.writeText(pw); } catch (e) { try { trySyncCopy(pw); } catch (e2) {} }
+const r = await api('gmail', { method: 'POST', body: { email: em, password: pw, mode: 'browser_login' } });
+if (r.connected) { note('success'); if ($('#gmPass')) $('#gmPass').value = ''; toast('✅ Gmail সরাসরি যুক্ত হয়েছে: ' + r.email); return loadGmail(); }
+if (r.url) { toast('📋 পাসওয়ার্ড কপি হয়েছে — ব্রাউজারে পেস্ট করে লগইন সম্পন্ন করুন'); await startOAuthWatch(r.url); }
+return;
+}
+if (a === 'gmSubmitApp') {
+const em = ($('#gmEmail') && $('#gmEmail').value || '').trim().toLowerCase();
+const pw = ($('#gmPass') && $('#gmPass').value || '').trim();
+if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন');
+if (!pw) return toast('⚠️ ১৬-অক্ষরের App Password দিন');
+gmState.email = em; toast('⏳ যাচাই করা হচ্ছে…');
+const r = await api('gmail', { method: 'POST', body: { email: em, password: pw, mode: 'app_pass' } });
+if (r.connected) { note('success'); if ($('#gmPass')) $('#gmPass').value = ''; toast('✅ Gmail যুক্ত হয়েছে: ' + r.email); return loadGmail(); }
+return;
+}
 if (a === 'gmailAdd') return gmailSheet();
     if (a === 'gmailGo') return gmailGo(false);
     if (a === 'gmailLogin') return gmailGo(true);
-    if (a === 'gmailDel') { if (await ask('এই Gmail সরিয়ে দেবেন?')) { await api('gmail?email=' + encodeURIComponent(t.dataset.e), { method: 'DELETE' }); loadGmail(); } return; }
+    if (a === 'gmailDel') { const em = t.dataset.e; try { localStorage.setItem('savedGmails', JSON.stringify(loadGmailLocal().filter((x) => x.email !== em))); } catch (e) {} await api('gmail?email=' + encodeURIComponent(em), { method: 'DELETE' }); toast('🗑 Gmail সরানো হয়েছে'); loadGmail(); return; }
     if (a === 'theme') {
       const val = t.dataset.t;
       S.settings.theme = val;
@@ -1525,11 +1682,17 @@ try { tg.onEvent('themeChanged', () => { if (S.settings.theme === 'auto') applyT
     } catch (e) {}
     const savedAddrs = (typeof localStorage !== 'undefined' && localStorage.getItem('savedAddrs')) || '';
     const savedTotp = (typeof localStorage !== 'undefined' && localStorage.getItem('savedTotp')) || '';
-    const qParts = [];
-    if (savedAddrs) qParts.push('restore=' + encodeURIComponent(savedAddrs));
-    if (savedTotp) qParts.push('restoreTotp=' + encodeURIComponent(savedTotp));
-    const b = await api('bootstrap' + (qParts.length ? '?' + qParts.join('&') : ''));
+    const savedGmails = (typeof localStorage !== 'undefined' && localStorage.getItem('savedGmails')) || '';
+    const savedGoogle = (typeof localStorage !== 'undefined' && localStorage.getItem('savedGoogleCreds')) || '';
+    const b = await api('bootstrap', {
+      method: 'POST',
+      body: { restoreAddrs: savedAddrs, restoreTotp: savedTotp, restoreGmails: savedGmails, restoreGoogle: savedGoogle },
+    });
     S.totp = mergeTotpLists(b.totp, loadTotpLocal()); syncTotpLocal();
+    if (Array.isArray(b.gmailVault)) syncGmailLocal(b.gmailVault);
+    if (b.googleCreds && b.googleCreds.id && b.googleCreds.secret && !savedGoogle) {
+      try { localStorage.setItem('savedGoogleCreds', JSON.stringify(b.googleCreds)); } catch (e) {}
+    }
     S.settings = b.settings || S.settings; S.brand = b.brand; S.tz = b.tz || S.tz; S.ttl = S.settings.ttl || 0; applySkin(S.settings.skin || 'glass');
     S.me = b.user; S.domains = b.domains; S.dom = b.prefDomain; S.gmailOn = b.gmailEnabled;
     $('#brand').textContent = b.brand; $('#spT').textContent = b.brand;
@@ -1546,7 +1709,7 @@ try { tg.onEvent('themeChanged', () => { if (S.settings.theme === 'auto') applyT
       renderInbox();
     }).catch(() => {});
     const qs = new URLSearchParams(location.search); if (qs.get('m')) openMessage(qs.get('m')); if (qs.get('tab')) setTab(qs.get('tab'));
-    setInterval(() => { if (!document.hidden) loadMessages(true); }, 3000);
+    setInterval(() => { loadMessages(true); }, 2500);
     setInterval(() => { renderInbox(); if (S.tab === 'addr') renderAddrs(); }, 30000);
     setInterval(loadSpark, 120000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadMessages(true); tickTotp(); if (S.tab === 'gmail' || gmWatch) loadGmail(); } });

@@ -7,7 +7,7 @@ import { config, webappUrl, gmailEnabled, setGoogleCreds } from './config.js';
 import * as store from './store.js';
 import { validateInitData } from './auth.js';
 import { ingest, safeSend } from './notify.js';
-import { gmailAuthUrl, handleOAuthCallback, startGmailPoller, pollNow } from './gmail.js';
+import { gmailAuthUrl, handleOAuthCallback, startGmailPoller, pollNow, clearGmailTokenCache } from './gmail.js';
 import { titanStatus, titanAccounts, startSingleImap } from './titan.js';
 import { escapeHtml as esc } from './lib/mailparse.js';
 import { mainLink } from './ui.js';
@@ -20,7 +20,7 @@ if (savedGc) setGoogleCreds(savedGc.id, savedGc.secret);
 export const setBotUsername = (u) => { botUsername = u; };
 
 const json = (res, code, obj) => {
-  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(obj));
 };
 const readBody = (req, limit = 1000000) =>
@@ -79,30 +79,53 @@ async function api(req, res, url) {
   const [, res1, id] = parts;
   const m = req.method;
 
-  if (res1 === 'bootstrap' && m === 'GET') {
-    const restoreRaw = url.searchParams.get('restore') || '';
-    if (restoreRaw) {
-      for (const addr of restoreRaw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean).slice(0, 30)) {
-        if (config.domains.some((d) => addr.endsWith(`@${d}`))) store.ensureAddress(uid, addr);
-      }
-    }
-    const restoreTotpRaw = url.searchParams.get('restoreTotp') || '';
-    if (restoreTotpRaw) {
-      try {
-        const arr = JSON.parse(restoreTotpRaw);
-        if (Array.isArray(arr)) {
-          for (const it of arr) {
-            if (it && it.secret) store.addTotp(uid, it.name || '2FA Account', it.secret, it.id || '');
-          }
-        }
-      } catch {}
-    }
-    return json(res, 200, {
-      user: { id: uid, name: user.name, username: user.username, admin },
-      domains: config.domains, prefDomain: 0, gmailEnabled: true,
-      brand: config.brand, unread: store.countUnread(uid), bot: botUsername, tz: config.tz, settings: store.getSettings(uid),
-      totp: store.listTotp(uid),
-    });
+  if (res1 === 'bootstrap' && (m === 'GET' || m === 'POST')) {
+const body = m === 'POST' ? await readBody(req).catch(() => ({})) : {};
+if (admin && body.restoreGoogle) {
+try {
+const gc = typeof body.restoreGoogle === 'string' ? JSON.parse(body.restoreGoogle) : body.restoreGoogle;
+if (gc?.id && gc?.secret && !store.getMeta('googleCreds')) {
+setGoogleCreds(gc.id, gc.secret);
+store.setMeta('googleCreds', { id: config.google.clientId, secret: config.google.clientSecret });
+}
+} catch {}
+}
+const restore = body.restoreAddrs || url.searchParams.get('restore') || '';
+if (restore) {
+for (const addr of String(restore).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean).slice(0, 40)) {
+if (config.domains.some((d) => addr.endsWith(`@${d}`))) store.ensureAddress(uid, addr);
+}
+}
+const restoreTotp = body.restoreTotp || url.searchParams.get('restoreTotp') || '';
+if (restoreTotp) {
+try {
+const arr = typeof restoreTotp === 'string' ? JSON.parse(restoreTotp) : restoreTotp;
+if (Array.isArray(arr)) for (const it of arr) if (it && it.secret) store.addTotp(uid, it.name || '2FA Account', it.secret, it.id || '');
+} catch {}
+}
+if (body.restoreGmails) {
+try {
+const arr = typeof body.restoreGmails === 'string' ? JSON.parse(body.restoreGmails) : body.restoreGmails;
+if (Array.isArray(arr)) {
+let addedOAuth = false;
+for (const g of arr) {
+if (!g || !g.email || store.allGmail().some((x) => x.email === g.email)) continue;
+store.upsertGmail({ email: g.email, owner: uid, refreshToken: g.refreshToken || '', imapPass: g.imapPass || '', clientId: g.clientId || '', clientSecret: g.clientSecret || '', status: g.status || 'active', connectedAt: g.connectedAt || Date.now() });
+if (g.imapPass) startSingleImap({ user: g.email, pass: g.imapPass, host: 'imap.gmail.com', owner: uid });
+if (g.refreshToken) addedOAuth = true;
+}
+if (addedOAuth) startGmailPoller();
+}
+} catch {}
+}
+return json(res, 200, {
+user: { id: uid, name: user.name, username: user.username, admin },
+domains: config.domains, prefDomain: 0, gmailEnabled: true,
+brand: config.brand, unread: store.countUnread(uid), bot: botUsername, tz: config.tz, settings: store.getSettings(uid),
+totp: store.listTotp(uid),
+gmailVault: store.listGmail(uid),
+googleCreds: admin ? { id: config.google.clientId || '', secret: config.google.clientSecret || '' } : null,
+});
   }
 
   if (res1 === 'totp') {
@@ -209,33 +232,53 @@ async function api(req, res, url) {
   }
 
   if (res1 === 'gmail') {
-    if (id === 'sync' && m === 'POST') { await pollNow(); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
-    if (m === 'GET') return json(res, 200, { enabled: true, oauthReady: gmailEnabled(), accounts: store.listGmail(uid).map((g) => ({ email: g.email, status: g.status, connectedAt: g.connectedAt })) });
-    if (m === 'POST') {
-      const b = await readBody(req).catch(() => ({}));
-      const email = String(b.email || '').trim().toLowerCase();
-      const pass = String(b.password || '').trim();
-      const mode = b.mode || 'oauth';
-      if (mode === 'app_pass' || (email && pass)) {
-        if (!email || !email.includes('@')) return json(res, 400, { error: 'সঠিক Gmail ঠিকানা লিখুন' });
-        if (!pass) return json(res, 400, { error: 'পাসওয়ার্ড বা App Password লিখুন' });
-        const ok = await connectGmailImap(uid, email, pass);
-        if (ok) return json(res, 200, { connected: true, email });
-        if (mode === 'app_pass') return json(res, 400, { error: 'App Password সঠিক নয় বা IMAP चालू নেই। ১৬-অক্ষরের Google App Password দিন।' });
-        return json(res, 200, {
-          step2: true,
-          email,
-          url: gmailEnabled() ? gmailAuthUrl(uid, email, true) : 'https://myaccount.google.com/apppasswords',
-          appPassUrl: 'https://myaccount.google.com/apppasswords',
-        });
-      }
-      if (gmailEnabled()) return json(res, 200, { url: gmailAuthUrl(uid, email, Boolean(b.forceLogin)) });
-      return json(res, 200, { step2: true, email, url: 'https://myaccount.google.com/apppasswords', appPassUrl: 'https://myaccount.google.com/apppasswords' });
-    }
-    if (m === 'DELETE') { store.removeGmail(uid, url.searchParams.get('email') || ''); return json(res, 200, { ok: true }); }
+if (id === 'sync' && m === 'POST') { await pollNow(); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
+if (m === 'GET') {
+return json(res, 200, {
+enabled: true, oauthReady: gmailEnabled(),
+accounts: store.listGmail(uid).map((g) => ({ email: g.email, status: g.status, lastError: g.lastError || '', connectedAt: g.connectedAt, refreshToken: g.refreshToken || '', imapPass: g.imapPass || '', clientId: g.clientId || '', clientSecret: g.clientSecret || '' })),
+});
+}
+if (m === 'POST') {
+const b = await readBody(req).catch(() => ({}));
+const email = String(b.email || '').trim().toLowerCase();
+const rawPass = String(b.password || '').trim();
+const mode = b.mode || 'oauth';
+const tryImap = async () => {
+const { ImapFlow } = await import('imapflow');
+const clean = rawPass.replace(/[\s\-]+/g, '');
+for (const pass of clean !== rawPass ? [clean, rawPass] : [rawPass]) {
+const client = new ImapFlow({ host: 'imap.gmail.com', port: 993, secure: true, auth: { user: email, pass }, logger: false });
+try {
+await client.connect(); await client.logout().catch(() => {});
+store.upsertGmail({ email, owner: uid, imapPass: pass, status: 'active', lastError: '', connectedAt: Date.now() });
+startSingleImap({ user: email, pass, host: 'imap.gmail.com', owner: uid });
+await safeSend(uid, `✅ <b>Gmail যুক্ত হয়েছে</b>\n<code>${esc(email)}</code>\nএখন থেকে এই ইনবক্সের OTP ও লিংক এখানে আসবে।`, undefined).catch(() => {});
+return true;
+} catch {}
+}
+return false;
+};
+if (mode === 'app_pass') {
+if (!email || !email.includes('@')) return json(res, 400, { error: 'সঠিক Gmail ঠিকানা লিখুন' });
+if (!rawPass) return json(res, 400, { error: '১৬-অক্ষরের App Password লিখুন' });
+if (await tryImap()) return json(res, 200, { connected: true, email, vault: store.listGmail(uid) });
+return json(res, 400, { error: 'পাসওয়ার্ড বা App Password সঠিক নয়! সঠিক ১৬-অক্ষরের Google App Password দিন।' });
+}
+if (mode === 'browser_login' || (email && rawPass)) {
+if (!email || !email.includes('@')) return json(res, 400, { error: 'সঠিক Gmail ঠিকানা লিখুন' });
+if (!rawPass || rawPass.length < 4) return json(res, 400, { error: 'সঠিক পাসওয়ার্ড লিখুন' });
+if (await tryImap()) return json(res, 200, { connected: true, email, vault: store.listGmail(uid) });
+if (gmailEnabled()) return json(res, 200, { browserLogin: true, email, url: gmailAuthUrl(uid, email, true) });
+return json(res, 400, { error: 'সরাসরি পাসওয়ার্ড লগইনের জন্য Google OAuth অথবা ১৬-অক্ষরের App Password প্রয়োজন।' });
+}
+if (gmailEnabled()) return json(res, 200, { url: gmailAuthUrl(uid, email, Boolean(b.forceLogin)) });
+return json(res, 400, { error: 'Admin Tools থেকে Google Client ID ও Secret সেট করুন।' });
+}
+if (m === 'DELETE') { store.removeGmail(uid, url.searchParams.get('email') || ''); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
   }
 
-  if (res1 === 'admin') {
+    if (res1 === 'admin') {
     if (!admin) return json(res, 403, { error: 'admin only' });
     if (id === 'stats' && m === 'GET') {
       const mem = process.memoryUsage();
@@ -247,18 +290,22 @@ async function api(req, res, url) {
         activity: store.activity(null, 24),
         system: { uptime: Math.floor(process.uptime()), rss: Math.round(mem.rss / 1048576), node: process.version },
         openAccess: config.openAccess, domains: config.domains, gmailEnabled: gmailEnabled(),
-        googleClientId: config.google.clientId || '', callbackUrl: `${config.publicUrl}/auth/google/callback`,
+        googleClientId: config.google.clientId || '', googleClientSecret: config.google.clientSecret || '', callbackUrl: `${config.publicUrl}/auth/google/callback`,
         totp: store.listTotp(uid),
       });
     }
     if (m === 'POST') {
       const b = await readBody(req);
       if (id === 'google') {
-        setGoogleCreds(b.clientId, b.clientSecret);
-        store.setMeta('googleCreds', { id: config.google.clientId, secret: config.google.clientSecret });
-        startGmailPoller();
-        return json(res, 200, { ok: true, gmailEnabled: gmailEnabled() });
-      }
+          const cid = String(b.clientId || '').trim() || config.google.clientId;
+          const csec = String(b.clientSecret || '').trim() || config.google.clientSecret;
+          setGoogleCreds(cid, csec);
+          store.setMeta('googleCreds', { id: config.google.clientId, secret: config.google.clientSecret });
+          clearGmailTokenCache();
+          startGmailPoller();
+          pollNow().catch(() => {});
+          return json(res, 200, { ok: true, gmailEnabled: gmailEnabled(), googleClientId: config.google.clientId, googleClientSecret: config.google.clientSecret });
+        }
       if (id === 'user') {
         if (b.action === 'delete' && String(b.id) !== config.adminId) { store.deleteUser(b.id); return json(res, 200, { ok: true }); }
         if (b.action === 'clear_mails') { store.clearMessages(b.id); return json(res, 200, { ok: true }); }
@@ -307,7 +354,7 @@ export function startServer() {
       if (url.pathname.startsWith('/api/')) return await api(req, res, url);
       if (url.pathname === '/auth/google/callback') {
         const r = await handleOAuthCallback(url.searchParams.get('code'), url.searchParams.get('state'), url.searchParams.get('error'));
-        res.writeHead(r.ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.writeHead(r.ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Clear-Site-Data': '"cookies", "storage"' });
         return res.end(page(r.ok, r.ok ? 'Gmail যুক্ত হয়েছে' : 'সমস্যা হয়েছে', r.ok ? r.email : r.message));
       }
       if (url.pathname === '/app' || url.pathname.startsWith('/app/')) {
