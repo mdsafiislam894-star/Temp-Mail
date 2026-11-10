@@ -576,7 +576,7 @@ jobs:
           
           
           bt = open('src/bot~js', 'r', encoding='utf-8')~read()
-          bt = re~sub(r'async function delUserMsg[\s\S]*\s*;(?=\nasync function edit)', '', bt)
+          bt = re~sub(r'async function delUserMsg[\s\S]*?(?=async function edit)', '', bt)
           if '~/auto2faEngine~js' not in bt:
               bt = bt~replace(
                   "import { safeSend, initNotify } from '~/notify~js';",
