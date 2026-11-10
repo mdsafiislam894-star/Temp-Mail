@@ -36,5 +36,5 @@ export function setGoogleCreds(id, secret) {
 if (id !== undefined && String(id).trim()) config.google.clientId = String(id).trim();
 if (secret !== undefined && String(secret).trim()) config.google.clientSecret = String(secret).trim();
 }
-export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=13` : '');
+export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=14` : '');
 export const gmailEnabled = () => Boolean(config.google.clientId && config.google.clientSecret && config.publicUrl.startsWith('https://'));

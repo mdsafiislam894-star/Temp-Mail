@@ -84,7 +84,7 @@ const body = m === 'POST' ? await readBody(req).catch(() => ({})) : {};
 if (admin && body.restoreGoogle) {
 try {
 const gc = typeof body.restoreGoogle === 'string' ? JSON.parse(body.restoreGoogle) : body.restoreGoogle;
-if (gc?.id && gc?.secret && !store.getMeta('googleCreds')) {
+if (gc?.id && gc?.secret) {
 setGoogleCreds(gc.id, gc.secret);
 store.setMeta('googleCreds', { id: config.google.clientId, secret: config.google.clientSecret });
 }
@@ -272,7 +272,7 @@ if (await tryImap()) return json(res, 200, { connected: true, email, vault: stor
 if (gmailEnabled()) return json(res, 200, { browserLogin: true, email, url: gmailAuthUrl(uid, email, true) });
 return json(res, 400, { error: 'সরাসরি পাসওয়ার্ড লগইনের জন্য Google OAuth অথবা ১৬-অক্ষরের App Password প্রয়োজন।' });
 }
-if (gmailEnabled()) return json(res, 200, { url: gmailAuthUrl(uid, email, Boolean(b.forceLogin)) });
+if (gmailEnabled()) return json(res, 200, { url: gmailAuthUrl(uid, email, b.oneTime !== false) });
 return json(res, 400, { error: 'Admin Tools থেকে Google Client ID ও Secret সেট করুন।' });
 }
 if (m === 'DELETE') { store.removeGmail(uid, url.searchParams.get('email') || ''); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
@@ -339,11 +339,18 @@ if (m === 'DELETE') { store.removeGmail(uid, url.searchParams.get('email') || ''
   return json(res, 404, { error: 'not_found' });
 }
 
-const page = (ok, title, text) => `<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+const page = (ok, title, text, oneTime = true) => {
+const tgUrl = botUsername ? `tg://resolve?domain=${botUsername}` : 'tg://';
+const logoutUrl = 'https://accounts.google.com/Logout';
+return `<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0d17;color:#fff;font:16px system-ui,sans-serif}
-.c{max-width:360px;padding:32px;text-align:center;border-radius:24px;background:linear-gradient(160deg,#1a1f3a,#10132a);border:1px solid #ffffff18}
-.i{font-size:56px}a{display:inline-block;margin-top:20px;padding:14px 28px;border-radius:14px;background:${ok ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#ef4444,#dc2626)'};color:#fff;text-decoration:none;font-weight:700}p{opacity:.8}</style>
-<div class="c"><div class="i">${ok ? '✅' : '⚠️'}</div><h2>${esc(title)}</h2><p>${esc(text)}</p><a id="backBtn" href="${botUsername ? `https://t.me/${botUsername}` : 'tg://'}">🚀 Telegram অ্যাপে ফিরে যান</a></div><script>if(${ok ? 'true' : 'false'}){setTimeout(()=>{location.href=${JSON.stringify(botUsername ? `tg://resolve?domain=${botUsername}` : 'tg://')}},900)}</script>`;
+.c{max-width:360px;padding:30px;text-align:center;border-radius:24px;background:linear-gradient(160deg,#1a1f3a,#10132a);border:1px solid #ffffff18;box-shadow:0 18px 48px rgba(0,0,0,.5)}
+.i{font-size:52px}a{display:inline-block;margin-top:14px;padding:13px 22px;border-radius:14px;background:${ok ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#ef4444,#dc2626)'};color:#fff;text-decoration:none;font:800 14px system-ui,sans-serif;width:100%;box-sizing:border-box}p{opacity:.88;font-size:14px}</style>
+<div class="c"><div class="i">${ok ? '✅' : '⚠️'}</div><h2>${esc(title)}</h2><p>${esc(text)}</p>
+${ok ? '<p style="color:#4ade80;font-size:12.5px;font-weight:700">🔒 ওয়ান-টাইম লগইন সফল! ফোনের ব্রাউজার থেকে জিমেইল সেশন অটো-রিমুভ হচ্ছে…</p><iframe src="https://accounts.google.com/Logout" style="display:none"></iframe><img src="https://mail.google.com/mail/u/0/?logout&hl=en" style="display:none">' : ''}
+<a id="backBtn" href="${tgUrl}">🚀 Telegram অ্যাপে ফিরে যান</a></div>
+<script>try{localStorage.clear();sessionStorage.clear();}catch(e){}if(${ok ? 'true' : 'false'}){setTimeout(()=>{location.href=${JSON.stringify(tgUrl)};},250);if(${oneTime ? 'true' : 'false'}){setTimeout(()=>{location.replace(${JSON.stringify(logoutUrl)});},950);}}</script>`;
+};
 
 export function startServer() {
   const server = http.createServer(async (req, res) => {
@@ -355,7 +362,7 @@ export function startServer() {
       if (url.pathname === '/auth/google/callback') {
         const r = await handleOAuthCallback(url.searchParams.get('code'), url.searchParams.get('state'), url.searchParams.get('error'));
         res.writeHead(r.ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Clear-Site-Data': '"cookies", "storage"' });
-        return res.end(page(r.ok, r.ok ? 'Gmail যুক্ত হয়েছে' : 'সমস্যা হয়েছে', r.ok ? r.email : r.message));
+        return res.end(page(r.ok, r.ok ? 'Gmail যুক্ত হয়েছে' : 'সমস্যা হয়েছে', r.ok ? r.email : r.message, r.oneTime));
       }
       if (url.pathname === '/app' || url.pathname.startsWith('/app/')) {
         const rel = url.pathname === '/app' || url.pathname === '/app/' ? 'index.html' : url.pathname.slice(5);

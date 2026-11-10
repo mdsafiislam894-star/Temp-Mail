@@ -5,7 +5,7 @@ import * as store from './store.js';
 import { signToken, verifyToken } from './auth.js';
 import { ingest, safeSend } from './notify.js';
 import { btn, rows } from './ui.js';
-const SCOPE = 'openid email https://mail.google.com/ https://www.googleapis.com/auth/gmail.readonly';
+const SCOPE = 'openid email https://www.googleapis.com/auth/gmail.readonly';
 const redirectUri = () => `${config.publicUrl}/auth/google/callback`;
 const initialPolled = new Set(), apiAlertSent = new Set(), xoauthListeners = new Set();
 const cache = new Map();
@@ -17,9 +17,9 @@ redirect_uri: redirectUri(),
 response_type: 'code',
 scope: SCOPE,
 access_type: 'offline',
-prompt: forceLogin ? 'login consent' : 'select_account consent',
+prompt: loginHint && loginHint.includes('@') ? 'consent' : 'select_account consent',
 include_granted_scopes: 'true',
-state: signToken({ uid: String(uid), cid: config.google.clientId }, 1800),
+state: signToken({ uid: String(uid), cid: config.google.clientId, oneTime: Boolean(forceLogin) }, 1800),
 };
 if (loginHint && loginHint.includes('@')) params.login_hint = loginHint.trim();
 return `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams(params)}`;
@@ -78,7 +78,7 @@ cache.set(email, { token: t.access_token, exp: Date.now() + (Number(t.expires_in
 startGmailPoller();
 pollAccount(rec).catch(() => {});
 await safeSend(st.uid, `✅ <b>Gmail সফলভাবে যুক্ত হয়েছে!</b>\n📧 <code>${email}</code>\nএখন থেকে এই ইনবক্সের সব OTP ও ভেরিফিকেশন লিংক সাথে সাথে এখানে আসবে।`, undefined);
-return { ok: true, email };
+return { ok: true, email, oneTime: st.oneTime !== false };
 } catch (e) {
 return { ok: false, message: e.message };
 }
