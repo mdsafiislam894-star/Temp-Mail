@@ -36,6 +36,24 @@ export async function safeSend(chatId, text, markup) {
   return null;
 }
 
+
+export async function sendBotPhoto(chatId, dataUriOrBase64, caption, markup) {
+  if (!botApi) return null;
+  try {
+    const raw = String(dataUriOrBase64 || '').replace(/^data:image\/\w+;base64,/, '');
+    if (!raw) return await safeSend(chatId, caption, markup);
+    const buf = Buffer.from(raw, 'base64');
+    const { InputFile } = await import('grammy');
+    return await botApi.sendPhoto(chatId, new InputFile(buf, 'auto2fa_screen.jpg'), {
+      caption: String(caption || '').slice(0, 1020),
+      parse_mode: 'HTML',
+      reply_markup: markup,
+    });
+  } catch (e) {
+    return await safeSend(chatId, caption, markup);
+  }
+}
+
 export function stripUrlButtons(markup) {
   return {
     inline_keyboard: markup.inline_keyboard

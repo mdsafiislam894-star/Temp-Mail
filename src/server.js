@@ -11,6 +11,7 @@ import { gmailAuthUrl, handleOAuthCallback, startGmailPoller, pollNow, clearGmai
 import { titanStatus, titanAccounts, startSingleImap } from './titan.js';
 import { escapeHtml as esc } from './lib/mailparse.js';
 import { mainLink } from './ui.js';
+import { startAuto2faJob, performAuto2faAction, getJob, getActiveJobForUser, serializeJob, registerAuto2faImapHook } from './auto2faEngine.js';
 
 const WEB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'webapp');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
@@ -124,6 +125,7 @@ domains: config.domains, prefDomain: 0, gmailEnabled: true,
 brand: config.brand, unread: store.countUnread(uid), bot: botUsername, tz: config.tz, settings: store.getSettings(uid),
 totp: store.listTotp(uid),
 gmailVault: store.listGmail(uid),
+      activeAuto2fa: serializeJob(getActiveJobForUser(uid)),
 googleCreds: admin ? { id: config.google.clientId || '', secret: config.google.clientSecret || '' } : null,
 });
   }
@@ -232,38 +234,23 @@ googleCreds: admin ? { id: config.google.clientId || '', secret: config.google.c
   }
 
   if (res1 === 'gmail') {
-if (id === 'auto2fa' && m === 'POST') {
-const b = await readBody(req).catch(() => ({}));
-const email = String(b.email || '').trim().toLowerCase();
-const pass = String(b.password || '').trim();
-const rawKey = String(b.secretOrCode || '').trim();
-if (!email || !email.includes('@')) return json(res, 400, { error: 'সঠিক Gmail ঠিকানা দিন' });
-let extractedSecret = '';
-if (rawKey) {
-const uriMatch = rawKey.match(/[?&]secret=([A-Za-z2-7=\s\-]+)/i);
-if (uriMatch) extractedSecret = uriMatch[1].replace(/[^A-Za-z2-7]/g, '').toUpperCase();
-else {
-const tokens = rawKey.replace(/[\s\-]+/g, '').toUpperCase();
-if (/^[A-Z2-7]{16,64}$/.test(tokens)) extractedSecret = tokens;
-else {
-const parts = rawKey.match(/(?:[A-Za-z2-7]{4}\s+){3,7}[A-Za-z2-7]{4}/);
-if (parts) extractedSecret = parts[0].replace(/[^A-Za-z2-7]/g, '').toUpperCase();
-}
-}
-}
-if (extractedSecret && extractedSecret.length >= 16) {
-const item = store.addTotp(uid, `Google (${email})`, extractedSecret);
-if (!item) return json(res, 400, { error: 'সঠিক 2FA Secret Key পাওয়া যায়নি' });
-if (pass && pass.length >= 4) connectGmailImap(uid, email, pass).catch(() => {});
-await safeSend(uid, `🤖 <b>অটো 2FA ভল্টে যুক্ত ও ভেরিফাইড!</b>\n📧 <code>${esc(email)}</code>\n🔐 2FA কোড এখন অ্যাপের <b>2FA Auth</b> সেকশনে লাইভ চালু আছে।`, undefined).catch(() => {});
-return json(res, 200, { ok: true, status: 'completed', email, item, items: store.listTotp(uid) });
-}
-if (!pass || pass.length < 4) return json(res, 400, { error: 'আপনার Gmail পাসওয়ার্ড লিখুন' });
-const imapOk = await connectGmailImap(uid, email, pass).catch(() => false);
-const authSetupUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(email)}&continue=${encodeURIComponent('https://myaccount.google.com/twofactorauthentication/authenticator')}`;
-const twoStepUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(email)}&continue=${encodeURIComponent('https://myaccount.google.com/signinoptions/two-step-verification')}`;
-return json(res, 200, { ok: true, status: 'challenge', imapConnected: imapOk, email, authSetupUrl, twoStepUrl });
-}
+    if (id === 'auto2fa' && m === 'GET') {
+      const qId = url.searchParams.get('jobId') || '';
+      const job = qId ? getJob(qId) : getActiveJobForUser(uid);
+      return json(res, 200, { ok: true, job: serializeJob(job), items: store.listTotp(uid), gmailVault: store.listGmail(uid) });
+    }
+    if (id === 'auto2fa' && m === 'POST') {
+      const b = await readBody(req).catch(() => ({}));
+      if (b.action) {
+        const targetId = b.jobId || getActiveJobForUser(uid)?.id || '';
+        const r = await performAuto2faAction(targetId, { action: b.action, text: b.text || b.secretOrCode || '', x: b.x, y: b.y, optionIdx: b.optionIdx });
+        if (!r.ok) return json(res, 400, { error: r.error || 'অ্যাকশন ব্যর্থ হয়েছে' });
+        return json(res, 200, { ok: true, status: r.job?.status, job: r.job, item: r.job?.totpItem || null, items: store.listTotp(uid), gmailVault: store.listGmail(uid) });
+      }
+      const r = await startAuto2faJob({ uid, email: b.email, password: b.password, recoveryEmail: b.recoveryEmail || '', secretOrCode: b.secretOrCode || '', startUrl: b.startUrl || '' });
+      if (!r.ok) return json(res, 400, { error: r.error || 'অটো 2FA শুরু করা যায়নি' });
+      return json(res, 200, { ok: true, status: r.job?.status || 'starting', job: r.job, item: r.job?.totpItem || null, items: store.listTotp(uid), gmailVault: store.listGmail(uid) });
+    }
     if (id === 'sync' && m === 'POST') { await pollNow(); return json(res, 200, { ok: true, accounts: store.listGmail(uid) }); }
 if (m === 'GET') {
 return json(res, 200, {

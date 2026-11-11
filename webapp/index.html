@@ -696,6 +696,18 @@ nav#tabs button{padding:7px 4px 6px!important;font-size:10px!important}
 .gm-item-acts[hidden]{display:none!important}
 .gm-act{padding:7px 8px!important;border-radius:10px!important;font-size:11.5px!important;font-weight:800!important;text-align:center!important;background:var(--card)!important;color:var(--tx)!important;border:1px solid var(--line)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 .gm-act.del{background:rgba(239,68,68,.14)!important;color:#ef4444!important;border-color:rgba(239,68,68,.3)!important}
+
+.a2fa-steps{display:flex;flex-direction:column;gap:5px;margin:8px 0;padding:9px 11px;border-radius:13px;background:var(--card2);border:1px solid var(--line)}
+.a2fa-st{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--mute)}
+.a2fa-st.done{color:var(--okt)}
+.a2fa-st.cur{color:var(--tx);font-weight:800}
+.a2fa-st i{width:18px;height:18px;border-radius:999px;display:grid;place-items:center;font-style:normal;font-size:10px;background:var(--card);border:1px solid var(--line);flex:0 0 auto}
+.a2fa-st.done i{background:#22c55e;color:#fff;border-color:transparent}
+.a2fa-st.cur i{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 0 10px color-mix(in srgb,var(--g1) 60%,transparent)}
+.a2fa-screen-wrap{margin-top:8px;border-radius:14px;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--g1) 45%,var(--line));background:#050811;position:relative}
+.a2fa-screen-head{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(15,23,42,.9);color:#e2e8f0;font-size:10.5px;font-weight:800}
+.a2fa-screen-img{display:block;width:100%;max-height:380px;object-fit:contain;cursor:crosshair;background:#fff}
+
 </style>
 </head>
 <body>
@@ -927,50 +939,6 @@ let last = '', i = 0, html = '';
   updateOtpVault();
 }
 let lastPendingOtp = null;
-window.addEventListener('focus', async () => {
-if (gmState && gmState.a2faStep === 'challenge') {
-try {
-const clip = await navigator.clipboard.readText();
-if (clip) {
-const clean = clip.replace(/[\s\-]+/g, '').toUpperCase();
-const isUri = /otpauth:\/\/totp/i.test(clip);
-const isBase32 = /^[A-Z2-7]{16,64}$/.test(clean);
-if (isUri || isBase32) {
-gmState.a2faKey = clip.trim();
-if ($('#a2faKeyInput')) $('#a2faKeyInput').value = gmState.a2faKey;
-completeAuto2fa(gmState.a2faKey);
-}
-}
-} catch (e) {}
-}
-});
-async function completeAuto2fa(rawKey) {
-const key = String(rawKey || ($('#a2faKeyInput') && $('#a2faKeyInput').value) || gmState.a2faKey || '').trim();
-if (!key) return toast('⚠️ রিকভারি কোড বা Setup Key দিন');
-const cleanDigits = key.replace(/[\s\-]+/g, '');
-if (/^\d{6,10}$/.test(cleanDigits)) {
-try { await navigator.clipboard.writeText(cleanDigits); } catch (e) { trySyncCopy(cleanDigits); }
-toast('✅ ভেরিফিকেশন/রিকভারি কোড কপি হয়েছে — গুগল পেজে ভেরিফাই হয়ে গেলে Setup Key কপি করুন');
-const u = gmState.a2faUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
-tg && tg.openLink ? tg.openLink(u) : window.open(u, '_blank');
-return;
-}
-toast('⏳ 2FA ভল্টে সেভ ও ৬-ডিজিট কোড তৈরি হচ্ছে…');
-try {
-const r = await api('gmail/auto2fa', { method: 'POST', body: { email: gmState.a2faEmail, password: gmState.a2faPass, secretOrCode: key } });
-if (r && r.item) {
-S.totp = mergeTotpLists(r.items || [r.item], S.totp);
-syncTotpLocal();
-const code = generateTotp(r.item.secret);
-gmState.a2faCode = code;
-gmState.a2faStep = 'done';
-try { await navigator.clipboard.writeText(code); } catch (e) { trySyncCopy(code); }
-note('success');
-toast('✅ 2FA সেভ ও ৬-ডিজিট কোড কপি হয়েছে: ' + code);
-renderGmWizard();
-}
-} catch (e) { toast('⚠️ ' + e.message); }
-}
 function trySyncCopy(text) {
 let ok = false;
 try {
@@ -1153,101 +1121,308 @@ async function loadSpark() {
 }
 
 /* ---------- gmail ---------- */
-let gmWatch, gmState = { mode: 'phone', email: '', pass: '', appPass: '', oneTime: true, showPw: false, a2faEmail: '', a2faPass: '', a2faStep: 'init', a2faKey: '', a2faUrl: '', a2faTwoStepUrl: '', a2faCode: '', openGmItem: '' };
+let gmWatch, a2faTimer = null, gmState = { email: '', pass: '', appPass: '', oneTime: true, showPw: false, a2faEmail: '', a2faPass: '', a2faExtra: '', a2faJob: null, openGmItem: '' };
 S.acc = S.acc || {};
 function accCard(id, icon, title, sub, badge, bodyHtml, defOpen = false) {
   if (S.acc[id] === undefined) S.acc[id] = Boolean(defOpen);
   const isOpen = Boolean(S.acc[id]);
-  return '<div class="acc-card ' + (isOpen ? 'open' : '') + '" id="ac-' + id + '"><button type="button" class="acc-head" data-act="acc" data-id="' + id + '"><div class="acc-hl"><div class="acc-ic">' + icon + '</div><div class="acc-tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div><div class="acc-hr">' + (badge ? '<span class="acc-bdg">' + badge + '</span>' : '') + '<span class="acc-chev">▾</span></div></button><div class="acc-body" id="ab-' + id + '"' + (isOpen ? '' : ' hidden') + '>' + bodyHtml + '</div></div>';
+  return '<div class="acc-card ' + (isOpen ? 'open' : '') + '" id="ac-' + id + '">' +
+    '<button type="button" class="acc-head" data-act="acc" data-id="' + id + '">' +
+      '<div class="acc-hl"><div class="acc-ic">' + icon + '</div><div class="acc-tx"><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>' +
+      '<div class="acc-hr">' + (badge ? '<span class="acc-bdg">' + badge + '</span>' : '') + '<span class="acc-chev">▾</span></div>' +
+    '</button>' +
+    '<div class="acc-body" id="ab-' + id + '"' + (isOpen ? '' : ' hidden') + '>' + bodyHtml + '</div>' +
+  '</div>';
 }
 function syncGmailLocal(list) {
-try {
-if (Array.isArray(list)) {
-const prev = loadGmailLocal();
-const map = new Map();
-for (const g of [...list, ...prev]) {
-if (!g || !g.email) continue;
-const ex = map.get(g.email) || {};
-map.set(g.email, {
-email: g.email,
-status: g.status || ex.status || 'active',
-refreshToken: g.refreshToken || ex.refreshToken || '',
-imapPass: g.imapPass || ex.imapPass || '',
-clientId: g.clientId || ex.clientId || '',
-clientSecret: g.clientSecret || ex.clientSecret || '',
-connectedAt: g.connectedAt || ex.connectedAt || Date.now(),
-});
-}
-localStorage.setItem('savedGmails', JSON.stringify([...map.values()]));
-}
-} catch (e) {}
+  try {
+    if (Array.isArray(list)) {
+      const prev = loadGmailLocal();
+      const map = new Map();
+      for (const g of [...list, ...prev]) {
+        if (!g || !g.email) continue;
+        const ex = map.get(g.email) || {};
+        map.set(g.email, {
+          email: g.email,
+          status: g.status || ex.status || 'active',
+          twoFaEnabled: Boolean(g.twoFaEnabled || ex.twoFaEnabled),
+          totpId: g.totpId || ex.totpId || '',
+          refreshToken: g.refreshToken || ex.refreshToken || '',
+          imapPass: g.imapPass || ex.imapPass || '',
+          clientId: g.clientId || ex.clientId || '',
+          clientSecret: g.clientSecret || ex.clientSecret || '',
+          connectedAt: g.connectedAt || ex.connectedAt || Date.now(),
+        });
+      }
+      localStorage.setItem('savedGmails', JSON.stringify([...map.values()]));
+    }
+  } catch (e) {}
 }
 function loadGmailLocal() {
-try {
-const r = localStorage.getItem('savedGmails');
-return r ? JSON.parse(r) : [];
-} catch (e) { return []; }
+  try {
+    const r = localStorage.getItem('savedGmails');
+    return r ? JSON.parse(r) : [];
+  } catch (e) { return []; }
+}
+function startAuto2faPoll(jobId) {
+  clearInterval(a2faTimer);
+  a2faTimer = setInterval(async () => {
+    try {
+      const r = await api('gmail/auto2fa' + (jobId ? '?jobId=' + encodeURIComponent(jobId) : ''));
+      if (r && r.job) {
+        const prevStatus = gmState.a2faJob && gmState.a2faJob.status;
+        gmState.a2faJob = r.job;
+        if (Array.isArray(r.items)) { S.totp = mergeTotpLists(r.items, S.totp); syncTotpLocal(); }
+        if (Array.isArray(r.gmailVault)) { S.gm = r.gmailVault; syncGmailLocal(S.gm); }
+        if (r.job.status === 'completed' || r.job.status === 'failed') {
+          clearInterval(a2faTimer); a2faTimer = null;
+          if (r.job.status === 'completed' && prevStatus !== 'completed') {
+            const code = r.job.totpCode || (r.job.secret ? totpLive(r.job.secret).code : '');
+            if (code) { try { await navigator.clipboard.writeText(code); } catch (e) { trySyncCopy(code); } }
+            note('success');
+            toast('✅ ফুল অটো 2FA অন ও ভল্টে সেভ সম্পন্ন! কোড: ' + code);
+          }
+        }
+        const activeInput = document.activeElement && document.activeElement.id === 'a2faLiveInput';
+        if (!activeInput) renderGmWizard();
+        else {
+          const img = $('#a2faScreen');
+          if (img && r.job.screenshot) img.src = r.job.screenshot;
+          const stEl = $('#a2faStatusText');
+          if (stEl) stEl.textContent = r.job.stepTitle || r.job.status;
+        }
+      }
+    } catch (e) {}
+  }, 2000);
+}
+function renderAuto2faBody(pwType, pwEye) {
+  const j = gmState.a2faJob;
+  if (!j) {
+    return '<div style="margin-top:8px">' +
+      '<div style="padding:9px 11px;border-radius:12px;background:color-mix(in srgb,var(--g1) 12%,var(--card2));border:1px solid color-mix(in srgb,var(--g1) 30%,transparent);margin-bottom:8px;font-size:11.5px;line-height:1.35;color:var(--tx2)">' +
+        '🤖 <b>ফুল অটোমেটিক হেডলেস বট:</b> ইমেইল ও পাসওয়ার্ড দিলে বট নিজে থেকেই গুগলে লগইন করে <b>2FA Secret Key</b> বের করবে, <b>TOTP কোড</b> জেনারেট করে নিজে নিজেই ভেরিফাই করবে এবং <b>2-Step Verification</b> অন করে ভল্টে সেভ করবে! প্রম্পট বা ক্যাপচা এলে বটে ও এখানে লাইভ দেখাবে।' +
+      '</div>' +
+      '<input class="field" id="a2faEmail" type="email" placeholder="Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.a2faEmail || gmState.email) + '" autocomplete="email">' +
+      '<div class="pw-wrap"><input class="field" id="a2faPass" type="' + pwType + '" placeholder="Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.a2faPass || gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div>' +
+      '<input class="field" id="a2faExtra" placeholder="ঐচ্ছিক: রিকভারি ইমেইল অথবা 2FA Secret Key (না থাকলে খালি রাখুন)" value="' + esc(gmState.a2faExtra) + '" autocomplete="off">' +
+      '<button type="button" class="btn ok block shine" data-act="a2faStart">🤖 ফুল অটোমেটিক 2FA অন ও ভেরিফাই শুরু করুন</button>' +
+    '</div>';
+  }
+  if (j.status === 'completed') {
+    const lv = j.secret ? totpLive(j.secret) : { code: j.totpCode || '------', next: '------', rem: 30 };
+    return '<div style="margin-top:8px;padding:12px;border-radius:15px;background:rgba(34,197,94,.12);border:1.5px solid rgba(34,197,94,.42)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">' +
+        '<b style="color:var(--okt);font-size:13.5px">✅ ফুল অটোমেটিক 2FA চালু ও ভেরিফাইড!</b>' +
+        '<span class="acc-bdg" style="background:#22c55e;color:#fff">ACTIVE</span>' +
+      '</div>' +
+      '<small style="display:block;font-weight:700;color:var(--tx2);margin-bottom:8px">📧 <code>' + esc(j.email) + '</code> — অ্যাপের 2FA ভল্টে অটো সেভ করা হয়েছে।</small>' +
+      (j.secretFormatted ? '<div class="glass" style="padding:8px 10px;border-radius:11px;margin-bottom:8px;cursor:pointer" data-act="copy" data-v="' + esc(j.secretFormatted) + '"><small style="display:block;color:var(--mute);font-size:10px;font-weight:800">🔑 2FA SECRET KEY (ট্যাপে কপি)</small><code style="font:800 12px ui-monospace,monospace;color:var(--tx);word-break:break-all">' + esc(j.secretFormatted) + '</code></div>' : '') +
+      '<div class="totp-live-box" data-act="copy" data-v="' + esc(lv.code) + '" data-totp-sec="' + esc(j.secret || '') + '">' +
+        '<div><small style="color:var(--mute);font-weight:800;display:block;font-size:10px">🔢 লাইভ ৬-ডিজিট 2FA কোড (ট্যাপে কপি)</small><span class="totp-code" style="font-size:21px">' + fmtTotp(lv.code) + '</span> <span class="totp-next-lbl">পরবর্তী: <b class="totp-next">' + fmtTotp(lv.next) + '</b></span></div>' +
+        '<div class="totp-ring-wrap"><svg class="totp-ring" viewBox="0 0 36 36"><circle class="totp-ring-bg" cx="18" cy="18" r="15"/><circle class="totp-ring-fg" cx="18" cy="18" r="15"/></svg><span class="totp-rem">' + lv.rem + 's</span></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
+        '<button type="button" class="btn ok block" data-act="openTotpVault" style="flex:2">🔐 2FA ভল্টে দেখুন</button>' +
+        '<button type="button" class="btn ghost sm" data-act="a2faReset" style="flex:1">🔄 নতুন মেইল</button>' +
+      '</div>' +
+    '</div>';
+  }
+  if (j.status === 'failed') {
+    return '<div style="margin-top:8px;padding:12px;border-radius:14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35)">' +
+      '<b style="color:#ef4444;display:block;font-size:13px;margin-bottom:4px">⚠️ অটো 2FA সম্পন্ন হয়নি</b>' +
+      '<small style="display:block;color:var(--tx2);margin-bottom:10px">' + esc(j.error || 'আবার চেষ্টা করুন') + '</small>' +
+      '<button type="button" class="btn pri block" data-act="a2faReset">🔄 আবার চেষ্টা করুন</button>' +
+    '</div>';
+  }
+  const labels = [
+    [1, '১. গুগল অ্যাকাউন্টে অটো-লগইন'],
+    [2, '২. সিকিউরিটি প্রম্পট / কোড / ক্যাপচা ভেরিফিকেশন'],
+    [3, '৩. Google Authenticator থেকে 2FA Key এক্সট্রাকশন'],
+    [4, '৪. TOTP কোড জেনারেট, অটো-ভেরিফাই ও 2FA Turn On'],
+    [5, '৫. অ্যাপের 2FA ভল্টে অটো-সেভ সম্পন্ন'],
+  ];
+  const stepsHtml = '<div class="a2fa-steps">' + labels.map(([n, txt]) => {
+    const cls = j.step > n ? 'done' : j.step === n ? 'cur' : '';
+    const icTxt = j.step > n ? '✓' : j.step === n ? '⚡' : n;
+    return '<div class="a2fa-st ' + cls + '"><i>' + icTxt + '</i><span>' + txt + '</span></div>';
+  }).join('') + '</div>';
+
+  const optHtml = (j.options && j.options.length)
+    ? '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">' +
+        '<small style="font-weight:800;color:var(--mute)">👉 গুগল ভেরিফিকেশন পদ্ধতি বেছে নিন:</small>' +
+        j.options.map((o) => '<button type="button" class="btn ghost block" style="text-align:left;padding:8px 10px;font-size:12px" data-act="a2faOpt" data-idx="' + o.idx + '">👉 ' + esc(o.text) + '</button>').join('') +
+      '</div>'
+    : '';
+
+  return '<div style="margin-top:8px">' +
+    '<div style="padding:10px 11px;border-radius:13px;background:rgba(14,165,233,.14);border:1px solid rgba(14,165,233,.38);margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">' +
+        '<b style="font-size:12.5px;color:var(--tx)" id="a2faStatusText">' + esc(j.stepTitle || 'অটোমেশন চলছে…') + '</b>' +
+        '<span class="acc-bdg">ধাপ ' + (j.step || 1) + '/5</span>' +
+      '</div>' +
+      (j.promptNumber ? '<div style="margin-top:6px;padding:6px 10px;border-radius:10px;background:rgba(34,197,94,.2);border:1px solid #22c55e;font-weight:900;font-size:14px;color:var(--okt);text-align:center">📱 ফোনে Google Prompt-এ ট্যাপ করুন: <span style="font-size:18px;padding:2px 8px;border-radius:8px;background:#22c55e;color:#fff">' + esc(j.promptNumber) + '</span></div>' : '') +
+      (j.challengePrompt ? '<small style="display:block;margin-top:4px;font-size:11px;color:var(--tx2);line-height:1.35">💡 ' + esc(j.challengePrompt) + ' (আপনি টেলিগ্রাম বটেও অ্যাপ্রুভ বা রিপ্লাই দিতে পারেন!)</small>' : '') +
+    '</div>' +
+    stepsHtml +
+    optHtml +
+    '<div style="display:flex;gap:6px;margin-bottom:7px">' +
+      '<input class="field" id="a2faLiveInput" style="margin-bottom:0!important;flex:1" placeholder="ভেরিফিকেশন কোড / রিকভারি ইমেইল / ক্যাপচা বা 2FA Key…" autocomplete="off">' +
+      '<button type="button" class="btn ok shine" data-act="a2faSendInput" style="padding:0 13px;flex:0 0 auto;border-radius:12px;font-size:12.5px">⚡ পাঠান</button>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">' +
+      '<button type="button" class="btn pri" data-act="a2faAct" data-m="continue" style="padding:8px 10px;font-size:11.5px">✅ Approve করেছি / Next</button>' +
+      '<button type="button" class="btn ghost" data-act="a2faAct" data-m="alt" style="padding:8px 10px;font-size:11.5px">🔄 Try Another Way</button>' +
+      '<button type="button" class="btn ghost" data-act="a2faAct" data-m="snap" style="padding:8px 10px;font-size:11.5px">📸 স্ক্রিন রিফ্রেশ</button>' +
+      '<button type="button" class="btn bad" data-act="a2faAct" data-m="stop" style="padding:8px 10px;font-size:11.5px">🛑 স্টপ করুন</button>' +
+    '</div>' +
+    (j.screenshot ? '<div class="a2fa-screen-wrap"><div class="a2fa-screen-head"><span>🖥️ লাইভ অটোমেশন ব্রাউজার (ট্যাপ করলে ক্লিক হবে)</span><span>LIVE</span></div><img id="a2faScreen" class="a2fa-screen-img" src="' + j.screenshot + '" alt="Live Automation Screen" data-act="a2faTapScreen"></div>' : '') +
+  '</div>';
 }
 function renderGmWizard() {
-const hub = $('#gmailHub'); if (!hub) return;
-const pwType = gmState.showPw ? 'text' : 'password', pwEye = gmState.showPw ? '🙈' : '👁';
-const oauthBody = '<button type="button" class="gbtn-sm" data-act="gmailGo">' + G + ' Continue with Gmail (১-ক্লিকে কানেক্ট)</button><div class="ot-row" data-act="togOneTime"><span>🔒 ওয়ান-টাইম সেশন (লগইন শেষে ব্রাউজার থেকে অটো রিমুভ)</span><b>' + (gmState.oneTime ? 'চালু ✓' : 'বন্ধ') + '</b></div>';
-const phoneBody = '<div style="margin-top:8px"><input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="gmPass" type="' + pwType + '" placeholder="আপনার Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><button type="button" class="btn pri block shine" data-act="gmBrowserLogin">🚀 ওয়ান-টাইম লগইন করুন (Auto Browser Logout) ↗</button></div>';
-let a2faBody = '';
-if (gmState.a2faStep === 'challenge') {
-a2faBody = '<div style="margin-top:8px;padding:10px 11px;border-radius:13px;background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.35);margin-bottom:8px"><b style="font-size:12.5px;display:block;margin-bottom:3px">🛡️ গুগল সিকিউরিটি চ্যালেঞ্জ (Prompt / কোড / ক্যাপচা)</b><small style="font-size:11px;color:var(--tx2);display:block;line-height:1.35">১. ফোনে <b>Google Prompt (Yes)</b> বা <b>ক্যাপচা</b> এলে নিচের বাটনে ট্যাপ করে কমপ্লিট করুন।<br>২. রিকভারি কোড, ভেরিফিকেশন কোড অথবা 2FA Setup Key পেলে নিচের বক্সে দিন (কপি করলে অ্যাপ নিজে থেকেই অটো ডিটেক্ট করবে)!</small></div><button type="button" class="btn pri block shine" data-act="a2faOpenAuth" style="margin-bottom:7px">🧩 প্রম্পট / ক্যাপচা কমপ্লিট ও 2FA অন পেজ ↗</button><input class="field" id="a2faKeyInput" placeholder="রিকভারি কোড / ভেরিফিকেশন কোড বা Setup Key দিন" value="' + esc(gmState.a2faKey) + '" autocomplete="off"><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ok block shine" data-act="a2faComplete" style="flex:2">⚡ কোড সাবমিট ও অটো 2FA সেভ করুন</button><button type="button" class="btn ghost sm" data-act="a2faReset" style="flex:1">↩ পরিবর্তন</button></div>';
-} else if (gmState.a2faStep === 'done') {
-a2faBody = '<div style="margin-top:8px;padding:12px;border-radius:14px;background:rgba(34,197,94,.14);border:1.5px solid rgba(34,197,94,.45);text-align:center"><b style="color:var(--okt);font-size:13.5px;display:block">✅ 2FA ভল্টে সেভ ও কোড অটো-কপি হয়েছে!</b><div style="font:900 22px ui-monospace,Menlo,monospace;color:var(--okt);margin:6px 0;letter-spacing:2px">' + esc(gmState.a2faCode || '------') + '</div><small style="display:block;color:var(--tx2);font-size:11px;margin-bottom:8px">কোডটি আপনার ক্লিপবোর্ডে কপি করা আছে — গুগলে Verify বক্সে পেস্ট করে Turn On চাপুন।</small><div style="display:flex;gap:6px"><button type="button" class="btn ok block" data-act="a2faOpenAuth" style="flex:2">🌐 গুগলে Verify ও Turn On সম্পন্ন করুন ↗</button><button type="button" class="btn ghost sm" data-act="a2faReset" style="flex:1">🔄 নতুন</button></div></div>';
-} else {
-a2faBody = '<div style="margin-top:8px"><input class="field" id="a2faEmail" type="email" placeholder="Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.a2faEmail || gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="a2faPass" type="' + pwType + '" placeholder="Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.a2faPass || gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><input class="field" id="a2faKeyInit" placeholder="ঐচ্ছিক: ইতিমধ্যে 2FA Setup Key থাকলে দিন (না থাকলে খালি রাখুন)" value="' + esc(gmState.a2faKey) + '" autocomplete="off"><button type="button" class="btn ok block shine" data-act="a2faStart">🤖 অটো 2FA चालू ও ভল্টে সেভ করুন</button></div>';
-}
-const appBody = '<div style="margin-top:8px"><input class="field" id="gmAppEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email"><div class="pw-wrap"><input class="field" id="gmAppPass" type="' + pwType + '" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" value="' + esc(gmState.appPass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ok block shine" data-act="gmSubmitApp" style="flex:2">⚡ কানেক্ট ও ভেরিফাই করুন</button><button type="button" class="btn ghost sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="flex:1">🔑 কোড নিন ↗</button></div></div>';
-const active = getActiveMail(), gmCount = (S.gm || []).length;
-const listBody = gmCount ? '<div style="margin-top:8px">' + S.gm.map((g) => {
-const isSel = g.email === active, isExp = gmState.openGmItem === g.email;
-return '<div class="gm-item ' + (isSel ? 'sel' : '') + '"><div class="gm-item-top" data-act="togGmItem" data-e="' + esc(g.email) + '"><div class="gb" style="width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;background:#fff">' + G + '</div><div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (isSel ? '<b style="color:var(--okt)">ব্যবহৃত হচ্ছে</b> • ' : '') + (g.lastError ? '<span style="color:#f59e0b">' + esc(g.lastError) + '</span>' : (g.status === 'expired' ? 'টোকেন শেষ' : 'সক্রিয় • ট্যাপে অপশন')) + '</small></div><button type="button" class="act-pill ' + (isSel ? 'on' : '') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✓ Active' : '🎯 Use') + '</button></div><div class="gm-item-acts"' + (isExp ? '' : ' hidden') + '><button type="button" class="gm-act ' + (isSel ? 'active' : 'use') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✅ ব্যবহৃত হচ্ছে' : '🎯 সিলেক্ট করুন') + '</button><button type="button" class="gm-act" data-act="copy" data-v="' + esc(g.email) + '">📋 মেইল কপি</button><button type="button" class="gm-act" data-act="filterMail" data-v="' + esc(g.email) + '">📥 ইনবক্স দেখুন</button><button type="button" class="gm-act" data-act="a2faForEmail" data-e="' + esc(g.email) + '">🤖 অটো 2FA</button><button type="button" class="gm-act del" style="grid-column:span 2" data-act="gmailDel" data-e="' + esc(g.email) + '">🗑 অ্যাকাউন্ট রিমুভ করুন</button></div></div>';
-}).join('') + '</div>' : '<div class="empty" style="padding:16px 10px"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
-hub.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:0 2px"><span style="font-size:12px;font-weight:800;color:var(--mute)">📮 GMAIL লগইন ও অটোমেশন (ট্যাপে খুলুন/লুকান)</span><button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button></div>' +
-accCard('gm-oauth', G, 'Continue with Gmail (১-ক্লিকে)', 'গুগল পপআপে লগইন ও অটো ব্রাউজার লগআউট', 'OAuth', oauthBody, false) +
-accCard('gm-phone', '🌐', 'ওয়ান-টাইম লগইন (Email + Password)', 'ইমেইল ও পাসওয়ার্ড দিয়ে ওয়ান-টাইম ব্রাউজার লগইন', '1-Time', phoneBody, false) +
-accCard('gm-auto2fa', '🤖', 'অটো 2FA অন ও ভল্ট সেটআপ', '2FA না থাকলে অটো 2FA চালু, ভল্টে সেভ ও ৬-ডিজিট ভেরিফাই', 'Auto 2FA', a2faBody, false) +
-accCard('gm-app', '🔑', 'App Password লগইন (১৬-ডিজিট)', '১৬-অক্ষরের App Password দিয়ে সরাসরি IMAP কানেক্ট', 'IMAP', appBody, false) +
-accCard('gm-list', '📮', 'যুক্ত করা Gmail অ্যাকাউন্টসমূহ', 'সিলেক্ট করে ব্যবহার, কপি বা ইনবক্স ফিল্টার করুন', gmCount + ' টি', listBody, gmCount > 0);
+  const hub = $('#gmailHub'); if (!hub) return;
+  const pwType = gmState.showPw ? 'text' : 'password';
+  const pwEye = gmState.showPw ? '🙈' : '👁';
+  const gSvg = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg>';
+
+  const oauthBody =
+    '<button type="button" class="gbtn-sm" data-act="gmailGo">' + gSvg + ' Continue with Gmail (১-ক্লিকে কানেক্ট)</button>' +
+    '<div class="ot-row" data-act="togOneTime">' +
+      '<span>🔒 ওয়ান-টাইম সেশন (লগইন শেষে ব্রাউজার থেকে অটো রিমুভ)</span>' +
+      '<b>' + (gmState.oneTime ? 'চালু ✓' : 'বন্ধ') + '</b>' +
+    '</div>';
+
+  const phoneBody =
+    '<div style="margin-top:8px">' +
+      '<input class="field" id="gmEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
+      '<div class="pw-wrap"><input class="field" id="gmPass" type="' + pwType + '" placeholder="আপনার Gmail পাসওয়ার্ড দিন" value="' + esc(gmState.pass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div>' +
+      '<button type="button" class="btn pri block shine" data-act="gmBrowserLogin">🚀 ওয়ান-টাইম লগইন করুন (Auto Browser Logout) ↗</button>' +
+    '</div>';
+
+  const a2faBody = renderAuto2faBody(pwType, pwEye);
+
+  const appBody =
+    '<div style="margin-top:8px">' +
+      '<input class="field" id="gmAppEmail" type="email" placeholder="আপনার Gmail ঠিকানা (example@gmail.com)" value="' + esc(gmState.email) + '" autocomplete="email">' +
+      '<div class="pw-wrap"><input class="field" id="gmAppPass" type="' + pwType + '" placeholder="১৬-অক্ষরের App Password (xxxx xxxx xxxx xxxx)" value="' + esc(gmState.appPass) + '" autocomplete="current-password"><button type="button" class="pw-eye" data-act="togPw">' + pwEye + '</button></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button type="button" class="btn ok block shine" data-act="gmSubmitApp" style="flex:2">⚡ কানেক্ট ও ভেরিফাই করুন</button>' +
+        '<button type="button" class="btn ghost sm" data-act="link" data-url="https://myaccount.google.com/apppasswords" style="flex:1">🔑 কোড নিন ↗</button>' +
+      '</div>' +
+    '</div>';
+
+  const active = getActiveMail();
+  const gmCount = (S.gm || []).length;
+  const listBody = gmCount ? '<div style="margin-top:8px">' + S.gm.map((g) => {
+    const isSel = g.email === active;
+    const isExp = gmState.openGmItem === g.email; 
+    return '<div class="gm-item ' + (isSel ? 'sel' : '') + '">' +
+      '<div class="gm-item-top" data-act="togGmItem" data-e="' + esc(g.email) + '">' +
+        '<div class="gb" style="width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;background:#fff">' + gSvg + '</div>' +
+        '<div class="a"><code>' + esc(g.email) + '</code><small><span class="dot ' + (g.status === 'expired' ? 'off' : '') + '"></span> ' + (isSel ? '<b style="color:var(--okt)">ব্যবহৃত হচ্ছে</b> • ' : '') + (g.twoFaEnabled ? '🔐 2FA সক্রিয় • ' : '') + (g.lastError ? '<span style="color:#f59e0b">' + esc(g.lastError) + '</span>' : (g.status === 'expired' ? 'টোকেন শেষ' : 'সক্রিয় • ট্যাপে অপশন')) + '</small></div>' +
+        '<button type="button" class="act-pill ' + (isSel ? 'on' : '') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✓ Active' : '🎯 Use') + '</button>' +
+      '</div>' +
+      '<div class="gm-item-acts"' + (isExp ? '' : ' hidden') + '>' +
+        '<button type="button" class="gm-act ' + (isSel ? 'active' : 'use') + '" data-act="selectMail" data-v="' + esc(g.email) + '">' + (isSel ? '✅ ব্যবহৃত হচ্ছে' : '🎯 সিলেক্ট করুন') + '</button>' +
+        '<button type="button" class="gm-act" data-act="copy" data-v="' + esc(g.email) + '">📋 মেইল কপি</button>' +
+        '<button type="button" class="gm-act" data-act="filterMail" data-v="' + esc(g.email) + '">📥 ইনবক্স দেখুন</button>' +
+        '<button type="button" class="gm-act" data-act="a2faForEmail" data-e="' + esc(g.email) + '">🤖 অটো 2FA</button>' +
+        '<button type="button" class="gm-act del" style="grid-column:span 2" data-act="gmailDel" data-e="' + esc(g.email) + '">🗑 অ্যাকাউন্ট রিমুভ করুন</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>' : '<div class="empty" style="padding:16px 10px"><div class="big">' + ic('mail') + '</div>কোনো Gmail এখনো যুক্ত নেই</div>';
+
+  const a2faBadge = gmState.a2faJob ? (gmState.a2faJob.status === 'completed' ? '✓ ON' : '⚡ LIVE') : 'Auto Bot';
+  hub.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:0 2px">' +
+      '<span style="font-size:12px;font-weight:800;color:var(--mute)">📮 GMAIL লগইন ও অটো 2FA বট (ট্যাপে খুলুন/লুকান)</span>' +
+      '<button type="button" class="act-pill" data-act="gmailSync">🔄 সিঙ্ক</button>' +
+    '</div>' +
+    accCard('gm-auto2fa', '🤖', 'অটো 2FA অন ও ভল্ট সেটআপ (Full Auto Bot)', 'নিজে নিজেই 2FA কোড বের করে ভেরিফাই ও 2-Step অন করবে', a2faBadge, a2faBody , true) +
+    accCard('gm-oauth', gSvg, 'Continue with Gmail (১-ক্লিকে)', 'গুগল পপআপে লগইন ও অটো ব্রাউজার লগআউট', 'OAuth', oauthBody, false) +
+    accCard('gm-phone', '🌐', 'ওয়ান-টাইম লগইন (Email + Password)', 'ইমেইল ও পাসওয়ার্ড দিয়ে ওয়ান-টাইম ব্রাউজার লগইন', '1-Time', phoneBody, false) +
+    accCard('gm-app', '🔑', 'App Password লগইন (১৬-ডিজিট)', '১৬-অক্ষরের App Password দিয়ে সরাসরি IMAP কানেক্ট', 'IMAP', appBody, false) +
+    accCard('gm-list', '📮', 'যুক্ত করা Gmail অ্যাকাউন্টসমূহ', 'সিলেক্ট করে ব্যবহার, কপি বা অটো 2FA সেটআপ করুন', gmCount + ' টি', listBody, gmCount > 0);
+  tickTotp();
 }
 async function loadGmail() {
-renderGmWizard();
-try {
-const d = await api('gmail'); S.gm = d.accounts || []; S.gmailOn = d.enabled;
-syncGmailLocal(S.gm); renderMailSwitcher(); renderGmWizard();
-} catch (e) { toast('⚠️ ' + e.message); }
+  renderGmWizard();
+  try {
+    const d = await api('gmail'); S.gm = d.accounts || []; S.gmailOn = d.enabled;
+    syncGmailLocal(S.gm);
+    renderMailSwitcher();
+    renderGmWizard();
+  } catch (e) { toast('⚠️ ' + e.message); }
 }
 function gmailSheet() { setTab('gmail'); }
 async function startOAuthWatch(url) {
-const before = (S.gm || []).length;
-tg && tg.openLink ? tg.openLink(url) : window.open(url, '_blank');
-stopGmailWatch();
-gmWatch = setInterval(async () => {
-try {
-const d = await api('gmail');
-if (d.accounts && (d.accounts.length > before || d.accounts.some((a) => a.connectedAt > Date.now() - 180000))) {
-stopGmailWatch(); closeSheet(); note('success');
-const newest = [...d.accounts].sort((a, b) => (b.connectedAt || 0) - (a.connectedAt || 0))[0];
-if (newest && newest.email) {
-S.selectedMail = newest.email;
-try { localStorage.setItem('selectedMail', newest.email); } catch (e) {}
-}
-toast('✅ Gmail যুক্ত ও সিলেক্ট হয়েছে!');
-loadGmail(); loadMessages(false);
-}
-} catch (e) {}
-}, 2000);
+  const before = (S.gm || []).length;
+  tg && tg.openLink ? tg.openLink(url) : window.open(url, '_blank');
+  stopGmailWatch();
+  gmWatch = setInterval(async () => {
+    try {
+      const d = await api('gmail');
+      if (d.accounts && (d.accounts.length > before || d.accounts.some((a) => a.connectedAt > Date.now() - 180000))) {
+        stopGmailWatch(); closeSheet(); note('success');
+        const newest = [...d.accounts].sort((a, b) => (b.connectedAt || 0) - (a.connectedAt || 0))[0];
+        if (newest && newest.email) {
+          S.selectedMail = newest.email;
+          try { localStorage.setItem('selectedMail', newest.email); } catch (e) {}
+        }
+        toast('✅ Gmail যুক্ত ও সিলেক্ট হয়েছে!');
+        loadGmail(); loadMessages(false);
+      }
+    } catch (e) {}
+  }, 2000);
 }
 async function gmailGo() {
-try {
-const email = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim().toLowerCase();
-const res = await api('gmail', { method: 'POST', body: { email, mode: 'oauth', oneTime: gmState.oneTime } });
-if (res.url) await startOAuthWatch(res.url);
-} catch (e) { toast('⚠️ ' + e.message); }
+  try {
+    const email = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim().toLowerCase();
+    const res = await api('gmail', { method: 'POST', body: { email, mode: 'oauth', oneTime: gmState.oneTime } });
+    if (res.url) await startOAuthWatch(res.url);
+  } catch (e) { toast('⚠️ ' + e.message); }
+}
+async function gmBrowserLogin() {
+  const em = ($('#gmEmail') && $('#gmEmail').value || gmState.email || '').trim().toLowerCase();
+  const pw = ($('#gmPass') && $('#gmPass').value || gmState.pass || '').trim();
+  if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন');
+  if (!pw || pw.length < 4) return toast('⚠️ আপনার পাসওয়ার্ড লিখুন');
+  gmState.email = em; gmState.pass = pw;
+  try { await navigator.clipboard.writeText(pw); } catch (e) { trySyncCopy(pw); }
+  toast('⏳ পাসওয়ার্ড কপি হয়েছে — লগইন চেক করা হচ্ছে…');
+  try {
+    const r = await api('gmail', { method: 'POST', body: { email: em, password: pw, mode: 'browser_login', oneTime: true } });
+    if (r.connected) {
+      if (Array.isArray(r.vault)) syncGmailLocal(r.vault);
+      S.selectedMail = em;
+      try { localStorage.setItem('selectedMail', em); } catch (e) {}
+      note('success'); toast('✅ Gmail সরাসরি যুক্ত ও সিলেক্ট হয়েছে!');
+      loadGmail(); loadMessages(false);
+      return;
+    }
+    if (r.url) {
+      toast('📋 পাসওয়ার্ড কপি আছে — গুগল পেজে পেস্ট করে লগইন সম্পন্ন করুন');
+      await startOAuthWatch(r.url);
+    }
+  } catch (e) { toast('⚠️ ' + e.message); }
+}
+async function gmSubmitApp() {
+  const em = (($('#gmAppEmail') && $('#gmAppEmail').value) || ($('#gmEmail') && $('#gmEmail').value) || gmState.email || '').trim().toLowerCase();
+  const pw = (($('#gmAppPass') && $('#gmAppPass').value) || ($('#gmPass') && $('#gmPass').value) || gmState.appPass || '').trim();
+  if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা লিখুন');
+  if (!pw) return toast('⚠️ ১৬-অক্ষরের App Password দিন');
+  gmState.email = em; gmState.appPass = pw;
+  toast('⏳ Gmail কানেক্ট হচ্ছে…');
+  try {
+    const r = await api('gmail', { method: 'POST', body: { email: em, password: pw, mode: 'app_pass' } });
+    if (r.connected) {
+      if (Array.isArray(r.vault)) syncGmailLocal(r.vault);
+      S.selectedMail = em;
+      try { localStorage.setItem('selectedMail', em); } catch (e) {}
+      gmState.appPass = '';
+      note('success'); toast('✅ Gmail সফলভাবে কানেক্ট ও সিলেক্ট হয়েছে!');
+      loadGmail(); loadMessages(false);
+    }
+  } catch (e) { note('error'); toast('⚠️ ' + e.message); }
 }
 function stopGmailWatch() { clearInterval(gmWatch); gmWatch = null; }
 
@@ -1640,51 +1815,111 @@ hap();
 return renderGmWizard();
 }
 if (a === 'a2faForEmail') {
-gmState.a2faEmail = t.dataset.e || '';
-gmState.a2faStep = 'init';
-S.acc['gm-auto2fa'] = true;
-hap('medium');
-renderGmWizard();
-setTimeout(() => $('#a2faPass') && $('#a2faPass').focus(), 80);
-return;
-}
-if (a === 'a2faStart') {
-const em = ($('#a2faEmail') && $('#a2faEmail').value || gmState.a2faEmail || '').trim().toLowerCase();
-const pw = ($('#a2faPass') && $('#a2faPass').value || gmState.a2faPass || '').trim();
-const initKey = ($('#a2faKeyInit') && $('#a2faKeyInit').value || '').trim();
-if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা দিন');
-gmState.a2faEmail = em; gmState.a2faPass = pw; gmState.a2faKey = initKey;
-if (initKey) return completeAuto2fa(initKey);
-if (!pw || pw.length < 4) return toast('⚠️ আপনার Gmail পাসওয়ার্ড দিন');
-hap('medium');
-try { await navigator.clipboard.writeText(pw); } catch (e) { trySyncCopy(pw); }
-toast('⏳ পাসওয়ার্ড কপি ও অটো 2FA সেশন শুরু হচ্ছে…');
-const r = await api('gmail/auto2fa', { method: 'POST', body: { email: em, password: pw } });
-gmState.a2faUrl = r.authSetupUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
-gmState.a2faTwoStepUrl = r.twoStepUrl || 'https://myaccount.google.com/signinoptions/two-step-verification';
-gmState.a2faStep = 'challenge';
-renderGmWizard();
-tg && tg.openLink ? tg.openLink(gmState.a2faUrl) : window.open(gmState.a2faUrl, '_blank');
-return;
-}
-if (a === 'a2faOpenAuth') {
-if (gmState.a2faPass && gmState.a2faStep !== 'done') {
-try { await navigator.clipboard.writeText(gmState.a2faPass); } catch (e) { trySyncCopy(gmState.a2faPass); }
-} else if (gmState.a2faCode) {
-try { await navigator.clipboard.writeText(gmState.a2faCode); } catch (e) { trySyncCopy(gmState.a2faCode); }
-}
-const u = gmState.a2faUrl || 'https://myaccount.google.com/twofactorauthentication/authenticator';
-tg && tg.openLink ? tg.openLink(u) : window.open(u, '_blank');
-return;
-}
-if (a === 'a2faComplete') {
-return completeAuto2fa(($('#a2faKeyInput') && $('#a2faKeyInput').value) || '');
-}
-if (a === 'a2faReset') {
-gmState.a2faStep = 'init'; gmState.a2faKey = ''; gmState.a2faCode = '';
-hap();
-return renderGmWizard();
-}
+      gmState.a2faEmail = t.dataset.e || '';
+      gmState.a2faJob = null;
+      S.acc['gm-auto2fa'] = true;
+      hap('medium');
+      renderGmWizard();
+      setTimeout(() => $('#a2faPass') && $('#a2faPass').focus(), 80);
+      return;
+    }
+    if (a === 'a2faStart') {
+      const em = ($('#a2faEmail') && $('#a2faEmail').value || gmState.a2faEmail || '').trim().toLowerCase();
+      const pw = ($('#a2faPass') && $('#a2faPass').value || gmState.a2faPass || '').trim();
+      const extra = ($('#a2faExtra') && $('#a2faExtra').value || gmState.a2faExtra || '').trim();
+      if (!em || !em.includes('@')) return toast('⚠️ সঠিক Gmail ঠিকানা দিন');
+      if (!pw && !extra) return toast('⚠️ আপনার Gmail পাসওয়ার্ড দিন');
+      gmState.a2faEmail = em; gmState.a2faPass = pw; gmState.a2faExtra = extra;
+      hap('medium');
+      toast('🤖 ফুল অটোমেটিক 2FA ইঞ্জিন চালু হচ্ছে…');
+      const isRecEmail = extra.includes('@');
+      const r = await api('gmail/auto2fa', {
+        method: 'POST',
+        body: {
+          email: em,
+          password: pw,
+          recoveryEmail: isRecEmail ? extra : '',
+          secretOrCode: isRecEmail ? '' : extra,
+        },
+      });
+      if (r.job) {
+        gmState.a2faJob = r.job;
+        if (Array.isArray(r.items)) { S.totp = mergeTotpLists(r.items, S.totp); syncTotpLocal(); }
+        renderGmWizard();
+        if (r.job.status !== 'completed' && r.job.status !== 'failed') {
+          startAuto2faPoll(r.job.id);
+        }
+      }
+      return;
+    }
+    if (a === 'a2faSendInput') {
+      const txt = ($('#a2faLiveInput') && $('#a2faLiveInput').value || '').trim();
+      if (!txt) return toast('⚠️ কোড বা টেক্সট লিখুন');
+      const jid = gmState.a2faJob && gmState.a2faJob.id;
+      $('#a2faLiveInput').value = '';
+      toast('⚡ বটে পাঠানো হচ্ছে…');
+      const r = await api('gmail/auto2fa', { method: 'POST', body: { jobId: jid, action: 'input', text: txt } });
+      if (r.job) {
+        gmState.a2faJob = r.job;
+        if (Array.isArray(r.items)) { S.totp = mergeTotpLists(r.items, S.totp); syncTotpLocal(); }
+        renderGmWizard();
+      }
+      return;
+    }
+    if (a === 'a2faAct') {
+      const mode = t.dataset.m;
+      const jid = gmState.a2faJob && gmState.a2faJob.id;
+      hap();
+      const r = await api('gmail/auto2fa', { method: 'POST', body: { jobId: jid, action: mode } });
+      if (r.job) {
+        gmState.a2faJob = r.job;
+        renderGmWizard();
+      }
+      return;
+    }
+    if (a === 'a2faOpt') {
+      const idx = Number(t.dataset.idx);
+      const jid = gmState.a2faJob && gmState.a2faJob.id;
+      hap();
+      toast('👉 অপশন সিলেক্ট করা হচ্ছে…');
+      const r = await api('gmail/auto2fa', { method: 'POST', body: { jobId: jid, action: 'option', optionIdx: idx } });
+      if (r.job) {
+        gmState.a2faJob = r.job;
+        renderGmWizard();
+      }
+      return;
+    }
+    if (a === 'a2faTapScreen') {
+      const img = $('#a2faScreen');
+      const jid = gmState.a2faJob && gmState.a2faJob.id;
+      if (!img || !jid) return;
+      const rect = img.getBoundingClientRect();
+      const rx = Math.round(((ev.clientX - rect.left) / Math.max(1, rect.width)) * 412);
+      const ry = Math.round(((ev.clientY - rect.top) / Math.max(1, rect.height)) * 840);
+      hap();
+      toast('🖱 ক্লিক পাঠানো হচ্ছে…');
+      const r = await api('gmail/auto2fa', { method: 'POST', body: { jobId: jid, action: 'click', x: rx, y: ry } });
+      if (r.job) {
+        gmState.a2faJob = r.job;
+        renderGmWizard();
+      }
+      return;
+    }
+    if (a === 'openTotpVault') {
+      S.admSub = 'totp';
+      S.acc['adm-totp-list'] = true;
+      setTab('admin');
+      return;
+    }
+    if (a === 'a2faReset') {
+      clearInterval(a2faTimer); a2faTimer = null;
+      gmState.a2faJob = null;
+      hap();
+      return renderGmWizard();
+    }
+    if (a === 'gmBrowserLogin') { return gmBrowserLogin(); }
+    if (a === 'gmSubmitApp') { return gmSubmitApp(); }
+    if (a === 'gmailSync') { hap(); toast('🔄 Gmail সিঙ্ক হচ্ছে…'); await api('gmail/sync', { method: 'POST' }); return loadGmail(); }
     if (a === 'selectMail') { return selectMail(t.dataset.v); }
     if (a === 'filterMail') { S.q = t.dataset.v || ''; if ($('#q')) $('#q').value = S.q; setTab('inbox'); renderInbox(true); return toast('📥 মেইল ফিল্টার: ' + S.q); }
     if (a === 'togOneTime') { gmState.oneTime = !gmState.oneTime; hap(); renderGmWizard(); return toast(gmState.oneTime ? '🔒 ওয়ান-টাইম ব্রাউজার মোড চালু' : '🔓 সাধারণ ব্রাউজার মোড চালু'); }
@@ -1777,7 +2012,7 @@ if (a === 'gmailAdd') return gmailSheet();
     }
     if (a === 'unmute') { await saveSettings({ unmute: t.dataset.n }); renderSettings(); return hap(); }
     if (a === 'ext') { await api('addresses', { method: 'PATCH', body: { id: t.dataset.id, extend: 60 } }); note('success'); toast('⏳ আরও ১ ঘণ্টা যোগ হয়েছে'); return loadAddrs(); }
-    if (a === 'asub') { S.admSub = t.dataset.k; hap(); return renderAdmin(); }
+    if (a === 'asub') { const k = t.dataset.k; S.admSub = S.admSub === k ? '' : k; hap(); renderAdmin(); if (S.admSub === 'totp') tickTotp(); return; }
     if (a === 'ausr') return userSheet(t.dataset.id);
     if (a === 'dm') { const txt = ($('#dmt').value || '').trim(); if (!txt) return toast('মেসেজ লিখুন'); await api('admin/user', { method: 'POST', body: { id: t.dataset.id, action: 'message', text: txt } }); closeSheet(); note('success'); return toast('📩 পাঠানো হয়েছে'); }
     if (a === 'bc') { const txt = ($('#bct').value || '').trim(); if (!txt) return toast('মেসেজ লিখুন'); if (await ask('সব approved ইউজারকে ব্রডকাস্ট পাঠাবেন?')) { const r = await api('admin/broadcast', { method: 'POST', body: { text: txt } }); $('#bct').value = ''; note('success'); toast('📤 ' + r.count + ' জনকে পাঠানো হচ্ছে'); } return; }
@@ -2030,6 +2265,7 @@ try { tg.onEvent('themeChanged', () => { if (S.settings.theme === 'auto') applyT
     S.totp = mergeTotpLists(b.totp, loadTotpLocal()); syncTotpLocal();
     if (Array.isArray(b.gmailVault)) syncGmailLocal(b.gmailVault);
     if (Array.isArray(b.gmailVault)) { S.gm = b.gmailVault; renderMailSwitcher(); }
+    if (b.activeAuto2fa) { gmState.a2faJob = b.activeAuto2fa; S.acc['gm-auto2fa'] = true; if (b.activeAuto2fa.status !== 'completed' && b.activeAuto2fa.status !== 'failed') startAuto2faPoll(b.activeAuto2fa.id); }
     S.settings = b.settings || S.settings; S.brand = b.brand; S.tz = b.tz || S.tz; S.ttl = S.settings.ttl || 0; applySkin(S.settings.skin || 'glass');
     S.me = b.user; S.domains = b.domains; S.dom = b.prefDomain; S.gmailOn = b.gmailEnabled;
     $('#brand').textContent = b.brand; $('#spT').textContent = b.brand;

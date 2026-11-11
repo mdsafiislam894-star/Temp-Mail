@@ -6,12 +6,22 @@ import * as store from './store.js';
 import { btn, rows, head, HR, mailCard, mailKeyboard, fullMessageText, genCard, genKeyboard, fmtTime } from './ui.js';
 
 import { escapeHtml as esc } from './lib/mailparse.js';
-import { safeSend, initNotify } from './notify.js';
+import { safeSend, sendBotPhoto, initNotify } from './notify.js';
+import { startAuto2faJob, performAuto2faAction, getJob, getActiveJobForUser, registerAuto2faBotHook } from './auto2faEngine.js';
 import { gmailAuthUrl } from './gmail.js';
 import { titanStatus } from './titan.js';
 
 const startedAt = Date.now();
-const pending = new Map(); // userId -> { type, ... }
+const pending = new Map();
+const delUserMsg = async (ctx) => { try { if (ctx.message?.message_id) await ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id); } catch {} };
+registerAuto2faBotHook((uid, jobId, status) => {
+  const numId = Number(uid);
+  if (jobId && (status === 'waiting_code' || status === 'waiting_captcha' || status === 'waiting_approval')) {
+    pending.set(numId, { type: 'a2fa_input', jobId });
+  } else if (!jobId || status === 'completed' || status === 'failed') {
+    if (pending.get(numId)?.type === 'a2fa_input') pending.delete(numId);
+  }
+}); // userId -> { type, ... }
 const isAdmin = (id) => String(id) === config.adminId;
 const HTML = { parse_mode: 'HTML', link_preview_options: { is_disabled: true } };
 
@@ -38,15 +48,6 @@ const mainMenu = (admin) => ({
   input_field_placeholder: '⚡ Instant Mail বা 🎯 Custom চাপুন',
 });
 
-async function delUserMsg(ctx, cleanPrev = false) {
-const cid = ctx.chat?.id, mid = ctx.message?.message_id;
-if (cid && mid) {
-await ctx.api.deleteMessage(cid, mid).catch(() => {});
-if (cleanPrev) {
-await Promise.all([1, 2, 3].map((d) => mid > d ? ctx.api.deleteMessage(cid, mid - d).catch(() => {}) : null));
-}
-}
-}
 async function edit(ctx, text, markup) {
 try {
 const r = await ctx.editMessageText(text, { ...HTML, reply_markup: markup });
@@ -429,6 +430,67 @@ bot.callbackQuery('gm:app', async (ctx) => { pending.set(ctx.from.id, { type: 'g
   }
   bot.command('2fa', (ctx) => showTotpBot(ctx));
   bot.callbackQuery('tf:home', (ctx) => showTotpBot(ctx, true));
+  bot.callbackQuery('totp:list', (ctx) => showTotpBot(ctx, true));
+  bot.command('auto2fa', async (ctx) => {
+    const raw = String(ctx.match || '').trim();
+    if (raw && raw.includes('@')) {
+      await delUserMsg(ctx);
+      const parts = raw.includes('|') ? raw.split('|') : raw.split(/\s+/);
+      const email = (parts[0] || '').trim(), password = (parts[1] || '').trim(), recoveryEmail = (parts[2] || '').trim();
+      if (!password) {
+        pending.set(ctx.from.id, { type: 'a2fa_start', email });
+        return ctx.reply(`🤖 <b>${esc(email)}</b>-এর পাসওয়ার্ড পাঠান:`, { ...HTML, reply_markup: rows([cancelRow]) });
+      }
+      const r = await startAuto2faJob({ uid: ctx.from.id, email, password, recoveryEmail });
+      if (!r.ok) return ctx.reply(`⚠️ ${esc(r.error)}`, HTML);
+      return;
+    }
+    pending.set(ctx.from.id, { type: 'a2fa_start' });
+    return ctx.reply(head('🤖', 'ফুল অটোমেটিক Gmail 2FA বট') + 'আপনার Gmail এবং Password নিচের ফরম্যাটে পাঠান:\n<code>example@gmail.com | your_password</code>', { ...HTML, reply_markup: rows([cancelRow]) });
+  });
+  bot.callbackQuery('a2fa:new', async (ctx) => {
+    pending.set(ctx.from.id, { type: 'a2fa_start' });
+    await edit(ctx, head('🤖', 'ফুল অটোমেটিক Gmail 2FA বট') + 'আপনার Gmail এবং Password নিচের ফরম্যাটে পাঠান:\n<code>example@gmail.com | your_password</code>', rows([cancelRow]));
+  });
+  bot.callbackQuery(/^a2fa:(cont|alt|snap|stop):([^:]+)$/, async (ctx) => {
+    const [, act, jobId] = ctx.match;
+    if (act === 'stop') {
+      await performAuto2faAction(jobId, { action: 'stop' });
+      pending.delete(ctx.from.id);
+      await ctx.answerCallbackQuery({ text: '🛑 অটো 2FA বাতিল করা হয়েছে' });
+      return ctx.reply('🛑 অটো 2FA সেশন বাতিল করা হয়েছে।', HTML);
+    }
+    if (act === 'cont') {
+      await ctx.answerCallbackQuery({ text: '✅ পরবর্তী ধাপে এগিয়ে যাওয়া হচ্ছে…' });
+      await performAuto2faAction(jobId, { action: 'continue' });
+      return;
+    }
+    if (act === 'alt') {
+      await ctx.answerCallbackQuery({ text: '🔄 বিকল্প ভেরিফিকেশন অপশন আনা হচ্ছে…' });
+      const r = await performAuto2faAction(jobId, { action: 'alt' });
+      if (r.ok && r.job?.screenshot) {
+        const optRows = (r.job.options || []).slice(0, 4).map((o) => [btn.cb(`👉 ${o.text.slice(0, 38)}`, `a2fa:opt:${jobId}:${o.idx}`, 'primary')]);
+        await sendBotPhoto(ctx.from.id, r.job.screenshot, `🔄 <b>বিকল্প ভেরিফিকেশন অপশন (${esc(r.job.email)}):</b>`, rows(...optRows, [btn.cb('✅ কন্টিনিউ', `a2fa:cont:${jobId}`, 'success')], [btn.cb('🛑 বাতিল', `a2fa:stop:${jobId}`, 'danger')]));
+      }
+      return;
+    }
+    if (act === 'snap') {
+      await ctx.answerCallbackQuery({ text: '📸 স্ক্রিনশট নেওয়া হচ্ছে…' });
+      const r = await performAuto2faAction(jobId, { action: 'snap' });
+      if (r.ok && r.job?.screenshot) {
+        await sendBotPhoto(ctx.from.id, r.job.screenshot, `📸 <b>লাইভ ব্রাউজার স্ক্রিন (${esc(r.job.email)})</b>`, rows([btn.cb('✅ কন্টিনিউ', `a2fa:cont:${jobId}`, 'success'), btn.cb('🔄 রিফ্রেশ', `a2fa:snap:${jobId}`)], [btn.cb('🛑 বাতিল', `a2fa:stop:${jobId}`, 'danger')]));
+      }
+    }
+  });
+  bot.callbackQuery(/^a2fa:opt:([^:]+):(\d+)$/, async (ctx) => {
+    const [, jobId, idx] = ctx.match;
+    await ctx.answerCallbackQuery({ text: '👉 অপশন সিলেক্ট করা হচ্ছে…' });
+    const r = await performAuto2faAction(jobId, { action: 'option', optionIdx: Number(idx) });
+    if (r.ok && r.job?.screenshot) {
+      pending.set(ctx.from.id, { type: 'a2fa_input', jobId });
+      await sendBotPhoto(ctx.from.id, r.job.screenshot, `✍️ <b>${esc(r.job.email)}</b>: কোড বা রিকভারি তথ্য সরাসরি এখানে লিখে পাঠান:`, rows([btn.cb('✅ কন্টিনিউ', `a2fa:cont:${jobId}`, 'success')], [btn.cb('🛑 বাতিল', `a2fa:stop:${jobId}`, 'danger')]));
+    }
+  });
   bot.callbackQuery('tf:add', async (ctx) => {
     pending.set(ctx.from.id, { type: 'totp_add' });
     await edit(
@@ -532,10 +594,35 @@ bot.callbackQuery('gm:app', async (ctx) => { pending.set(ctx.from.id, { type: 'g
 
   // ---------- free-text (pending actions) ----------
   bot.on('message:text', async (ctx) => {
-    const p = pending.get(ctx.from.id);
-    if (!p) return;
     const text = ctx.message.text.trim();
     if (text.startsWith('/')) return;
+    let p = pending.get(ctx.from.id);
+    if (!p) {
+      const activeJob = getActiveJobForUser(ctx.from.id);
+      if (activeJob && (activeJob.status === 'waiting_code' || activeJob.status === 'waiting_captcha' || activeJob.status === 'waiting_approval')) {
+        p = { type: 'a2fa_input', jobId: activeJob.id };
+      }
+    }
+    if (!p) return;
+    if (p.type === 'a2fa_start') {
+      await delUserMsg(ctx);
+      let email = p.email || '', password = '', recoveryEmail = '';
+      if (email && !text.includes('@')) password = text;
+      else if (text.includes('|')) { const parts = text.split('|').map((s) => s.trim()); email = parts[0] || email; password = parts[1] || ''; recoveryEmail = parts[2] || ''; }
+      else { const parts = text.split(/\s+/); email = parts[0] || email; password = parts.slice(1).join(' '); }
+      if (!email || !email.includes('@')) return ctx.reply('⚠️ সঠিক ফরম্যাটে পাঠান: <code>example@gmail.com | your_password</code>', { ...HTML, reply_markup: rows([cancelRow]) });
+      if (!password || password.length < 4) { pending.set(ctx.from.id, { type: 'a2fa_start', email }); return ctx.reply(`🔑 এখন <code>${esc(email)}</code>-এর পাসওয়ার্ডটি পাঠান:`, { ...HTML, reply_markup: rows([cancelRow]) }); }
+      pending.delete(ctx.from.id);
+      const r = await startAuto2faJob({ uid: ctx.from.id, email, password, recoveryEmail });
+      if (!r.ok) return ctx.reply(`⚠️ ${esc(r.error)}`, HTML);
+      return;
+    }
+    if (p.type === 'a2fa_input') {
+      await delUserMsg(ctx);
+      await ctx.reply('⚡ আপনার দেওয়া কোড/তথ্য অটো 2FA বটে পাঠানো হয়েছে — ভেরিফাই করা হচ্ছে…', HTML);
+      await performAuto2faAction(p.jobId, { action: 'input', text });
+      return;
+    }
         if (p.type === 'gm_email') {
 const email = text.toLowerCase().trim();
 if (!email.includes('@')) return ctx.reply('⚠️ সঠিক Gmail ঠিকানা লিখুন (যেমন: example@gmail.com)');
