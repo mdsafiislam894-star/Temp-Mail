@@ -954,7 +954,7 @@ jobs:
               accCard('gm-oauth', gSvg, 'Continue with Gmail (১-ক্লিকে)', 'গুগল পপআপে লগইন ও অটো ব্রাউজার লগআউট', 'OAuth', oauthBody, false) +
               accCard('gm-phone', '🌐', 'ওয়ান-টাইম লগইন (Email + Password)', 'ইমেইল ও পাসওয়ার্ড দিয়ে ওয়ান-টাইম ব্রাউজার লগইন', '1-Time', phoneBody, false) +
               accCard('gm-app', '🔑', 'App Password লগইন (১৬-ডিজিট)', '১৬-অক্ষরের App Password দিয়ে সরাসরি IMAP কানেক্ট', 'IMAP', appBody, false) +
-              accCard('gm-list', '📮', 'যুক্ত করা Gmail অ্যাকাউন্টসমূহ', 'সিলেক্ট করে ব্যবহার, কপি বা অটো 2FA সেটআপ করুন', gmCount + ' টি', listBody, gmCount > 0);) + 0);
+              accCard('gm-list', '📮', 'যুক্ত করা Gmail অ্যাকাউন্টসমূহ', 'সিলেক্ট করে ব্যবহার, কপি বা অটো 2FA সেটআপ করুন', gmCount + ' টি', listBody, gmCount > 0);
             tickTotp();
           }
           async function loadGmail() {
