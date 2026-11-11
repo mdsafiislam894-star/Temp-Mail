@@ -234,7 +234,7 @@ googleCreds: admin ? { id: config.google.clientId || '', secret: config.google.c
   }
 
   if (res1 === 'gmail') {
-    if (id === 'auto2fa' && m === 'GET') {
+        if (id === 'auto2fa' && m === 'GET') {
       const qId = url.searchParams.get('jobId') || '';
       const job = qId ? getJob(qId) : getActiveJobForUser(uid);
       return json(res, 200, { ok: true, job: serializeJob(job), items: store.listTotp(uid), gmailVault: store.listGmail(uid) });
