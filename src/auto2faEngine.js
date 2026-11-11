@@ -1,7 +1,7 @@
 import http from 'http';
 import crypto from 'crypto';
 import fs from 'fs';
-import { spnaw, execSyncn } from 'child_process';
+import { spawn } from 'child_process';
 import * as store from './store.js';
 import { safeSend, sendBotPhoto } from './notify.js';
 import { btn, rows, HR } from './ui.js';
@@ -10,7 +10,7 @@ import { escapeHtml as esc } from './lib/mailparse.js';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const BINS = [process.env.PUPPETEER_EXECUTABLE_PATH, process.env.CHROME_BIN, '/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable', '/usr/bin/google-chrome'].filter(Boolean);
 export const findChromiumBinary = () => BINS.find((p) => { try { return fs.existsSync(p); } catch { return false; } }) || null;
-
+import('@sparticuz/chromium').then((m) => (m.default || m).executablePath()).then((p) => { if (p) { BINS.unshift(p); try { fs.chmodSync(p, 0o755); } catch {} } }).catch(() => {});
 class CdpSocket {
   constructor(wsUrl) { this.wsUrl = wsUrl; this.seq = 1; this.pending = new Map(); this.socket = null; this.buf = Buffer.alloc(0); this.closed = false; }
   connect() {
