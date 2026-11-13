@@ -28,7 +28,7 @@ maxPerUser: Number(env.MAX_MESSAGES_PER_USER) || 150,
 google: {
 clientId: envGoogle.clientId,
 clientSecret: envGoogle.clientSecret,
-pollMs: Math.max(2500, Number(env.GMAIL_POLL_MS) || 3500),
+pollMs: (Number(env.GMAIL_POLL_SECONDS) || 3) * 1000,
 },
 titan: { accounts: titanAccounts(), host: env.TITAN_IMAP_HOST || 'imap.titan.email' },
 };
@@ -36,5 +36,5 @@ export function setGoogleCreds(id, secret) {
 if (id !== undefined && String(id).trim()) config.google.clientId = String(id).trim();
 if (secret !== undefined && String(secret).trim()) config.google.clientSecret = String(secret).trim();
 }
-export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=16` : '');
+export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=17` : '');
 export const gmailEnabled = () => Boolean(config.google.clientId && config.google.clientSecret && config.publicUrl.startsWith('https://'));
