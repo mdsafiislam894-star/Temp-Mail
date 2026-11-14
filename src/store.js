@@ -69,7 +69,7 @@ export function deleteUser(id) {
 }
 
 export function generateUniqueAddress(owner, customLocal = '', label = '', ttlMin = 0) {
-  const domain = 'safix.tech';
+  const doms = ['safix.tech', 'mdsafiislam.tech']; const mDom = String(label || '').match(/^@(safix\.tech|mdsafiislam\.tech)\|(.*)$/i); const domain = mDom ? mDom[1].toLowerCase() : doms[crypto.randomInt(doms.length)]; if (mDom) label = mDom[2];
   const clean = String(customLocal || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 32);
   if (clean) {
     const full = `${clean}@${domain}`;
