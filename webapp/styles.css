@@ -1442,3 +1442,44 @@ body { transition: background-color 0.22s ease, color 0.22s ease; }
   color: var(--accent);
   max-width: 48%;
 }
+/* === v20 Ultra-Premium Spatial Glass UI & Organized Layout === */
+:root, [data-theme="aurora"] {
+  --bg: #050711 !important;
+  --bg2: #0a0e1f !important;
+  --card: rgba(14, 20, 38, 0.78) !important;
+  --card2: rgba(22, 31, 58, 0.70) !important;
+  --gl1: rgba(20, 28, 54, 0.86) !important;
+  --gl2: rgba(10, 15, 30, 0.94) !important;
+  --glb: rgba(255, 255, 255, 0.14) !important;
+  --glh: rgba(255, 255, 255, 0.24) !important;
+  --g1: #6366f1 !important;
+  --g2: #06b6d4 !important;
+  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%) !important;
+}
+body {
+  letter-spacing: -0.012em !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+#v-gmail #gmInbox, #v-gmail #gmMsgs, #v-gmail .gm-inbox, #v-gmail .gm-msgs, #v-gmail #ac-gm-live-feed {
+  display: none !important;
+}
+.top-mail-bar, .hero-card, .glass-card, .card, .acc-card, .bento-card {
+  backdrop-filter: blur(28px) saturate(195%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(195%) !important;
+  border: 1px solid var(--glb) !important;
+  box-shadow: inset 0 1px 0 var(--glh), 0 16px 38px -10px rgba(0, 0, 0, 0.62) !important;
+  border-radius: 22px !important;
+}
+.top-mail-box, .addr-box {
+  background: rgba(7, 11, 24, 0.72) !important;
+  border: 1px solid rgba(99, 102, 241, 0.40) !important;
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.52), 0 0 26px rgba(99, 102, 241, 0.16) !important;
+  border-radius: 16px !important;
+}
+nav#tabs, .bottom-nav {
+  backdrop-filter: blur(30px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(210%) !important;
+  border-radius: 30px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 18px 42px rgba(0, 0, 0, 0.70) !important;
+}
