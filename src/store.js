@@ -208,16 +208,31 @@ export function setPrefDomain(id, idx) {
 }
 
 // ---------- settings ----------
-export const THEMES = [
-  'aurora', 'claude', 'claude-light', 'midnight', 'obsidian', 'ocean', 'cobalt',
-  'emerald', 'amber', 'crimson', 'rose', 'cyber', 'nebula', 'nord', 'daylight',
-  'sky', 'mint', 'blush', 'auto',
-];
+export const THEMES = ['aurora', 'claude', 'daylight', 'claude-light'];
 export const STYLES = ['smart', 'rich', 'compact'];
 export const SKINS = ['glass', 'claude', 'mix', 'bento', 'obsidian', 'minimal', 'editorial'];
 export const TTLS = [0, 10, 60, 1440];
 
-const LEGACY_THEME_MAP = { claydark: 'claude', clay: 'claude-light', pearl: 'daylight' };
+const LEGACY_THEME_MAP = {
+  claydark: 'claude',
+  amber: 'claude',
+  clay: 'claude-light',
+  pearl: 'daylight',
+  sky: 'daylight',
+  mint: 'daylight',
+  blush: 'daylight',
+  midnight: 'aurora',
+  obsidian: 'aurora',
+  ocean: 'aurora',
+  cobalt: 'aurora',
+  emerald: 'aurora',
+  crimson: 'aurora',
+  rose: 'aurora',
+  cyber: 'aurora',
+  nebula: 'aurora',
+  nord: 'aurora',
+  auto: 'aurora',
+};
 const LEGACY_SKIN_MAP = {};
 
 export const DEFAULT_SETTINGS = {
@@ -320,8 +335,57 @@ export function ensureAddress(owner, addr, label = '', ttlMin = 0) {
 
 export function setLabel(id, label) {
   const a = getAddressById(id);
-  if (a) { a.label = String(label || '').slice(0, 30); save(); }
+  if (a) { a.label = String(label || '').trim().slice(0, 30); save(); }
   return a;
+}
+
+/** Rename an owned address (local part and/or domain) and optionally label/ttl. */
+export function renameAddress(owner, id, { local, domain, label, ttl, migrateMessages = true } = {}) {
+  const uid = String(owner);
+  const a = getAddressById(id);
+  if (!a || a.owner !== uid) return { error: 'not_found' };
+
+  const [curLocal, curDom] = String(a.addr || '').split('@');
+  const cleanLocal = local !== undefined
+    ? String(local || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 32)
+    : curLocal;
+  if (!cleanLocal || cleanLocal.length < 3) return { error: 'invalid_name' };
+
+  const normDom = domain !== undefined
+    ? String(domain || '').trim().toLowerCase().replace(/^@+/, '')
+    : curDom;
+  if (!normDom || !config.domains.includes(normDom)) return { error: 'invalid_domain' };
+
+  const oldAddr = a.addr;
+  const newAddr = `${cleanLocal}@${normDom}`;
+
+  if (newAddr !== oldAddr) {
+    const existing = getAddress(newAddr);
+    if (existing && existing.id !== a.id) return { error: 'taken' };
+    delete db.addresses[oldAddr];
+    a.addr = newAddr;
+    db.addresses[newAddr] = a;
+    if (db.users[uid]?.activeCard?.addr === oldAddr) {
+      db.users[uid].activeCard.addr = newAddr;
+    }
+    if (migrateMessages) {
+      for (const m of db.messages) {
+        if (m.owner === uid && String(m.to || '').toLowerCase() === oldAddr) {
+          m.to = newAddr;
+        }
+      }
+    }
+  }
+
+  if (typeof label === 'string') a.label = label.trim().slice(0, 30);
+  if (ttl !== undefined) {
+    const t = Math.max(0, Number(ttl) || 0);
+    a.ttl = t;
+    a.expiresAt = t > 0 ? Date.now() + t * 60000 : 0;
+    a.expired = false;
+  }
+  save();
+  return { ok: true, oldAddr, address: a };
 }
 
 export function setExpiry(id, ttlMin) {
@@ -439,6 +503,16 @@ export function pinMessage(owner, id, pinned = true) {
   return m;
 }
 
+export function updateMessage(owner, id, { read, pinned, note } = {}) {
+  const m = getMessage(id);
+  if (!m || (owner !== null && m.owner !== String(owner) && String(owner) !== config.adminId)) return null;
+  if (typeof read === 'boolean') m.read = read;
+  if (typeof pinned === 'boolean') m.pinned = pinned;
+  if (typeof note === 'string') m.note = note.trim().slice(0, 80);
+  save();
+  return m;
+}
+
 export function deleteMessage(id) {
   const i = db.messages.findIndex((m) => m.id === id);
   if (i >= 0) { db.messages.splice(i, 1); save(); return true; }
@@ -493,6 +567,13 @@ export function upsertGmail(rec) {
   db.gmail[rec.email] = { ...(db.gmail[rec.email] || {}), ...rec };
   save();
   return db.gmail[rec.email];
+}
+export function setGmailLabel(owner, email, label = '') {
+  const g = db.gmail[String(email || '').toLowerCase()] || db.gmail[email];
+  if (!g || g.owner !== String(owner)) return null;
+  g.label = String(label || '').trim().slice(0, 30);
+  save();
+  return g;
 }
 export function removeGmail(owner, email) {
   const g = db.gmail[email];

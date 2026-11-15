@@ -89,9 +89,9 @@ export function mailKeyboard(msg, { back = false, style = 'smart' } = {}) {
   if (style === 'compact') {
     r.push([btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
   } else {
-    r.push([btn.cb('🔄 New Mail', 'gn', 'primary'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
+    r.push([btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
   }
-  if (back) r.push([btn.cb('⬅️ Inbox', 'ib:0')]);
+  if (back) r.push([btn.cb('⬅️ Inbox', 'ib:0', 'primary')]);
   return rows(...r);
 }
 
@@ -133,24 +133,24 @@ export function genCard(rec, { domainLabel = '', modeLabel = '' } = {}) {
   return (
     `⚡ <b>Instant Disposable Email</b>  ·  <code>${esc(dom)}</code>\n` +
     `${metaParts.join('  ·  ')}\n` +
-    `<i>নিচের বাটনে ট্যাপ করে কপি করুন — নতুন মেইল এলেই এখানে চলে আসবে</i>`
+    `<i>নিচের বাটনে ট্যাপ করে কপি করুন — নতুন মেইল এলেই সাথে সাথে এখানে চলে আসবে</i>`
   );
 }
 
 export function genKeyboard(rec, { multiDomain = config.domains.length > 1 } = {}) {
-  const row1 = [btn.cb('🔄 New Mail', 'gn', 'primary')];
+  const row1 = [btn.cb('🔄 New Mail', 'gn', 'success')];
   if (multiDomain) row1.push(btn.cb('🌐 Domain', 'gd', 'primary'));
   const row2 = [
-    btn.cb('⏳ TTL', `gt:${rec.id}`),
-    btn.cb('🏷 Label', `rl:${rec.id}:`),
-    btn.cb('📬 Inbox', 'ib:0'),
+    btn.cb('✏️ Rename', `ar:${rec.id}`, 'primary'),
+    btn.cb('🏷 Label', `rl:${rec.id}:`, 'primary'),
+    btn.cb('⏳ TTL', `gt:${rec.id}`, 'primary'),
   ];
-  const appBtn = btn.app('📱 Open Mini App', '', 'success');
+  const appBtn = btn.app('🚀 Open Mini App', '', 'success');
   return rows(
-    [btn.copy(rec.addr, rec.addr, 'success')],
+    [btn.copy(`📋 ${rec.addr}`, rec.addr, 'success')],
     row1,
     row2,
-    appBtn ? [appBtn] : []
+    [btn.cb('📬 Inbox', 'ib:0', 'primary'), ...(appBtn ? [appBtn] : [])]
   );
 }
 
@@ -169,16 +169,17 @@ export function totpVaultView(items = [], { isAdmin = false } = {}) {
 
   const text = head('🛡', '2FA Authenticator Vault') + body;
   const copyRows = items.slice(0, 8).map((t) => [
-    btn.copy(`📋 ${t.name.slice(0, 22)} · ${formatOtpSpaced(t.code)} (${t.remaining}s)`, t.code, 'success'),
-    btn.cb(t.pinned ? '★' : '☆', `tf:pin:${t.id}`),
+    btn.copy(`🔑 ${t.name.slice(0, 20)} · ${formatOtpSpaced(t.code)} (${t.remaining}s)`, t.code, 'success'),
+    btn.cb(t.pinned ? '★' : '☆', `tf:pin:${t.id}`, t.pinned ? 'success' : 'primary'),
+    btn.cb('✏️', `tf:ed:${t.id}`, 'primary'),
     btn.cb('🗑', `tf:del:${t.id}`, 'danger'),
   ]);
-  const appBtn = btn.app('🚀 Open 2FA Vault', '?tab=totp', 'primary');
+  const appBtn = btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success');
   const markup = rows(
     ...copyRows,
     [btn.cb('➕ Add / Import', 'tf:add', 'success'), btn.cb('🔄 Refresh', 'tf:home', 'primary')],
     [btn.cb('🤖 Auto 2FA Bot', 'a2fa:new', 'primary'), ...(appBtn ? [appBtn] : [])],
-    ...(isAdmin ? [[btn.cb('⬅️ Admin', 'am:home')]] : [])
+    ...(isAdmin ? [[btn.cb('⬅️ Admin', 'am:home', 'primary')]] : [])
   );
   return { text, markup };
 }

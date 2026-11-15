@@ -75,6 +75,7 @@ const summary = (m) => ({
   date: m.date,
   read: Boolean(m.read),
   pinned: Boolean(m.pinned),
+  note: m.note || '',
   source: m.source,
   links: (m.links || []).length,
   firstLink: mainLink(m) ? { url: mainLink(m).url, label: mainLink(m).label || mainLink(m).host } : null,
@@ -188,7 +189,7 @@ async function api(req, res, url) {
       settings: store.getSettings(uid),
       totp: store.listTotp(uid),
       gmailVault: store.listGmail(uid).map((g) => ({
-        email: g.email, status: g.status, lastError: g.lastError || '', connectedAt: g.connectedAt,
+        email: g.email, label: g.label || '', status: g.status, lastError: g.lastError || '', connectedAt: g.connectedAt,
         hasRefresh: Boolean(g.refreshToken), hasImap: Boolean(g.imapPass), twoFaEnabled: Boolean(g.twoFaEnabled),
       })),
       activeAuto2fa: serializeJob(getActiveJobForUser(uid)),
@@ -340,9 +341,15 @@ async function api(req, res, url) {
     }
     if (m === 'POST' || m === 'PATCH') {
       const b = await readBody(req).catch(() => ({}));
-      if (typeof b.pinned === 'boolean') store.pinMessage(msg.owner, id, b.pinned);
-      else store.markRead(id);
-      return json(res, 200, { ok: true, message: summary(msg), stats: store.countStats(uid) }, req);
+      const hasExplicit = typeof b.read === 'boolean' || typeof b.pinned === 'boolean' || typeof b.note === 'string';
+      const updated = store.updateMessage(admin ? null : uid, id, {
+        read: hasExplicit ? b.read : true,
+        pinned: b.pinned,
+        note: b.note,
+      });
+      if (!updated) return json(res, 404, { error: 'not_found' }, req);
+      emitUserEvent(msg.owner, 'mail:sync', { id, unread: store.countUnread(msg.owner) });
+      return json(res, 200, { ok: true, message: summary(updated), unread: store.countUnread(uid), stats: store.countStats(uid) }, req);
     }
     if (m === 'DELETE') {
       store.deleteMessage(id);
@@ -378,15 +385,33 @@ async function api(req, res, url) {
     }
     if (m === 'PATCH') {
       const b = await readBody(req);
-      const a = store.getAddressById(b.id || id);
+      let a = store.getAddressById(b.id || id);
       if (!a || a.owner !== uid) return json(res, 404, { error: 'not_found' }, req);
-      if (typeof b.label === 'string') store.setLabel(a.id, b.label);
+      let oldAddr = '';
+      if (b.name !== undefined || b.local !== undefined || b.domain !== undefined) {
+        const resRename = store.renameAddress(uid, a.id, {
+          local: b.name ?? b.local,
+          domain: b.domain,
+          label: b.label,
+          ttl: b.ttl,
+          migrateMessages: b.migrateMessages !== false,
+        });
+        if (resRename.error === 'invalid_name') return json(res, 400, { error: 'নাম কমপক্ষে ৩ অক্ষর (a-z, 0-9, . _ -)' }, req);
+        if (resRename.error === 'invalid_domain') return json(res, 400, { error: 'অবৈধ ডোমেইন' }, req);
+        if (resRename.error === 'taken') return json(res, 409, { error: 'এই নামটি আগে থেকেই ব্যবহৃত' }, req);
+        if (resRename.error) return json(res, 400, { error: resRename.error }, req);
+        a = resRename.address;
+        oldAddr = resRename.oldAddr || '';
+      } else {
+        if (typeof b.label === 'string') store.setLabel(a.id, b.label);
+        if (b.ttl !== undefined) store.setExpiry(a.id, Number(b.ttl) || 0);
+      }
       if (b.active) store.setPrimaryAddress(uid, a.id);
       if (typeof b.pinned === 'boolean') store.setPinnedAddress(uid, a.id, b.pinned);
-      if (b.ttl !== undefined) store.setExpiry(a.id, Number(b.ttl) || 0);
       if (b.extend) store.extendAddress(a.id, Number(b.extend) || 60);
-      emitUserEvent(uid, 'addresses:changed', { id: a.id });
-      return json(res, 200, { ok: true, address: a }, req);
+      emitUserEvent(uid, 'addresses:changed', { id: a.id, oldAddr });
+      if (oldAddr) emitUserEvent(uid, 'mail:sync', {});
+      return json(res, 200, { ok: true, address: a, oldAddr }, req);
     }
     if (m === 'DELETE') {
       const a = store.getAddressById(id);
@@ -425,10 +450,17 @@ async function api(req, res, url) {
         enabled: gmailEnabled(),
         oauthReady: gmailEnabled(),
         accounts: store.listGmail(uid).map((g) => ({
-          email: g.email, status: g.status, lastError: g.lastError || '', connectedAt: g.connectedAt,
+          email: g.email, label: g.label || '', status: g.status, lastError: g.lastError || '', connectedAt: g.connectedAt,
           hasRefresh: Boolean(g.refreshToken), hasImap: Boolean(g.imapPass), twoFaEnabled: Boolean(g.twoFaEnabled),
         })),
       }, req);
+    }
+    if (m === 'PATCH') {
+      const b = await readBody(req).catch(() => ({}));
+      const updated = store.setGmailLabel(uid, b.email || '', b.label || '');
+      if (!updated) return json(res, 404, { error: 'not_found' }, req);
+      emitUserEvent(uid, 'gmail:sync', { email: updated.email });
+      return json(res, 200, { ok: true, account: updated }, req);
     }
     if (m === 'POST') {
       const b = await readBody(req).catch(() => ({}));

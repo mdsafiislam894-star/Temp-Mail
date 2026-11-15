@@ -192,7 +192,7 @@ async function notifyChallenge(j, cap, extra = []) {
     if (botPendingHook) botPendingHook(j.uid, j.id, j.status);
     j.screenshot = j.screenshot || (j.browser ? await j.browser.screenshot() : '');
     emitUserEvent(j.uid, 'auto2fa:update', serializeJob(j));
-    const kb = rows(...extra, [btn.cb('✅ ফোনে Approve করেছি / কন্টিনিউ', `a2fa:cont:${j.id}`, 'success')], [btn.cb('🔄 Try Another Way', `a2fa:alt:${j.id}`, 'primary'), btn.cb('📸 লাইভ স্ক্রিন', `a2fa:snap:${j.id}`)], [btn.app('🚀 মিনি অ্যাপে লাইভ দেখুন', '?tab=hub', 'primary')], [btn.cb('🛑 বাতিল করুন', `a2fa:stop:${j.id}`, 'danger')]);
+    const kb = rows(...extra, [btn.cb('✅ ফোনে Approve করেছি / কন্টিনিউ', `a2fa:cont:${j.id}`, 'success')], [btn.cb('🔄 Try Another Way', `a2fa:alt:${j.id}`, 'primary'), btn.cb('📸 লাইভ স্ক্রিন', `a2fa:snap:${j.id}`, 'primary')], [btn.app('🚀 মিনি অ্যাপে লাইভ দেখুন', '?tab=hub', 'success')], [btn.cb('🛑 বাতিল করুন', `a2fa:stop:${j.id}`, 'danger')]);
     j.screenshot ? await sendBotPhoto(j.uid, j.screenshot, cap, kb) : await safeSend(j.uid, cap, kb);
   } catch {}
 }
@@ -208,7 +208,7 @@ async function finalizeSuccess(j, secret, verified = true) {
   if (botPendingHook) botPendingHook(j.uid, null, 'completed');
   const sp = formatSecretSpaced(clean);
   const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`;
-  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], [btn.cb('🔐 সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'primary')])).catch(() => {});
+  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], [btn.cb('🔐 সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success')])).catch(() => {});
 }
 
 async function inspectGooglePage(b) {

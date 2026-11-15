@@ -49,21 +49,23 @@ function makeAddress(owner, domain = '', local = '', ttl = 0) {
 }
 
 const mainMenu = (admin) => {
-  const appUrl = webappUrl();
   const row1 = [{ text: '⚡ Instant Mail', style: 'success' }, { text: '🎯 Custom', style: 'primary' }];
-  const row2 = [{ text: '🔐 2FA Vault' }, { text: '📬 Inbox' }, { text: '🌐 Domain' }];
-  const row3 = [
-    ...(appUrl ? [{ text: '🚀 Mail App', web_app: { url: appUrl } }] : []),
-    { text: '⚙️ Settings' },
-    ...(admin ? [{ text: '👑 Admin', style: 'danger' }] : []),
-  ];
+  const keyboard = admin ? [row1, [{ text: '👑 Admin', style: 'danger' }]] : [row1];
   return {
-    keyboard: [row1, row2, row3],
+    keyboard,
     resize_keyboard: true,
     is_persistent: true,
-    input_field_placeholder: '⚡ Instant Mail, 🎯 Custom বা @ট্যাপ করুন',
+    input_field_placeholder: '⚡ Instant Mail বা 🎯 Custom ট্যাপ করুন',
   };
 };
+
+async function delPrompt(ctx, p) {
+  try {
+    if (p?.promptMsgId && ctx.chat?.id) {
+      await ctx.api.deleteMessage(ctx.chat.id, p.promptMsgId);
+    }
+  } catch {}
+}
 
 async function edit(ctx, text, markup, addr = '') {
   try {
@@ -203,7 +205,7 @@ export function createBot() {
     const markup = rows(
       [btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('🛡 2FA Vault', 'tf:home', 'success')],
       [btn.cb(`📬 Inbox${st.unread ? ` (${st.unread})` : ''}`, 'ib:0', 'primary'), btn.cb('🔐 OTP Codes', 'cd', 'primary')],
-      [btn.cb('📮 Addresses', 'as'), btn.cb('📧 Gmail', 'gm'), btn.cb('⚙️ Settings', 'st')],
+      [btn.cb('📮 Addresses', 'as', 'primary'), btn.cb('📧 Gmail', 'gm', 'primary'), btn.cb('⚙️ Settings', 'st', 'primary')],
       ...(appBtn ? [[appBtn]] : [])
     );
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
@@ -228,7 +230,7 @@ export function createBot() {
     const markup = rows(
       ...vault.map((v) => [btn.copy(`🛡 ${v.name.slice(0, 20)} · ${formatOtpSpaced(v.code)}`, v.code, 'success')]),
       ...mailOtps.map((m) => [btn.copy(`${m.service.icon} ${m.service.name} · ${m.otp} · ${fmtTime(m.date)}`.slice(0, 60), m.otp, 'primary')]),
-      [btn.cb('🔄 Refresh', 'cd', 'primary'), btn.cb('📊 Panel', 'qp')]
+      [btn.cb('🔄 Refresh', 'cd', 'success'), btn.cb('📊 Panel', 'qp', 'primary')]
     );
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
   }
@@ -249,7 +251,7 @@ export function createBot() {
           btn.cb('1h', `tt:${rec.id}:60`, rec.ttl === 60 ? 'success' : 'primary'),
           btn.cb('24h', `tt:${rec.id}:1440`, rec.ttl === 1440 ? 'success' : 'primary'),
         ],
-        [btn.cb('➕ +1h Extend', `ex:${rec.id}`), btn.cb('⬅️ Back', `gc:${rec.id}`)]
+        [btn.cb('➕ +1h Extend', `ex:${rec.id}`, 'success'), btn.cb('⬅️ Back', `gc:${rec.id}`, 'primary')]
       )
     );
   });
@@ -293,6 +295,7 @@ export function createBot() {
     await showSettings(ctx, true);
   });
   bot.callbackQuery(/^st:skin:(\w+)$/, async (ctx) => { store.setSettings(ctx.from.id, { skin: ctx.match[1] }); await showSettings(ctx, true); });
+  bot.callbackQuery(/^st:theme:([\w-]+)$/, async (ctx) => { store.setSettings(ctx.from.id, { theme: ctx.match[1] }); await showSettings(ctx, true); });
   bot.callbackQuery(/^st:ttl:(\d+)$/, async (ctx) => { store.setSettings(ctx.from.id, { ttl: Number(ctx.match[1]) }); await showSettings(ctx, true); });
 
   const onOff = (b) => (b ? '🟢 ON' : '⚪ OFF');
@@ -303,7 +306,7 @@ export function createBot() {
       `🔔 Notifications  <b>${onOff(s.notify)}</b>\n` +
       `🔐 OTP/Link only  <b>${onOff(s.otpOnly)}</b>\n` +
       `⚡ Auto-Copy OTP  <b>${onOff(s.autoCopy)}</b>\n` +
-      `🎨 Card style  <b>${s.style}</b>  ·  Skin <b>${s.skin}</b>\n` +
+      `🎨 Card style  <b>${s.style}</b>  ·  Skin <b>${s.skin}</b>  ·  Theme <b>${s.theme}</b>\n` +
       `⏳ Default TTL  <b>${TTL_LABEL[s.ttl] || '♾'}</b>  ·  🔕 Muted <b>${s.muted.length}</b>`;
     const appBtn = btn.app('🎨 Appearance Studio', '?tab=settings', 'success');
     const markup = rows(
@@ -311,12 +314,18 @@ export function createBot() {
       [btn.cb(`⚡ Auto-Copy: ${s.autoCopy ? 'ON' : 'OFF'}`, 'st:ac', s.autoCopy ? 'success' : 'primary')],
       ['smart', 'rich', 'compact'].map((x) => btn.cb(`${s.style === x ? '✓ ' : ''}${x}`, `st:style:${x}`, s.style === x ? 'success' : 'primary')),
       store.TTLS.map((m) => btn.cb(`${s.ttl === m ? '✓ ' : ''}${m === 0 ? '♾' : m >= 60 ? `${m / 60}h` : `${m}m`}`, `st:ttl:${m}`, s.ttl === m ? 'success' : 'primary')),
-      [{ k: 'minimal', l: 'Minimal' }, { k: 'obsidian', l: 'Obsidian' }, { k: 'editorial', l: 'Editorial' }].map((x) =>
+      [{ k: 'glass', l: 'Glass' }, { k: 'claude', l: 'Claude' }, { k: 'mix', l: 'Mix' }].map((x) =>
         btn.cb(`${s.skin === x.k ? '✓ ' : ''}${x.l}`, `st:skin:${x.k}`, s.skin === x.k ? 'success' : 'primary')
       ),
+      [
+        { k: 'aurora', l: '🌙 Aurora' },
+        { k: 'claude', l: '🟠 Claude' },
+        { k: 'daylight', l: '☀️ Light' },
+        { k: 'claude-light', l: '📜 Cream' },
+      ].map((x) => btn.cb(`${s.theme === x.k ? '✓ ' : ''}${x.l}`, `st:theme:${x.k}`, s.theme === x.k ? 'success' : 'primary')),
       ...s.muted.slice(0, 4).map((n, i) => [btn.cb(`🔔 Unmute ${n}`, `um:${i}`, 'danger')]),
       [btn.cb('✅ Mark All Read', 'st:read', 'primary'), btn.cb('🧹 Clear Inbox', 'st:clr', 'danger')],
-      [...(appBtn ? [appBtn] : []), btn.cb('⬅️ Panel', 'qp')]
+      [...(appBtn ? [appBtn] : []), btn.cb('⬅️ Panel', 'qp', 'primary')]
     );
     return { text, markup };
   }
@@ -412,7 +421,7 @@ export function createBot() {
     const markup = rows(
       [btn.cb(`${pref === -1 ? '✅ ' : '🎲 '}Auto-Random (সব ডোমেইন)`, 'gs:-1', pref === -1 ? 'success' : 'primary')],
       ...config.domains.map((d, i) => [btn.cb(`${pref === i ? '✅ ' : '🌐 '}${d}`, `gs:${i}`, pref === i ? 'success' : 'primary')]),
-      [btn.cb('⬅️ Generate Mail', 'gn')]
+      [btn.cb('⬅️ Generate Mail', 'gn', 'primary')]
     );
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
   }
@@ -450,7 +459,7 @@ export function createBot() {
   bot.hears('🎯 Custom', (ctx) => askName(ctx, pickDomain(ctx.from.id)));
   bot.callbackQuery(/^cn:(\w+)$/, (ctx) => sendGen(ctx, true));
 
-  // ---------- labels ----------
+  // ---------- labels & address rename ----------
   bot.callbackQuery(/^rl:(\w*):(\w*)$/, async (ctx) => {
     let rec = ctx.match[1] && ctx.match[1] !== 'x' ? store.getAddressById(ctx.match[1]) : null;
     if (!rec && ctx.match[2]) {
@@ -458,8 +467,20 @@ export function createBot() {
       if (m && m.owner === String(ctx.from.id)) rec = store.ensureAddress(m.owner, m.to);
     }
     if (!rec || rec.owner !== String(ctx.from.id)) return ctx.answerCallbackQuery({ text: 'এই অ্যাড্রেসটি আপনার নয়', show_alert: true });
-    pending.set(ctx.from.id, { type: 'label', id: rec.id });
-    await ctx.reply(`🏷 <code>${esc(rec.addr)}</code>\nএর জন্য একটি লেবেল লিখুন (যেমন: Netflix, Dev):`, { ...HTML, reply_markup: rows([cancelRow]) });
+    await delPrompt(ctx, pending.get(ctx.from.id));
+    const pm = await ctx.reply(`🏷 <code>${esc(rec.addr)}</code>\nএর জন্য একটি লেবেল লিখুন (যেমন: Netflix, Dev):`, { ...HTML, reply_markup: rows([cancelRow]) }).catch(() => null);
+    pending.set(ctx.from.id, { type: 'label', id: rec.id, promptMsgId: pm?.message_id });
+  });
+  bot.callbackQuery(/^ar:(\w+)$/, async (ctx) => {
+    const rec = store.getAddressById(ctx.match[1]);
+    if (!rec || rec.owner !== String(ctx.from.id)) return ctx.answerCallbackQuery({ text: 'এই অ্যাড্রেসটি আপনার নয়', show_alert: true });
+    await delPrompt(ctx, pending.get(ctx.from.id));
+    const domsText = config.domains.map((d) => `@${esc(d)}`).join(' · ');
+    const pm = await ctx.reply(
+      `✏️ <b>অ্যাড্রেস রিনেম / এডিট</b>\nবর্তমান: <code>${esc(rec.addr)}</code>\n\nনতুন নাম পাঠান (যেমন: <code>myname</code> অথবা <code>myname@${esc(config.domains[0])}</code>)\n<i>ডোমেইন: ${domsText}</i>`,
+      { ...HTML, reply_markup: rows([cancelRow]) }
+    ).catch(() => null);
+    pending.set(ctx.from.id, { type: 'addr_rename', id: rec.id, promptMsgId: pm?.message_id });
   });
 
   // ---------- messages ----------
@@ -484,7 +505,7 @@ export function createBot() {
     if (!m) return edit(ctx, '❌ মেসেজটি আর নেই।', undefined);
     store.markRead(m.id);
     await edit(ctx, fullMessageText(m), rows(
-      [m.html ? btn.cb('📎 HTML ফাইল', `fh:${m.id}`, 'primary') : null, btn.cb(m.pinned ? '📌 Pinned' : '📌 Pin', `pm:${m.id}`)],
+      [m.html ? btn.cb('📎 HTML ফাইল', `fh:${m.id}`, 'primary') : null, btn.cb(m.pinned ? '📌 Pinned' : '📌 Pin', `pm:${m.id}`, m.pinned ? 'success' : 'primary')],
       [m.otp ? btn.copy(`🔒 ${m.otp}`, m.otp, 'success') : null],
       [btn.cb('⬅️ Back', `mm:${m.id}`, 'primary'), btn.cb('🗑 Delete', `dm:${m.id}`, 'danger')]
     ));
@@ -495,7 +516,7 @@ export function createBot() {
     store.pinMessage(m.owner, m.id, !m.pinned);
     await ctx.answerCallbackQuery({ text: m.pinned ? '📌 পিন করা হয়েছে' : '📌 আনপিন করা হয়েছে' });
     await edit(ctx, fullMessageText(m), rows(
-      [m.html ? btn.cb('📎 HTML ফাইল', `fh:${m.id}`, 'primary') : null, btn.cb(m.pinned ? '📌 Pinned' : '📌 Pin', `pm:${m.id}`)],
+      [m.html ? btn.cb('📎 HTML ফাইল', `fh:${m.id}`, 'primary') : null, btn.cb(m.pinned ? '📌 Pinned' : '📌 Pin', `pm:${m.id}`, m.pinned ? 'success' : 'primary')],
       [m.otp ? btn.copy(`🔒 ${m.otp}`, m.otp, 'success') : null],
       [btn.cb('⬅️ Back', `mm:${m.id}`, 'primary'), btn.cb('🗑 Delete', `dm:${m.id}`, 'danger')]
     ));
@@ -521,13 +542,13 @@ export function createBot() {
     const headTitle = query ? `Inbox: "${query}"` : 'Inbox';
     const text = head('📬', headTitle) + (all.length ? `মোট <b>${all.length}</b> · অপঠিত <b>${unread}</b>` : '📭 এখনো কোনো মেসেজ আসেনি।\n<i>/gen দিয়ে মেইল নিয়ে ব্যবহার করুন।</i>');
     const list = page.map((m) => [
-      btn.cb(`${m.read ? '' : '🔵 '}${m.service.icon} ${m.service.name} · ${(m.otp || m.purpose).slice(0, 22)}  ${fmtTime(m.date)}`.slice(0, 60), `mo:${m.id}`, m.read ? undefined : 'primary'),
+      btn.cb(`${m.read ? '' : '🔵 '}${m.service.icon} ${m.service.name} · ${(m.otp || m.purpose).slice(0, 22)}  ${fmtTime(m.date)}`.slice(0, 60), `mo:${m.id}`, m.read ? 'primary' : 'success'),
     ]);
     const nav = [];
-    if (offset > 0) nav.push(btn.cb('⬅️ Prev', `ib:${Math.max(0, offset - 8)}`));
-    if (offset + 8 < all.length) nav.push(btn.cb('Next ➡️', `ib:${offset + 8}`));
+    if (offset > 0) nav.push(btn.cb('⬅️ Prev', `ib:${Math.max(0, offset - 8)}`, 'primary'));
+    if (offset + 8 < all.length) nav.push(btn.cb('Next ➡️', `ib:${offset + 8}`, 'primary'));
     const appBtn = btn.app('📱 Mini App', '', 'success');
-    const markup = rows(...list, nav, [btn.cb('🔄 Refresh', `ib:${offset}`, 'success'), btn.cb('✅ সব পঠিত', `ra:${offset}`, 'primary'), btn.cb('🏠', 'qp')], ...(appBtn ? [[appBtn]] : []));
+    const markup = rows(...list, nav, [btn.cb('🔄 Refresh', `ib:${offset}`, 'success'), btn.cb('✅ সব পঠিত', `ra:${offset}`, 'primary'), btn.cb('🏠', 'qp', 'primary')], ...(appBtn ? [[appBtn]] : []));
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
   }
   bot.command('inbox', (ctx) => inbox(ctx, 0, false, String(ctx.match || '').trim()));
@@ -545,7 +566,7 @@ export function createBot() {
     const text = head('📮', 'Active Addresses') + (list.length ? 'একটিতে ট্যাপ করে ম্যানেজ করুন:' : 'এখনো কোনো অ্যাড্রেস নেই। /gen চাপুন।');
     const markup = rows(
       ...list.map((a) => [btn.cb(`${a.pinned ? '★ ' : '📧 '}${a.label ? `${a.label} · ` : ''}${a.addr}`.slice(0, 60), `av:${a.id}`, 'primary')]),
-      [btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('🌐 Domain', 'gd')]
+      [btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('🌐 Domain', 'gd', 'primary'), btn.cb('🏠 Panel', 'qp', 'primary')]
     );
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
   }
@@ -555,8 +576,9 @@ export function createBot() {
     const a = store.getAddressById(ctx.match[1]);
     if (!a || a.owner !== String(ctx.from.id)) return edit(ctx, '❌ পাওয়া যায়নি।', undefined);
     await edit(ctx, head('📧', 'Address') + `<code>${esc(a.addr)}</code>${a.label ? `\n🏷 <i>${esc(a.label)}</i>` : ''}`, rows(
-      [btn.copy('📋 Copy', a.addr, 'success'), btn.cb(a.pinned ? '★ Pinned' : '☆ Pin', `ap:${a.id}`, 'primary'), btn.cb('🏷 Label', `rl:${a.id}:`)],
-      [btn.cb('⏳ TTL', `gt:${a.id}`), btn.cb('🗑 Delete', `ad:${a.id}`, 'danger'), btn.cb('⬅️ Back', 'as')]
+      [btn.copy('📋 Copy', a.addr, 'success'), btn.cb(a.pinned ? '★ Pinned' : '☆ Pin', `ap:${a.id}`, a.pinned ? 'success' : 'primary'), btn.cb('✏️ Rename', `ar:${a.id}`, 'primary')],
+      [btn.cb('🏷 Label', `rl:${a.id}:`, 'primary'), btn.cb('⏳ TTL', `gt:${a.id}`, 'primary'), btn.cb('🗑 Delete', `ad:${a.id}`, 'danger')],
+      [btn.cb('⬅️ Back', 'as', 'primary')]
     ));
   });
   bot.callbackQuery(/^ap:(\w+)$/, async (ctx) => {
@@ -578,20 +600,20 @@ export function createBot() {
     const list = store.listGmail(ctx.from.id);
     const stateIcon = (g) => (g.status === 'expired' ? '🔴' : '🟢');
     const text = head('📧', 'Gmail Connect & Live OTP') + (list.length ? list.map((g) => `${stateIcon(g)} <code>${esc(g.email)}</code>`).join('\n') : 'কোনো Gmail যুক্ত নেই।') + '\n\n👇 <b>যেকোনো একটি পদ্ধতিতে কানেক্ট করুন:</b>';
-    const appBtn = btn.app('🚀 Open Hub (Mini App)', '?tab=hub', 'primary');
+    const appBtn = btn.app('🚀 Open Hub (Mini App)', '?tab=hub', 'success');
     const markup = rows(
       [gmailEnabled() ? btn.url('🟢 Continue with Gmail', gmailAuthUrl(ctx.from.id), 'success') : btn.cb('🟢 Continue with Gmail', 'ga', 'success')],
       [btn.cb('📱 Email + Password (2FA)', 'gm:phone', 'primary'), btn.cb('🔑 App Password', 'gm:app', 'primary')],
       ...list.map((g, i) => [btn.cb(`🗑 ${g.email}`, `gx:${i}`, 'danger')]),
-      ...(appBtn ? [[appBtn]] : [])
+      [...(appBtn ? [appBtn] : []), btn.cb('🏠 Panel', 'qp', 'primary')]
     );
     return asEdit ? edit(ctx, text, markup) : ctx.reply(text, { ...HTML, reply_markup: markup });
   }
   bot.command('gmail', (ctx) => gmailHome(ctx));
   bot.callbackQuery('gm', (ctx) => gmailHome(ctx, true));
   bot.callbackQuery('ga', async (ctx) => {
-    if (gmailEnabled()) return edit(ctx, head('🟢', 'Continue with Gmail') + 'নিচের বাটনে ট্যাপ করে Google অ্যাকাউন্ট সিলেক্ট করুন:', rows([btn.url('🟢 Continue with Gmail', gmailAuthUrl(ctx.from.id), 'success')], [btn.cb('⬅️ Back', 'gm')]));
-    return edit(ctx, head('📱', 'Gmail লগইন') + 'নিচের বাটন থেকে App Password বা Password দিয়ে যুক্ত করুন:', rows([btn.cb('📱 Email + Password (2FA)', 'gm:phone', 'primary')], [btn.cb('🔑 Email + App Password', 'gm:app', 'success')], [btn.cb('⬅️ Back', 'gm')]));
+    if (gmailEnabled()) return edit(ctx, head('🟢', 'Continue with Gmail') + 'নিচের বাটনে ট্যাপ করে Google অ্যাকাউন্ট সিলেক্ট করুন:', rows([btn.url('🟢 Continue with Gmail', gmailAuthUrl(ctx.from.id), 'success')], [btn.cb('⬅️ Back', 'gm', 'primary')]));
+    return edit(ctx, head('📱', 'Gmail লগইন') + 'নিচের বাটন থেকে App Password বা Password দিয়ে যুক্ত করুন:', rows([btn.cb('📱 Email + Password (2FA)', 'gm:phone', 'primary')], [btn.cb('🔑 Email + App Password', 'gm:app', 'success')], [btn.cb('⬅️ Back', 'gm', 'primary')]));
   });
   bot.callbackQuery('gm:phone', async (ctx) => { pending.set(ctx.from.id, { type: 'gm_email', mode: 'phone' }); await edit(ctx, head('📱', 'ধাপ ১/৩: আপনার Gmail ঠিকানা') + 'আপনার <b>Gmail অ্যাড্রেসটি</b> লিখে পাঠান (যেমন: <code>example@gmail.com</code>):', rows([cancelRow])); });
   bot.callbackQuery('gm:app', async (ctx) => { pending.set(ctx.from.id, { type: 'gm_email', mode: 'app_pass' }); await edit(ctx, head('🔑', 'ধাপ ১/২: আপনার Gmail ঠিকানা') + 'আপনার <b>Gmail অ্যাড্রেসটি</b> লিখে পাঠান (যেমন: <code>example@gmail.com</code>):', rows([cancelRow])); });
@@ -651,6 +673,16 @@ export function createBot() {
     await ctx.answerCallbackQuery({ text: cur?.pinned ? '☆ আনপিন হয়েছে' : '★ টপে পিন হয়েছে' });
     await showTotpBot(ctx, true);
   });
+  bot.callbackQuery(/^tf:ed:(\w+)$/, async (ctx) => {
+    const cur = store.listTotp(ctx.from.id).find((x) => x.id === ctx.match[1]);
+    if (!cur) return ctx.answerCallbackQuery({ text: 'এন্ট্রি পাওয়া যায়নি', show_alert: true });
+    await delPrompt(ctx, pending.get(ctx.from.id));
+    const pm = await ctx.reply(
+      `✏️ <b>2FA রিনেম / এডিট</b>\nবর্তমান: <b>${esc(cur.name)}</b>${cur.issuer ? ` (${esc(cur.issuer)})` : ''}\n\nনতুন নাম লিখুন অথবা <code>Name | Issuer</code> পাঠান:`,
+      { ...HTML, reply_markup: rows([cancelRow]) }
+    ).catch(() => null);
+    pending.set(ctx.from.id, { type: 'totp_edit', id: cur.id, promptMsgId: pm?.message_id });
+  });
   bot.callbackQuery(/^tf:del:(\w+)$/, async (ctx) => {
     store.removeTotp(ctx.from.id, ctx.match[1]);
     await ctx.answerCallbackQuery({ text: '🗑 2FA মুছে ফেলা হয়েছে' });
@@ -705,7 +737,7 @@ export function createBot() {
       await ctx.answerCallbackQuery({ text: '📸 স্ক্রিনশট নেওয়া হচ্ছে…' });
       const r = await performAuto2faAction(jobId, { action: 'snap' });
       if (r.ok && r.job?.screenshot) {
-        await sendBotPhoto(ctx.from.id, r.job.screenshot, `📸 <b>লাইভ ব্রাউজার (${esc(r.job.email)})</b>`, rows([btn.cb('✅ কন্টিনিউ', `a2fa:cont:${jobId}`, 'success'), btn.cb('🔄 রিফ্রেশ', `a2fa:snap:${jobId}`)], [btn.cb('🛑 বাতিল', `a2fa:stop:${jobId}`, 'danger')]));
+        await sendBotPhoto(ctx.from.id, r.job.screenshot, `📸 <b>লাইভ ব্রাউজার (${esc(r.job.email)})</b>`, rows([btn.cb('✅ কন্টিনিউ', `a2fa:cont:${jobId}`, 'success'), btn.cb('🔄 রিফ্রেশ', `a2fa:snap:${jobId}`, 'primary')], [btn.cb('🛑 বাতিল', `a2fa:stop:${jobId}`, 'danger')]));
       }
     }
   });
@@ -764,9 +796,9 @@ export function createBot() {
     const off = Number(ctx.match[1]);
     const all = store.listUsers().sort((a, b) => b.lastSeen - a.lastSeen);
     const nav = [];
-    if (off > 0) nav.push(btn.cb('⬅️', `am:users:${off - 8}`));
-    if (off + 8 < all.length) nav.push(btn.cb('➡️', `am:users:${off + 8}`));
-    await edit(ctx, head('👥', 'Users') + `মোট ${all.length}`, rows(...all.slice(off, off + 8).map((u) => [btn.cb(`${stIcon[u.status]} ${u.name}`.slice(0, 50), `am:u:${u.id}`, u.status === 'banned' ? 'danger' : undefined)]), nav, [btn.cb('⬅️ Back', 'am:home')]));
+    if (off > 0) nav.push(btn.cb('⬅️ Prev', `am:users:${off - 8}`, 'primary'));
+    if (off + 8 < all.length) nav.push(btn.cb('Next ➡️', `am:users:${off + 8}`, 'primary'));
+    await edit(ctx, head('👥', 'Users') + `মোট ${all.length}`, rows(...all.slice(off, off + 8).map((u) => [btn.cb(`${stIcon[u.status]} ${u.name}`.slice(0, 50), `am:u:${u.id}`, u.status === 'banned' ? 'danger' : u.status === 'pending' ? 'success' : 'primary')]), nav, [btn.cb('⬅️ Back', 'am:home', 'primary')]));
   });
   bot.callbackQuery(/^am:u:(\d+)$/, async (ctx) => {
     if (!adminOnly(ctx)) return;
@@ -774,13 +806,13 @@ export function createBot() {
     if (!u) return;
     await edit(ctx, head('👤', u.name) + `🆔 <code>${u.id}</code>${u.username ? `\n@${esc(u.username)}` : ''}\nStatus: ${stIcon[u.status]} <b>${u.status}</b>\n📮 ${store.listAddresses(u.id).length} addresses`, rows(
       [u.status === 'banned' ? btn.cb('♻️ Unban', `am:ok:${u.id}`, 'success') : btn.cb('⛔ Ban', `am:ban:${u.id}`, 'danger')],
-      [btn.cb('⬅️ Back', 'am:users:0')]
+      [btn.cb('⬅️ Back', 'am:users:0', 'primary')]
     ));
   });
   bot.callbackQuery('am:pend', async (ctx) => {
     if (!adminOnly(ctx)) return;
     const p = store.listUsers().filter((u) => u.status === 'pending');
-    await edit(ctx, head('⏳', 'Pending Requests') + (p.length ? '' : 'কোনো পেন্ডিং রিকোয়েস্ট নেই।'), rows(...p.map((u) => [btn.cb(`✅ ${u.name}`.slice(0, 30), `am:ok:${u.id}`, 'success'), btn.cb('⛔', `am:no:${u.id}`, 'danger')]), [btn.cb('⬅️ Back', 'am:home')]));
+    await edit(ctx, head('⏳', 'Pending Requests') + (p.length ? '' : 'কোনো পেন্ডিং রিকোয়েস্ট নেই।'), rows(...p.map((u) => [btn.cb(`✅ ${u.name}`.slice(0, 30), `am:ok:${u.id}`, 'success'), btn.cb('⛔', `am:no:${u.id}`, 'danger')]), [btn.cb('⬅️ Back', 'am:home', 'primary')]));
   });
   bot.callbackQuery(/^am:(ok|no|ban):(\d+)$/, async (ctx) => {
     if (!adminOnly(ctx)) return;
@@ -918,9 +950,42 @@ export function createBot() {
     }
 
     if (p.type === 'label') {
+      await delPrompt(ctx, p);
+      await delUserMsg(ctx);
       pending.delete(ctx.from.id);
       const a = store.setLabel(p.id, text);
-      return ctx.reply(a ? `🏷 লেবেল সেট হয়েছে: <b>${esc(a.label)}</b>` : '❌ অ্যাড্রেস পাওয়া যায়নি।', HTML);
+      if (!a) return ctx.reply('❌ অ্যাড্রেস পাওয়া যায়নি।', HTML);
+      return ctx.reply(genCard(a), { ...HTML, reply_markup: genKeyboard(a, { multiDomain: config.domains.length > 1 }) });
+    }
+
+    if (p.type === 'addr_rename') {
+      const [rawLocal, rawDom] = text.split('@');
+      const local = cleanName(rawLocal);
+      const dom = rawDom && config.domains.includes(rawDom.trim().toLowerCase()) ? rawDom.trim().toLowerCase() : undefined;
+      const r = store.renameAddress(ctx.from.id, p.id, { local, domain: dom });
+      if (r.error === 'invalid_name') return ctx.reply('⚠️ কমপক্ষে ৩টি বৈধ অক্ষর দিন (a-z, 0-9, . _ -)', { ...HTML, reply_markup: rows([cancelRow]) });
+      if (r.error === 'taken') return ctx.reply('⚠️ এই নামটি অন্য কেউ ব্যবহার করছে। অন্য নাম দিন।', { ...HTML, reply_markup: rows([cancelRow]) });
+      if (r.error) { pending.delete(ctx.from.id); return ctx.reply('❌ অ্যাড্রেস রিনেম করা যায়নি।', HTML); }
+      await delPrompt(ctx, p);
+      await delUserMsg(ctx);
+      pending.delete(ctx.from.id);
+      const rec = r.address;
+      const s = await ctx.reply(genCard(rec), { ...HTML, reply_markup: genKeyboard(rec, { multiDomain: config.domains.length > 1 }) }).catch(() => null);
+      if (s) store.setActiveCard(ctx.from.id, s.chat.id, s.message_id, rec.addr, false);
+      return;
+    }
+
+    if (p.type === 'totp_edit') {
+      const parts = text.split('|').map((s) => s.trim());
+      const name = parts[0] || '';
+      const issuer = parts[1] !== undefined ? parts[1] : undefined;
+      if (!name) return ctx.reply('⚠️ সঠিক নাম দিন।', { ...HTML, reply_markup: rows([cancelRow]) });
+      const upd = store.updateTotp(ctx.from.id, p.id, { name, ...(issuer !== undefined ? { issuer } : {}) });
+      await delPrompt(ctx, p);
+      await delUserMsg(ctx);
+      pending.delete(ctx.from.id);
+      if (!upd) return ctx.reply('❌ 2FA এন্ট্রি পাওয়া যায়নি।', HTML);
+      return showTotpBot(ctx, false);
     }
 
     if (p.type === 'broadcast' && isAdmin(ctx.from.id)) {
@@ -953,9 +1018,9 @@ export async function startBot(bot) {
     { command: 'help', description: '💡 Help & Commands' },
   ]).catch(() => {});
 
-  if (config.adminId && !store.getMeta('v4MenuSent')) {
-    store.setMeta('v4MenuSent', true);
-    bot.api.sendMessage(config.adminId, `⚡ <b>${esc(config.brand)} v4 Online</b>`, { ...HTML, reply_markup: mainMenu(true) }).catch(() => {});
+  if (config.adminId && !store.getMeta('menuV6Sent')) {
+    store.setMeta('menuV6Sent', true);
+    bot.api.sendMessage(config.adminId, `⚡ <b>${esc(config.brand)} Studio Active</b>`, { ...HTML, reply_markup: mainMenu(true) }).catch(() => {});
   }
   if (webappUrl()) {
     await bot.api.setChatMenuButton({ menu_button: { type: 'web_app', text: '🚀 Mail App', web_app: { url: webappUrl() } } }).catch((e) => console.warn('menu button:', e.message));

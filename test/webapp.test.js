@@ -65,4 +65,22 @@ test('webapp assets are modular, v17.js removed, and Telegram Mini App gate is e
   assert.match(css, /\[data-skin="bento"\]/);
   assert.match(css, /\[data-theme="claude"\]/);
   assert.match(css, /\[data-theme="claude-light"\]/);
+
+  const themeDecls = [...css.matchAll(/^\[data-theme="([^"]+)"\]\s*\{/gm)].map((m) => m[1]);
+  assert.deepEqual(themeDecls, ['aurora', 'claude', 'daylight', 'claude-light']);
+  assert.match(css, /\.theme-card\b/);
+  assert.match(css, /\.ic-pill\b/);
+  assert.match(css, /\.view\.view-enter\b/);
+
+  const idxHtml = fs.readFileSync(new URL('index.html', webDir), 'utf8');
+  for (const sym of ['i-clock', 'i-tag', 'i-bell-off', 'i-mail-open', 'i-moon', 'i-sun', 'i-note', 'i-send']) {
+    assert.ok(idxHtml.includes(`id="${sym}"`), `missing symbol ${sym}`);
+  }
+  const symbolIds = [...idxHtml.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(symbolIds.length, new Set(symbolIds).size, 'duplicate SVG symbol IDs');
+
+  const appJs = fs.readFileSync(new URL('app.js', webDir), 'utf8');
+  assert.doesNotMatch(appJs, /\b(prompt|confirm)\(/);
+  assert.match(appJs, /openEditAddrSheet/);
+  assert.match(appJs, /syncKeyedList/);
 });

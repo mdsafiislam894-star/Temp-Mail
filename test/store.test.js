@@ -128,3 +128,41 @@ test('store TOTP vault supports pin, bulk import, algo/digits, and backup restor
   assert.equal(stBento.skin, 'bento');
   assert.equal(stBento.theme, 'aurora');
 });
+
+test('store enforces 2 dark + 2 light themes and supports renameAddress, message notes/unread, and gmail labels', () => {
+  store.touchUser({ id: 'u200', first_name: 'U200' }, 'approved');
+  assert.deepEqual(store.THEMES, ['aurora', 'claude', 'daylight', 'claude-light']);
+  assert.equal(store.setSettings('u200', { theme: 'midnight' }).theme, 'aurora');
+  assert.equal(store.setSettings('u200', { theme: 'amber' }).theme, 'claude');
+  assert.equal(store.setSettings('u200', { theme: 'sky' }).theme, 'daylight');
+  assert.equal(store.setSettings('u200', { theme: 'claude-light' }).theme, 'claude-light');
+
+  const a1 = store.createAddress('u200', 'alpha1@safix.tech', 'First', 60);
+  const a2 = store.createAddress('u200', 'taken1@safix.tech', 'Second', 60);
+  store.addMessage({ id: 'm_mig_1', owner: 'u200', to: 'alpha1@safix.tech', from: 'noreply@x.com', subject: 'Code 123456', date: Date.now(), read: true });
+
+  const conflict = store.renameAddress('u200', a1.id, { local: 'taken1', domain: 'safix.tech' });
+  assert.equal(conflict.error, 'taken');
+
+  const badDom = store.renameAddress('u200', a1.id, { local: 'beta1', domain: 'evil.example' });
+  assert.equal(badDom.error, 'invalid_domain');
+
+  const renamed = store.renameAddress('u200', a1.id, { local: 'beta_22', domain: 'safix.tech', label: 'Renamed', ttl: 0, migrateMessages: true });
+  assert.equal(renamed.ok, true);
+  assert.equal(renamed.oldAddr, 'alpha1@safix.tech');
+  assert.equal(renamed.address.addr, 'beta_22@safix.tech');
+  assert.equal(renamed.address.label, 'Renamed');
+  assert.equal(renamed.address.ttl, 0);
+  assert.equal(store.getAddress('alpha1@safix.tech'), null);
+  assert.equal(store.getAddress('beta_22@safix.tech').id, a1.id);
+  assert.equal(store.getMessage('m_mig_1').to, 'beta_22@safix.tech');
+
+  const upd = store.updateMessage('u200', 'm_mig_1', { read: false, note: 'AWS Login OTP' });
+  assert.equal(upd.read, false);
+  assert.equal(upd.note, 'AWS Login OTP');
+  assert.ok(a2.id);
+
+  store.upsertGmail({ owner: 'u200', email: 'vaultuser@gmail.com', mode: 'app_pass', password: 'pw' });
+  const gUpd = store.setGmailLabel('u200', 'vaultuser@gmail.com', 'Personal Vault');
+  assert.equal(gUpd.label, 'Personal Vault');
+});

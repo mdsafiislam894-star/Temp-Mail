@@ -48,4 +48,17 @@ test('totpVaultView renders formatted codes and native copy_text buttons', () =>
   assert.match(view.text, /492 817/);
   assert.match(view.text, /GitHub/);
   assert.equal(view.markup.inline_keyboard[0][0].copy_text.text, '492817');
+  assert.equal(view.markup.inline_keyboard[0][0].style, 'success');
+  assert.ok(view.markup.inline_keyboard[0].some((b) => b.callback_data === 'tf:ed:t1' && b.style === 'primary'));
+});
+
+test('inline keyboards use colorful styles and bot mainMenu keeps only 3 buttons', async () => {
+  const gk = genKeyboard({ id: 'a9', addr: 'neo9@safix.tech', domain: 'safix.tech', ttl: 0, pinned: false }).inline_keyboard.flat();
+  assert.ok(gk.some((b) => b.copy_text?.text === 'neo9@safix.tech' && b.style === 'success'));
+  assert.ok(gk.some((b) => b.callback_data === 'ar:a9' && b.style === 'primary'));
+
+  const botSrc = (await import('fs')).readFileSync(new URL('../src/bot.js', import.meta.url), 'utf8');
+  const menuBlock = botSrc.match(/const mainMenu = [\s\S]*?\n\};/)?.[0] || '';
+  assert.match(menuBlock, /⚡ Instant Mail[\s\S]*🎯 Custom[\s\S]*👑 Admin/);
+  assert.doesNotMatch(menuBlock, /2FA Vault|📬 Inbox|Domain|Mail App|Settings/);
 });

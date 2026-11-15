@@ -127,3 +127,33 @@ test('/api/domain, /api/addresses pin/domain/ttl, /api/totp bulk, /api/backup, a
   assert.ok(Array.isArray(bkp.body.backup.totp));
   assert.ok(bkp.body.backup.totp.length >= 1);
 });
+
+test('PATCH /api/addresses rename, PATCH /api/messages/:id note/unread, and PATCH /api/gmail label work end-to-end', async () => {
+  const c1 = await apiReq('/api/addresses', { method: 'POST', body: JSON.stringify({ name: 'renbox1', domain: 'safix.tech', ttl: 60 }) });
+  const c2 = await apiReq('/api/addresses', { method: 'POST', body: JSON.stringify({ name: 'renbox2', domain: 'safix.tech', ttl: 60 }) });
+  assert.equal(c1.status, 200);
+  assert.equal(c2.status, 200);
+  const owner = store.getAddress(c1.body.address.addr).owner;
+
+  store.addMessage({ id: 'srv_msg_1', owner, to: 'renbox1@safix.tech', from: 'bot@github.com', subject: 'Code 554433', date: Date.now(), read: true, otp: '554433' });
+
+  const clash = await apiReq('/api/addresses', { method: 'PATCH', body: JSON.stringify({ id: c1.body.address.id, local: 'renbox2', domain: 'safix.tech' }) });
+  assert.equal(clash.status, 409);
+
+  const ren = await apiReq('/api/addresses', { method: 'PATCH', body: JSON.stringify({ id: c1.body.address.id, local: 'renamed99', domain: 'safix.tech', label: 'DevBox', ttl: 0, migrateMessages: true }) });
+  assert.equal(ren.status, 200);
+  assert.equal(ren.body.address.addr, 'renamed99@safix.tech');
+  assert.equal(ren.body.address.label, 'DevBox');
+  assert.equal(store.getMessage('srv_msg_1').to, 'renamed99@safix.tech');
+
+  const msgUpd = await apiReq('/api/messages/srv_msg_1', { method: 'PATCH', body: JSON.stringify({ read: false, note: 'Keep for deploy', pinned: true }) });
+  assert.equal(msgUpd.status, 200);
+  assert.equal(msgUpd.body.message.read, false);
+  assert.equal(msgUpd.body.message.note, 'Keep for deploy');
+  assert.equal(msgUpd.body.message.pinned, true);
+
+  store.upsertGmail({ owner, email: 'testuser99@gmail.com', mode: 'app_pass', password: 'abc' });
+  const gmLbl = await apiReq('/api/gmail', { method: 'PATCH', body: JSON.stringify({ email: 'testuser99@gmail.com', label: 'Primary Mail' }) });
+  assert.equal(gmLbl.status, 200);
+  assert.equal(gmLbl.body.account.label, 'Primary Mail');
+});
