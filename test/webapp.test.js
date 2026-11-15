@@ -51,8 +51,18 @@ test('webapp assets are modular, v17.js removed, and Telegram Mini App gate is e
   const html = fs.readFileSync(new URL('index.html', webDir), 'utf8');
   assert.equal(html.includes('v17.js'), false);
   assert.match(html, /id="tgGate"/);
+  assert.match(html, /id="auroraBg"/);
+  assert.match(html, /id="navPill"/);
   assert.match(html, /href="\/app\/styles\.css/);
   assert.match(html, /src="\/app\/app\.js/);
   assert.ok(fs.existsSync(new URL('styles.css', webDir)));
   assert.ok(fs.existsSync(new URL('app.js', webDir)));
+
+  const css = fs.readFileSync(new URL('styles.css', webDir), 'utf8');
+  assert.match(css, /\[data-skin="glass"\]/);
+  assert.match(css, /\[data-skin="claude"\]/);
+  assert.match(css, /\[data-skin="mix"\]/);
+  assert.match(css, /\[data-skin="bento"\]/);
+  assert.match(css, /\[data-theme="claude"\]/);
+  assert.match(css, /\[data-theme="claude-light"\]/);
 });

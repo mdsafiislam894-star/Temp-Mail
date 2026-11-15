@@ -36,14 +36,15 @@ const S = {
     notify: true,
     otpOnly: false,
     style: 'smart',
-    theme: 'midnight',
-    skin: 'minimal',
+    theme: 'aurora',
+    skin: 'glass',
     ttl: 0,
     muted: [],
     autoCopy: true,
     autoMarkReadOnCopy: false,
     sound: true,
     compact: false,
+    liteBlur: false,
     otpFormat: 'spaced',
   },
   addrs: [],
@@ -169,12 +170,23 @@ async function api(path, opts = {}) {
   return data;
 }
 
+function resolveTheme(name) {
+  if (name === 'auto') {
+    const isLight = tg?.colorScheme === 'light' || (!tg?.colorScheme && window.matchMedia?.('(prefers-color-scheme: light)').matches);
+    return isLight ? 'daylight' : 'aurora';
+  }
+  return name || 'aurora';
+}
+
 function applyTheme() {
   const st = S.settings;
-  document.documentElement.setAttribute('data-theme', st.theme || 'midnight');
-  document.documentElement.setAttribute('data-skin', st.skin || 'minimal');
+  const actualTheme = resolveTheme(st.theme);
+  document.documentElement.setAttribute('data-theme', actualTheme);
+  document.documentElement.setAttribute('data-skin', st.skin || 'glass');
+  if (st.liteBlur) document.documentElement.setAttribute('data-lite', '1');
+  else document.documentElement.removeAttribute('data-lite');
   document.body.classList.toggle('compact', Boolean(st.compact));
-  lsSet('savedSettings', JSON.stringify(st));
+  lsSet('savedSettings', JSON.stringify({ ...st, theme: actualTheme }));
   try {
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
     if (bg && tg) {
@@ -182,6 +194,7 @@ function applyTheme() {
       tg.setBackgroundColor?.(bg);
     }
   } catch {}
+  requestAnimationFrame(updateNavPill);
 }
 
 function relTime(ts) {
@@ -473,10 +486,23 @@ function tickTotpDom() {
 setInterval(tickTotpDom, 200);
 
 // ---------- Navigation & View Renderers ----------
+function updateNavPill() {
+  const nav = $('#bottomNav');
+  const pill = $('#navPill');
+  if (!nav || !pill || nav.hidden) return;
+  const on = nav.querySelector('.nav-item.on');
+  if (!on || on.offsetWidth === 0) { pill.classList.remove('ready'); return; }
+  pill.style.width = `${on.offsetWidth}px`;
+  pill.style.transform = `translateX(${on.offsetLeft}px)`;
+  pill.classList.add('ready');
+}
+window.addEventListener('resize', () => requestAnimationFrame(updateNavPill));
+
 function setTab(tab) {
-  if (tab === 'admin' && !S.user?.admin) tab = 'totp';
+  if (tab === 'admin' && !S.user?.admin) tab = 'inbox';
   S.tab = tab;
   $$('.nav-item').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+  requestAnimationFrame(updateNavPill);
   renderView();
   if (tab === 'totp') loadTotp();
   if (tab === 'hub') {
@@ -844,19 +870,32 @@ function renderHubAuto2fa() {
 function renderSettings() {
   const s = S.settings;
   const themes = [
-    { id: 'midnight', l: 'Midnight', c: '#6366f1' },
-    { id: 'obsidian', l: 'Obsidian', c: '#14b8a6' },
-    { id: 'slate', l: 'Slate', c: '#4f7cff' },
-    { id: 'daylight', l: 'Daylight', c: '#f8fafc' },
-    { id: 'emerald', l: 'Emerald', c: '#10b981' },
-    { id: 'cobalt', l: 'Cobalt', c: '#3b82f6' },
-    { id: 'amber', l: 'Amber', c: '#f59e0b' },
-    { id: 'crimson', l: 'Crimson', c: '#f43f5e' },
+    { id: 'aurora', l: 'Aurora', c: 'linear-gradient(135deg,#6d4aff,#00c2ff)' },
+    { id: 'claude', l: 'Claude Orange', c: 'linear-gradient(135deg,#d97757,#f09e7c)' },
+    { id: 'claude-light', l: 'Claude Cream', c: 'linear-gradient(135deg,#f5f2eb,#cc5d38)' },
+    { id: 'midnight', l: 'Midnight', c: 'linear-gradient(135deg,#6366f1,#38bdf8)' },
+    { id: 'obsidian', l: 'Obsidian Gold', c: 'linear-gradient(135deg,#0b0c10,#f5b942)' },
+    { id: 'ocean', l: 'Ocean', c: 'linear-gradient(135deg,#1d4ed8,#22d3ee)' },
+    { id: 'cobalt', l: 'Cobalt', c: 'linear-gradient(135deg,#2563eb,#60a5fa)' },
+    { id: 'emerald', l: 'Emerald', c: 'linear-gradient(135deg,#10b981,#a3e635)' },
+    { id: 'amber', l: 'Solar Amber', c: 'linear-gradient(135deg,#f59e0b,#fb7185)' },
+    { id: 'crimson', l: 'Crimson', c: 'linear-gradient(135deg,#f43f5e,#fb923c)' },
+    { id: 'cyber', l: 'Cyber Neon', c: 'linear-gradient(135deg,#00e5ff,#ff2bd6)' },
+    { id: 'nebula', l: 'Nebula', c: 'linear-gradient(135deg,#a855f7,#f472b6)' },
+    { id: 'nord', l: 'Nord Arctic', c: 'linear-gradient(135deg,#5e81ac,#88c0d0)' },
+    { id: 'daylight', l: 'Daylight', c: 'linear-gradient(135deg,#ffffff,#2563eb)' },
+    { id: 'sky', l: 'Sky Frost', c: 'linear-gradient(135deg,#eaf5ff,#0284c7)' },
+    { id: 'mint', l: 'Mint Leaf', c: 'linear-gradient(135deg,#eefaf4,#059669)' },
+    { id: 'blush', l: 'Blush Rose', c: 'linear-gradient(135deg,#fff2f6,#db2777)' },
+    { id: 'auto', l: 'Telegram Auto', c: 'conic-gradient(#6d4aff,#00c2ff,#f5f2eb,#d97757,#6d4aff)' },
   ];
   const skins = [
-    { id: 'minimal', l: 'Minimal' },
-    { id: 'obsidian', l: 'Glass' },
-    { id: 'editorial', l: 'Editorial' },
+    { id: 'glass', l: 'iPhone Glass', pv: 'pv-glass' },
+    { id: 'claude', l: 'Claude Studio', pv: 'pv-claude' },
+    { id: 'mix', l: 'Glass × Claude', pv: 'pv-mix' },
+    { id: 'bento', l: 'Spatial Bento', pv: 'pv-bento' },
+    { id: 'obsidian', l: 'OLED Craft', pv: 'pv-obsidian' },
+    { id: 'minimal', l: 'Minimal', pv: 'pv-minimal' },
   ];
   const toggle = (key, title, desc, val) => `
     <div class="toggle-row">
@@ -867,9 +906,23 @@ function renderSettings() {
   return `
   <section class="view">
     <div class="card stack">
-      <strong style="font-size:14px">ভিজ্যুয়াল স্টুডিও ও স্কিন</strong>
-      <div class="seg">
-        ${skins.map((sk) => `<button type="button" class="${s.skin === sk.id ? 'on' : ''}" data-act="setSkin" data-v="${sk.id}">${sk.l}</button>`).join('')}
+      <div class="row-between">
+        <strong style="font-size:14px">ডিজাইন স্কিন (UI Style)</strong>
+        <span class="badge accent">${esc(skins.find((x) => x.id === s.skin)?.l || s.skin)}</span>
+      </div>
+      <div class="skin-grid">
+        ${skins.map((sk) => `
+          <button type="button" class="skin-card ${s.skin === sk.id ? 'on' : ''}" data-act="setSkin" data-v="${sk.id}">
+            <div class="skin-pv ${sk.pv}"><u></u><u></u></div>
+            <span>${sk.l}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <div class="card stack">
+      <div class="row-between">
+        <strong style="font-size:14px">কালার থিম (${themes.length})</strong>
+        <span class="badge">${esc(themes.find((x) => x.id === s.theme)?.l || s.theme)}</span>
       </div>
       <div class="theme-grid">
         ${themes.map((t) => `
@@ -887,6 +940,7 @@ function renderSettings() {
       ${toggle('notify', 'টেলিগ্রাম বট নোটিফিকেশন', 'ইনকামিং মেইল চ্যাটেও সাথে সাথে পাঠাবে', s.notify)}
       ${toggle('otpOnly', 'শুধু OTP ও ভেরিফাই মেইল', 'অপ্রয়োজনীয় নিউজলেটার নোটিফিকেশন ফিল্টার করবে', s.otpOnly)}
       ${toggle('compact', 'কম্প্যাক্ট ডেনসিটি', 'এক স্ক্রিনে আরও বেশি মেইল ও 2FA কার্ড দেখাবে', s.compact)}
+      ${toggle('liteBlur', 'পারফরম্যান্স মোড (হালকা ব্লার)', 'পুরোনো ফোনে ১২০Hz আল্ট্রা-স্মুদ স্ক্রল ও ব্যাটারি সেভ', s.liteBlur)}
     </div>
 
     <div class="card stack">
@@ -1435,9 +1489,24 @@ async function handleAction(el, ev) {
   }
 
   // Settings & Backup
-  if (act === 'setSkin') { S.settings.skin = el.dataset.v; applyTheme(); renderView(); api('settings', { method: 'POST', body: { skin: S.settings.skin } }).catch(() => {}); return; }
-  if (act === 'setTheme') { S.settings.theme = el.dataset.v; applyTheme(); renderView(); api('settings', { method: 'POST', body: { theme: S.settings.theme } }).catch(() => {}); return; }
+  if (act === 'setSkin') {
+    hap('light');
+    S.settings.skin = el.dataset.v;
+    applyTheme();
+    renderView();
+    api('settings', { method: 'POST', body: { skin: S.settings.skin } }).catch(() => {});
+    return;
+  }
+  if (act === 'setTheme') {
+    hap('light');
+    S.settings.theme = el.dataset.v;
+    applyTheme();
+    renderView();
+    api('settings', { method: 'POST', body: { theme: S.settings.theme } }).catch(() => {});
+    return;
+  }
   if (act === 'toggleSetting') {
+    hap('light');
     const k = el.dataset.k;
     S.settings[k] = !S.settings[k];
     applyTheme();
@@ -1600,9 +1669,10 @@ async function init() {
     $('#brandName').textContent = S.brand;
     $('#brandLogo').textContent = S.brand.slice(0, 1).toUpperCase();
     if (S.user?.admin) $('#navAdmin').hidden = false;
-    else if (S.tab === 'admin') S.tab = 'totp';
+    else if (S.tab === 'admin') S.tab = 'inbox';
 
     applyTheme();
+    try { tg.onEvent?.('themeChanged', () => { if (S.settings.theme === 'auto') applyTheme(); }); } catch {}
     updateUnreadBadge();
     connectEvents();
     await precomputeTotpCodes();

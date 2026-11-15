@@ -208,29 +208,31 @@ export function setPrefDomain(id, idx) {
 }
 
 // ---------- settings ----------
-export const THEMES = ['midnight', 'slate', 'daylight', 'emerald', 'cobalt', 'amber', 'crimson', 'obsidian'];
+export const THEMES = [
+  'aurora', 'claude', 'claude-light', 'midnight', 'obsidian', 'ocean', 'cobalt',
+  'emerald', 'amber', 'crimson', 'rose', 'cyber', 'nebula', 'nord', 'daylight',
+  'sky', 'mint', 'blush', 'auto',
+];
 export const STYLES = ['smart', 'rich', 'compact'];
-export const SKINS = ['minimal', 'obsidian', 'editorial'];
+export const SKINS = ['glass', 'claude', 'mix', 'bento', 'obsidian', 'minimal', 'editorial'];
 export const TTLS = [0, 10, 60, 1440];
 
-const LEGACY_THEME_MAP = {
-  auto: 'midnight', aurora: 'midnight', cyber: 'midnight', nebula: 'midnight', claydark: 'obsidian',
-  ocean: 'cobalt', rose: 'crimson', pearl: 'daylight', sky: 'daylight', blush: 'daylight', mint: 'daylight', clay: 'daylight',
-};
-const LEGACY_SKIN_MAP = { glass: 'obsidian', claude: 'editorial', mix: 'minimal' };
+const LEGACY_THEME_MAP = { claydark: 'claude', clay: 'claude-light', pearl: 'daylight' };
+const LEGACY_SKIN_MAP = {};
 
 export const DEFAULT_SETTINGS = {
   notify: true,
   otpOnly: false,
   style: 'smart',
-  theme: 'midnight',
-  skin: 'minimal',
+  theme: 'aurora',
+  skin: 'glass',
   ttl: 0,
   muted: [],
   autoCopy: true,
   autoMarkReadOnCopy: false,
   sound: true,
   compact: false,
+  liteBlur: false,
   otpFormat: 'spaced',
 };
 
@@ -252,6 +254,7 @@ export function getSettings(id) {
   if (!TTLS.includes(Number(s.ttl))) s.ttl = 0;
   if (!Array.isArray(s.muted)) s.muted = [];
   if (s.otpFormat !== 'plain' && s.otpFormat !== 'spaced') s.otpFormat = 'spaced';
+  s.liteBlur = Boolean(s.liteBlur);
   return s;
 }
 
@@ -265,6 +268,7 @@ export function setSettings(id, patch = {}) {
   if (typeof patch.autoMarkReadOnCopy === 'boolean') s.autoMarkReadOnCopy = patch.autoMarkReadOnCopy;
   if (typeof patch.sound === 'boolean') s.sound = patch.sound;
   if (typeof patch.compact === 'boolean') s.compact = patch.compact;
+  if (typeof patch.liteBlur === 'boolean') s.liteBlur = patch.liteBlur;
   if (patch.otpFormat === 'plain' || patch.otpFormat === 'spaced') s.otpFormat = patch.otpFormat;
   if (STYLES.includes(patch.style)) s.style = patch.style;
   if (patch.theme) s.theme = normalizeTheme(patch.theme);

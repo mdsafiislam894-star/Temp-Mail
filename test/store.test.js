@@ -114,4 +114,17 @@ test('store TOTP vault supports pin, bulk import, algo/digits, and backup restor
   const backup = store.exportUserBackup('u100');
   assert.ok(backup.addresses.length >= 2);
   assert.ok(backup.totp.length >= 3);
+
+  const stGlass = store.setSettings('u100', { skin: 'glass', theme: 'claude', liteBlur: true });
+  assert.equal(stGlass.skin, 'glass');
+  assert.equal(stGlass.theme, 'claude');
+  assert.equal(stGlass.liteBlur, true);
+
+  const stMix = store.setSettings('u100', { skin: 'mix', theme: 'claude-light' });
+  assert.equal(stMix.skin, 'mix');
+  assert.equal(stMix.theme, 'claude-light');
+
+  const stBento = store.setSettings('u100', { skin: 'bento', theme: 'aurora' });
+  assert.equal(stBento.skin, 'bento');
+  assert.equal(stBento.theme, 'aurora');
 });

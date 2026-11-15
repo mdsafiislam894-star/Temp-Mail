@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bn" data-theme="midnight" data-skin="minimal">
+<html lang="bn" data-theme="aurora" data-skin="glass">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -10,11 +10,13 @@
       const s = JSON.parse(localStorage.getItem('savedSettings') || '{}');
       if (s.theme) document.documentElement.setAttribute('data-theme', s.theme);
       if (s.skin) document.documentElement.setAttribute('data-skin', s.skin);
+      if (s.liteBlur) document.documentElement.setAttribute('data-lite', '1');
     } catch {}
   </script>
-  <link rel="stylesheet" href="/app/styles.css?v=4">
+  <link rel="stylesheet" href="/app/styles.css?v=5">
 </head>
 <body>
+  <div id="auroraBg" class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <!-- Crisp Lucide-style SVG Icon Sprite -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
@@ -86,6 +88,7 @@
 
   <!-- Bottom Navigation -->
   <nav id="bottomNav" class="bottom-nav" hidden>
+    <i class="nav-pill" id="navPill" aria-hidden="true"></i>
     <button type="button" class="nav-item on" data-act="goTab" data-tab="inbox">
       <svg class="ic"><use href="#i-inbox"/></svg>
       <span>ইনবক্স</span>
@@ -112,6 +115,6 @@
   <div id="sheetRoot"></div>
   <div id="toastRoot"></div>
 
-  <script type="module" src="/app/app.js?v=4"></script>
+  <script type="module" src="/app/app.js?v=5"></script>
 </body>
 </html>
