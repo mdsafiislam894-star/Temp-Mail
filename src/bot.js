@@ -369,29 +369,19 @@ export function createBot() {
   // ---------- generate ----------
   async function sendGen(ctx, asEdit = false, domain = '', local = '') {
     const uid = String(ctx.from.id);
-    if (ctx.message?.message_id && ctx.chat?.id) {
-      const prevCmd = lastGenCmdMsg.get(uid);
-      if (prevCmd) await ctx.api.deleteMessage(ctx.chat.id, prevCmd).catch(() => {});
-      await delUserMsg(ctx);
-      lastGenCmdMsg.set(uid, ctx.message.message_id);
-    }
     const chosenDom = domain || pickDomain(uid);
     const defaultTtl = store.getSettings(uid).ttl || 0;
     const rec = makeAddress(uid, chosenDom, local, defaultTtl);
     if (!rec) {
       return ctx.reply('⚠️ এই নামটি অন্য কেউ ব্যবহার করছে। অন্য নাম দিন।', { reply_markup: mainMenu(isAdmin(ctx.from.id)) });
     }
-    const domLabel = rec.addr.split('@')[1] || '';
+    const domainLabel = rec.addr.split('@')[1] || '';
     const modeLabel = chosenDom === 'random' ? '🎲 Auto' : '';
     const cardText = genCard(rec, { domainLabel, modeLabel });
     const opts = genKeyboard(rec, { multiDomain: config.domains.length > 1 });
 
     if (asEdit) return edit(ctx, cardText, opts, rec.addr);
 
-    const prev = store.getActiveCard(uid);
-    if (prev?.chatId && prev?.messageId && !prev.gotMail) {
-      await ctx.api.deleteMessage(prev.chatId, prev.messageId).catch(() => {});
-    }
     const s = await ctx.reply(cardText, { ...HTML, reply_markup: opts }).catch(() => null);
     if (s) store.setActiveCard(uid, s.chat.id, s.message_id, rec.addr, false);
   }
