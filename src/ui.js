@@ -126,7 +126,7 @@ export function genCard(rec) {
    `🚀 <b>Your Instant Disposable Email:</b>\n` +
    `✨ <i>Tap the box below to copy:</i> 👇`
  );
-  
+}
 
 export function genKeyboard(rec) {
   return rows(
