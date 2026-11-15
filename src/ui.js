@@ -134,7 +134,7 @@ export function genKeyboard(rec) {
     [btn.cb('🔄 Change Name', 'gn', 'primary')]
  );
   
-
+}
 export function totpVaultView(items = [], { isAdmin = false } = {}) {
   const meter = (rem = 30, period = 30) => {
     const filled = Math.max(1, Math.min(6, Math.round((rem / (period || 30)) * 6)));
