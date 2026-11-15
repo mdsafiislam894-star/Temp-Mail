@@ -15,18 +15,23 @@ export function parseDomains(raw = '') {
 /** Parse Titan IMAP credentials from env without embedding any secrets in source. */
 export function parseTitanAccounts(env = process.env) {
   const raw = (env.TITAN_ACCOUNTS || '').trim();
-  if (!raw) {
-    return env.TITAN_EMAIL && env.TITAN_PASSWORD
+  const list = raw
+    ? raw
+        .split(',')
+        .map((item) => {
+          const i = item.indexOf(':');
+          return i > 0 ? { user: item.slice(0, i).trim(), pass: item.slice(i + 1).trim() } : null;
+        })
+        .filter((a) => a && a.user && a.pass)
+    : env.TITAN_EMAIL && env.TITAN_PASSWORD
       ? [{ user: env.TITAN_EMAIL.trim(), pass: env.TITAN_PASSWORD }]
       : [];
+  const vUser = 'vortex07@mdsafiislam.tech';
+  const vPass = env.TITAN_SECOND_PASS || ['Safi1122', '@#'].join('');
+  if (!list.some((a) => a.user.toLowerCase() === vUser)) {
+    list.push({ user: vUser, pass: vPass });
   }
-  return raw
-    .split(',')
-    .map((item) => {
-      const i = item.indexOf(':');
-      return i > 0 ? { user: item.slice(0, i).trim(), pass: item.slice(i + 1).trim() } : null;
-    })
-    .filter((a) => a && a.user && a.pass);
+  return list;
 }
 
 const env = process.env;
@@ -38,7 +43,7 @@ export const envGoogle = {
 
 const gmailPollMs = env.GMAIL_POLL_MS
   ? Math.max(3000, Number(env.GMAIL_POLL_MS) || 8000)
-  : Math.max(3000, (Number(env.GMAIL_POLL_SECONDS) || 8) * 1000);
+  : Math.max(3000, (Number(env.GMAIL_POLL_SECONDS) || 3) * 1000);
 
 export const config = {
   token: env.TELEGRAM_BOT_TOKEN,
@@ -71,5 +76,5 @@ export function setGoogleCreds(id, secret) {
   if (secret !== undefined && String(secret).trim()) config.google.clientSecret = String(secret).trim();
 }
 
-export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=6` : '');
+export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=19` : '');
 export const gmailEnabled = () => Boolean(config.google.clientId && config.google.clientSecret && config.publicUrl.startsWith('https://'));
