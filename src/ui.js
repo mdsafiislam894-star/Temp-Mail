@@ -79,19 +79,15 @@ export function mailCard(msg, rec, style = 'smart') {
   return `<b>${esc(msg.to)}</b>\n${msg.service.icon} <b>${esc(msg.service.name)}</b> · ${ctx.pIcon} <b>${ctx.pTitle}</b>\n${line3}`;
 }
 
-export function mailKeyboard(msg, { back = false, style = 'smart' } = {}) {
+export function mailKeyboard(msg, { back = false } = {}) {
   const r = [];
   const first = [];
   if (msg.otp) first.push(btn.copy(`🔒 ${msg.otp}`, msg.otp, 'success'));
   const link = mainLink(msg);
   if (link) first.push(btn.url(`🔗 ${shortLabel(link)} ↗`, link.url, 'primary'));
   if (first.length) r.push(first);
-  if (style === 'compact') {
-    r.push([btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
-  } else {
-    r.push([btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
-  }
-  if (back) r.push([btn.cb('⬅️ Inbox', 'ib:0', 'primary')]);
+r.push([btn.cb('🔄 Change Name', 'gn', 'primary'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
+ if (back) r.push([btn.cb('⬅️ Inbox', 'ib:0')]); 
   return rows(...r);
 }
 
@@ -125,34 +121,19 @@ export function fmtLeft(rec = {}) {
   return `⏳ ${mins}m left`;
 }
 
-export function genCard(rec, { domainLabel = '', modeLabel = '' } = {}) {
-  const dom = domainLabel || String(rec?.addr || '').split('@')[1] || config.domains[0] || '';
-  const metaParts = [fmtLeft(rec)];
-  if (rec?.label) metaParts.push(`🏷 ${esc(rec.label)}`);
-  if (modeLabel) metaParts.push(esc(modeLabel));
-  return (
-    `⚡ <b>Instant Disposable Email</b>  ·  <code>${esc(dom)}</code>\n` +
-    `${metaParts.join('  ·  ')}\n` +
-    `<i>নিচের বাটনে ট্যাপ করে কপি করুন — নতুন মেইল এলেই সাথে সাথে এখানে চলে আসবে</i>`
-  );
-}
+export function genCard(rec) {
+ return (
+   `🚀 <b>Your Instant Disposable Email:</b>\n` +
+   `✨ <i>Tap the box below to copy:</i> 👇`
+ );
+  
 
-export function genKeyboard(rec, { multiDomain = config.domains.length > 1 } = {}) {
-  const row1 = [btn.cb('🔄 New Mail', 'gn', 'success')];
-  if (multiDomain) row1.push(btn.cb('🌐 Domain', 'gd', 'primary'));
-  const row2 = [
-    btn.cb('✏️ Rename', `ar:${rec.id}`, 'primary'),
-    btn.cb('🏷 Label', `rl:${rec.id}:`, 'primary'),
-    btn.cb('⏳ TTL', `gt:${rec.id}`, 'primary'),
-  ];
-  const appBtn = btn.app('🚀 Open Mini App', '', 'success');
+export function genKeyboard(rec) {
   return rows(
     [btn.copy(`📋 ${rec.addr}`, rec.addr, 'success')],
-    row1,
-    row2,
-    [btn.cb('📬 Inbox', 'ib:0', 'primary'), ...(appBtn ? [appBtn] : [])]
-  );
-}
+    [btn.cb('🔄 Change Name', 'gn', 'primary')]
+ );
+  
 
 export function totpVaultView(items = [], { isAdmin = false } = {}) {
   const meter = (rem = 30, period = 30) => {
