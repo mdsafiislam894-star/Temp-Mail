@@ -7,6 +7,10 @@ import * as store from './store.js';
 const status = new Map();
 const activeListeners = new Set();
 const initialSynced = new Set();
+const activeClients = new Set();
+const reconnectTimers = new Set();
+let stopped = false;
+
 export const titanStatus = () => ({
   total: config.titan.accounts.length,
   online: [...status.values()].filter(Boolean).length,
@@ -102,13 +106,15 @@ export function startSingleImap(account) {
   activeListeners.add(key);
   let attempt = 0;
   const run = async () => {
+    if (stopped) return;
     const client = new ImapFlow({
       host: account.host || config.titan.host, port: 993, secure: true,
       auth: { user: account.user, pass: account.pass }, logger: false,
     });
+    activeClients.add(client);
     let busy = false, again = false, closed = false, fails = 0, poll;
     const processMail = async () => {
-      if (busy) { again = true; return; }
+      if (busy || stopped) { if (!stopped) again = true; return; }
       busy = true;
       try {
         do {
@@ -117,18 +123,22 @@ export function startSingleImap(account) {
           await drain(client, account, first);
           initialSynced.add(key);
           fails = 0;
-        } while (again);
-      } catch (e) {
+        } while (again && !stopped);
+      } catch {
         if (++fails >= 3) { try { client.close(); } catch {} }
       } finally { busy = false; }
     };
     const onClose = () => {
+      activeClients.delete(client);
       if (closed) return;
       closed = true;
       clearInterval(poll);
       status.set(account.user, false);
+      if (stopped) return;
       const wait = Math.min(30000, 2500 * 2 ** Math.min(attempt++, 4));
-      setTimeout(run, wait);
+      const t = setTimeout(() => { reconnectTimers.delete(t); run(); }, wait);
+      t.unref?.();
+      reconnectTimers.add(t);
     };
     client.on('error', () => {});
     client.on('close', onClose);
@@ -139,8 +149,9 @@ export function startSingleImap(account) {
       attempt = 0;
       console.log(`✅ [IMAP Online] ${account.user}`);
       await processMail();
-      poll = setInterval(processMail, 4000);
-    } catch (e) {
+      poll = setInterval(processMail, config.titan.pollMs || 4000);
+      poll.unref?.();
+    } catch {
       try { client.close(); } catch {}
       onClose();
     }
@@ -149,6 +160,7 @@ export function startSingleImap(account) {
 }
 
 export function startTitan() {
+  stopped = false;
   for (const g of store.allGmail()) {
     if (g.imapPass && g.status !== 'expired') {
       startSingleImap({ user: g.email, pass: g.imapPass, host: 'imap.gmail.com', owner: g.owner });
@@ -157,4 +169,15 @@ export function startTitan() {
   const accounts = config.titan.accounts;
   if (!accounts.length) return;
   accounts.forEach((a) => startSingleImap(a));
+}
+
+export function stopTitan() {
+  stopped = true;
+  for (const t of reconnectTimers) clearTimeout(t);
+  reconnectTimers.clear();
+  for (const c of [...activeClients]) {
+    try { c.close(); } catch {}
+  }
+  activeClients.clear();
+  activeListeners.clear();
 }

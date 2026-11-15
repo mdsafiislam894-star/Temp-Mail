@@ -33,6 +33,7 @@ test('startAuto2faJob direct secret key shortcut saves to vault and computes 6-d
   assert.equal(r.job.status, 'completed');
   assert.equal(r.job.secret, 'V3JZ6TWHHF4W7PEYKBOXFI7IFMTP2OAC');
   assert.match(r.job.totpCode, /^\d{6}$/);
+  assert.ok(r.job.totpLeft >= 1 && r.job.totpLeft <= 30, `expected totpLeft in 1..30, got ${r.job.totpLeft}`);
   const list = store.listTotp(uid);
   assert.ok(list.some((x) => x.secret === 'V3JZ6TWHHF4W7PEYKBOXFI7IFMTP2OAC'));
 });

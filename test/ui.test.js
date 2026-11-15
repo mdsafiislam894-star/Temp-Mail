@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.TELEGRAM_BOT_TOKEN = '1:T';
-const { mailCard, mailKeyboard, mainLink } = await import('../src/ui.js');
+const { mailCard, mailKeyboard, mainLink, genCard, genKeyboard, totpVaultView } = await import('../src/ui.js');
 
 const base = { id: 'a1', to: 'x@d.com', date: Date.now(), service: { icon: '🔵', name: 'Meta' }, purpose: 'Email Verification', links: [] };
 
@@ -28,4 +28,24 @@ test('no Mini App inline button on mail cards', () => {
 });
 test('smart card is two short lines', () => {
   assert.equal(mailCard({ ...base, otp: '1' }, null, 'smart').split('\n').length, 3);
+});
+
+test('genCard & genKeyboard show domain, TTL, copy_text button, and domain switcher', () => {
+  const rec = { id: 'a1', addr: 'gojo42@mdsafiislam.tech', label: 'Dev', ttl: 60, expiresAt: Date.now() + 3600000 };
+  const text = genCard(rec, { domainLabel: 'mdsafiislam.tech' });
+  assert.match(text, /mdsafiislam\.tech/);
+  assert.match(text, /Dev/);
+  const kb = genKeyboard(rec, { multiDomain: true }).inline_keyboard;
+  assert.equal(kb[0][0].copy_text.text, 'gojo42@mdsafiislam.tech');
+  assert.equal(kb[0][0].style, 'success');
+  assert.ok(kb.flat().some((b) => b.callback_data === 'gd'));
+});
+
+test('totpVaultView renders formatted codes and native copy_text buttons', () => {
+  const view = totpVaultView([
+    { id: 't1', name: 'GitHub', issuer: 'GitHub', code: '492817', nextCode: '301122', remaining: 19, pinned: true },
+  ]);
+  assert.match(view.text, /492 817/);
+  assert.match(view.text, /GitHub/);
+  assert.equal(view.markup.inline_keyboard[0][0].copy_text.text, '492817');
 });

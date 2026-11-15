@@ -1,7 +1,8 @@
 import { config } from './config.js';
 import * as store from './store.js';
 import { analyze } from './lib/mailparse.js';
-import { mailCard, mailKeyboard } from './ui.js';
+import { mailCard, mailKeyboard, mainLink } from './ui.js';
+import { emitUserEvent } from './events.js';
 
 let botApi = null;
 export const initNotify = (bot) => { botApi = bot.api; };
@@ -62,25 +63,34 @@ export function stripUrlButtons(markup) {
   };
 }
 
-export async function safeLiveUpdate(userId, text, markup) {
-const active = store.getActiveCard(userId);
-if (botApi && active && active.chatId && active.messageId) {
-try {
-await botApi.editMessageText(active.chatId, active.messageId, text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: markup });
-return;
-} catch (e) {
-if (/not modified/i.test(e.description || e.message || '')) return;
-if (markup) {
-try {
-await botApi.editMessageText(active.chatId, active.messageId, text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: stripUrlButtons(markup) });
-return;
-} catch {}
+export async function safeLiveUpdate(userId, text, markup, mailAddr = '') {
+  const active = store.getActiveCard(userId);
+  const canEditPlaceholder = botApi && active && active.chatId && active.messageId && !active.gotMail
+    && (!active.addr || !mailAddr || active.addr === String(mailAddr).toLowerCase());
+  if (canEditPlaceholder) {
+    try {
+      await botApi.editMessageText(active.chatId, active.messageId, text, {
+        parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: markup,
+      });
+      store.setActiveCard(userId, active.chatId, active.messageId, active.addr || mailAddr, true);
+      return;
+    } catch (e) {
+      if (/not modified/i.test(e.description || e.message || '')) return;
+      if (markup) {
+        try {
+          await botApi.editMessageText(active.chatId, active.messageId, text, {
+            parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: stripUrlButtons(markup),
+          });
+          store.setActiveCard(userId, active.chatId, active.messageId, active.addr || mailAddr, true);
+          return;
+        } catch {}
+      }
+    }
+  }
+  const sent = await safeSend(userId, text, markup);
+  if (sent) store.setActiveCard(userId, userId, sent.message_id, mailAddr, true);
 }
-}
-}
-const sent = await safeSend(userId, text, markup);
-if (sent) store.setActiveCard(userId, userId, sent.message_id);
-}
+
 export async function notifyMessage(msg) {
   const user = store.getUser(msg.owner);
   if (user && user.status !== 'approved') return;
@@ -89,7 +99,7 @@ export async function notifyMessage(msg) {
   if (st.otpOnly && !msg.otp && !(msg.links || []).length) return;
   const rec = store.getAddress(msg.to);
   const m = { ...msg, addrId: rec?.id };
-  await safeLiveUpdate(msg.owner, mailCard(m, rec, st.style), mailKeyboard(m, { style: st.style }));
+  await safeLiveUpdate(msg.owner, mailCard(m, rec, st.style), mailKeyboard(m, { style: st.style }), msg.to);
 }
 
 /** Entry point for every inbound mail (Titan IMAP, Cloudflare Worker, Gmail). */
@@ -113,7 +123,21 @@ export async function ingest({ to, from, subject = '', text = '', html = '', mes
     otp: a.otp, links: a.links, service: a.service, purpose: a.purpose, details: a.details,
     date: Number(date) || Date.now(), source, key,
   });
+  const topLink = mainLink(msg);
+  emitUserEvent(ownerId, 'mail:new', {
+    message: {
+      id: msg.id, to: msg.to, from: msg.from, subject: msg.subject, service: msg.service,
+      purpose: msg.purpose, otp: msg.otp, date: msg.date, read: msg.read, pinned: msg.pinned,
+      source: msg.source, links: (msg.links || []).length,
+      firstLink: topLink ? { url: topLink.url, label: topLink.label || topLink.host } : null,
+    },
+    unread: store.countUnread(ownerId),
+    stats: store.countStats(ownerId),
+    silent: Boolean(silentNotify),
+  });
   console.log(`⚡ [${source}] ${to} → ${ownerId}: ${a.service.name} / ${a.purpose} / OTP=${a.otp || '-'}`);
-  if (!silentNotify) await notifyMessage(msg);
+  if (!silentNotify && botApi) {
+    try { await notifyMessage(msg); } catch (e) { console.warn('⚠️ notify failed:', e?.message || e); }
+  }
   return msg;
 }

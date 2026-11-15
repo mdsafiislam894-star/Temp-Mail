@@ -6,6 +6,7 @@ import * as store from './store.js';
 import { safeSend, sendBotPhoto } from './notify.js';
 import { btn, rows, HR } from './ui.js';
 import { escapeHtml as esc } from './lib/mailparse.js';
+import { emitUserEvent } from './events.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const BINS = [process.env.PUPPETEER_EXECUTABLE_PATH, process.env.CHROME_BIN, '/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome-stable', '/usr/bin/google-chrome'].filter(Boolean);
@@ -170,21 +171,28 @@ export function extractSecretFromText(raw = '') {
   return /^[A-Z2-7]{16,64}$/.test(cp) && store.b32ToBytes(cp).length >= 10 ? cp : '';
 }
 
-const addJobLog = (j, m) => { j.logs.push({ t: Date.now(), msg: m }); if (j.logs.length > 20) j.logs.shift(); j.stepTitle = m; j.updatedAt = Date.now(); };
+const addJobLog = (j, m) => {
+  j.logs.push({ t: Date.now(), msg: m });
+  if (j.logs.length > 25) j.logs.shift();
+  j.stepTitle = m;
+  j.updatedAt = Date.now();
+  emitUserEvent(j.uid, 'auto2fa:update', serializeJob(j));
+};
 export const getJob = (id) => jobs.get(String(id || '')) || null;
 export const getActiveJobForUser = (uid) => { const id = userActiveJob.get(String(uid)); return id ? jobs.get(id) || null : null; };
 
 export function serializeJob(j) {
   if (!j) return null;
   const lv = j.secret ? store.computeTotp(j.secret) : null;
-  return { id: j.id, uid: j.uid, email: j.email, status: j.status, step: j.step, stepTitle: j.stepTitle, challengeType: j.challengeType, challengePrompt: j.challengePrompt, promptNumber: j.promptNumber, options: j.options || [], screenshot: j.screenshot || '', secret: j.secret || '', secretFormatted: j.secret ? formatSecretSpaced(j.secret) : '', totpCode: lv?.code || j.totpCode || '', totpLeft: lv?.left || 0, totpItem: j.totpItem || null, error: j.error || '', logs: j.logs || [], updatedAt: j.updatedAt };
+  return { id: j.id, uid: j.uid, email: j.email, status: j.status, step: j.step, stepTitle: j.stepTitle, challengeType: j.challengeType, challengePrompt: j.challengePrompt, promptNumber: j.promptNumber, options: j.options || [], screenshot: j.screenshot || '', secret: j.secret || '', secretFormatted: j.secret ? formatSecretSpaced(j.secret) : '', totpCode: lv?.code || j.totpCode || '', totpLeft: lv?.remaining || 0, totpItem: j.totpItem || null, error: j.error || '', logs: j.logs || [], updatedAt: j.updatedAt };
 }
 
 async function notifyChallenge(j, cap, extra = []) {
   try {
     if (botPendingHook) botPendingHook(j.uid, j.id, j.status);
     j.screenshot = j.screenshot || (j.browser ? await j.browser.screenshot() : '');
-    const kb = rows(...extra, [btn.cb('✅ ফোনে Approve করেছি / কন্টিনিউ', `a2fa:cont:${j.id}`, 'success')], [btn.cb('🔄 Try Another Way', `a2fa:alt:${j.id}`, 'primary'), btn.cb('📸 লাইভ স্ক্রিন', `a2fa:snap:${j.id}`)], [btn.app('🚀 মিনি অ্যাপে লাইভ দেখুন', '?tab=gmail', 'primary')], [btn.cb('🛑 বাতিল করুন', `a2fa:stop:${j.id}`, 'danger')]);
+    emitUserEvent(j.uid, 'auto2fa:update', serializeJob(j));
+    const kb = rows(...extra, [btn.cb('✅ ফোনে Approve করেছি / কন্টিনিউ', `a2fa:cont:${j.id}`, 'success')], [btn.cb('🔄 Try Another Way', `a2fa:alt:${j.id}`, 'primary'), btn.cb('📸 লাইভ স্ক্রিন', `a2fa:snap:${j.id}`)], [btn.app('🚀 মিনি অ্যাপে লাইভ দেখুন', '?tab=hub', 'primary')], [btn.cb('🛑 বাতিল করুন', `a2fa:stop:${j.id}`, 'danger')]);
     j.screenshot ? await sendBotPhoto(j.uid, j.screenshot, cap, kb) : await safeSend(j.uid, cap, kb);
   } catch {}
 }
@@ -192,7 +200,7 @@ async function notifyChallenge(j, cap, extra = []) {
 async function finalizeSuccess(j, secret, verified = true) {
   const clean = secret.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
   j.secret = clean;
-  const item = store.addTotp(j.uid, `Google (${j.email})`, clean);
+  const item = store.addTotp(j.uid, `Google (${j.email})`, clean, '', { issuer: 'Google', category: 'Personal' });
   j.totpItem = item; j.totpCode = item?.code || store.computeTotp(clean).code; j.status = 'completed'; j.step = 5;
   addJobLog(j, '✅ 2FA Secret Key ভল্টে সেভ ও 2-Step Verification অন সম্পন্ন!');
   store.upsertGmail({ email: j.email, owner: j.uid, twoFaEnabled: true, totpId: item?.id || '', status: 'active', lastError: '', connectedAt: Date.now() });
@@ -200,7 +208,7 @@ async function finalizeSuccess(j, secret, verified = true) {
   if (botPendingHook) botPendingHook(j.uid, null, 'completed');
   const sp = formatSecretSpaced(clean);
   const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`;
-  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], [btn.cb('🔐 সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=admin', 'primary')])).catch(() => {});
+  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], [btn.cb('🔐 সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'primary')])).catch(() => {});
 }
 
 async function inspectGooglePage(b) {
@@ -350,7 +358,7 @@ async function runPipeline(j) {
 
     j.step = 4; j.status = 'verifying_totp';
     let lv = store.computeTotp(sec);
-    if (lv.left <= 3) { await sleep((lv.left + 1) * 1000); lv = store.computeTotp(sec); }
+    if (lv.remaining <= 3) { await sleep((lv.remaining + 1) * 1000); lv = store.computeTotp(sec); }
     j.totpCode = lv.code;
     addJobLog(j, `🔢 ধাপ ৪/৫: TOTP কোড (${lv.code}) জেনারেট করে গুগলে অটো-ভেরিফাই করা হচ্ছে…`);
     await b.typeInto(['[role="dialog"] input[type="text"]', '[role="dialog"] input[type="tel"]', 'input[placeholder*="code" i]', 'input[type="tel"]', 'input[type="text"]'], lv.code, true);

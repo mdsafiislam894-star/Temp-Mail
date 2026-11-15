@@ -5,6 +5,7 @@ import * as store from './store.js';
 import { signToken, verifyToken } from './auth.js';
 import { ingest, safeSend } from './notify.js';
 import { btn, rows } from './ui.js';
+import { emitUserEvent } from './events.js';
 const SCOPE = 'openid email https://www.googleapis.com/auth/gmail.readonly';
 const redirectUri = () => `${config.publicUrl}/auth/google/callback`;
 const initialPolled = new Set(), apiAlertSent = new Set(), xoauthListeners = new Set();
@@ -168,23 +169,46 @@ return;
 throw e;
 }
 }
-let running = false, pollerOn = false;
-async function tick() {
-if (running) return;
-running = true;
-try {
-for (const acc of store.allGmail().filter((g) => g.refreshToken)) {
-try { await pollAccount(acc); } catch (e) {
-if (e.code === 'invalid_grant') store.upsertGmail({ email: acc.email, status: 'expired', lastError: 'টোকেনের মেয়াদ শেষ — আবার কানেক্ট করুন' });
+let running = false;
+let pollTimer = null;
+
+async function tick(targetOwner = null) {
+  if (running) return;
+  running = true;
+  try {
+    const accounts = store.allGmail().filter((g) => g.refreshToken && (!targetOwner || g.owner === String(targetOwner)));
+    for (const acc of accounts) {
+      try {
+        await pollAccount(acc);
+      } catch (e) {
+        if (e.code === 'invalid_grant') {
+          store.upsertGmail({ email: acc.email, status: 'expired', lastError: 'টোকেনের মেয়াদ শেষ — আবার কানেক্ট করুন' });
+          emitUserEvent(acc.owner, 'gmail:sync', { email: acc.email, status: 'expired' });
+        }
+      }
+    }
+  } finally {
+    running = false;
+  }
 }
-}
-} finally { running = false; }
-}
+
 export function startGmailPoller() {
-if (!pollerOn) { pollerOn = true; setInterval(tick, config.google.pollMs); }
-tick().catch(() => {});
+  if (!pollTimer) {
+    pollTimer = setInterval(() => tick().catch(() => {}), config.google.pollMs);
+    pollTimer.unref?.();
+  }
+  tick().catch(() => {});
 }
-export async function pollNow() {
-clearGmailTokenCache();
-try { await tick(); } catch {}
+
+export function stopGmailPoller() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+export async function pollNow(owner = null) {
+  try {
+    await tick(owner);
+  } catch {}
 }
