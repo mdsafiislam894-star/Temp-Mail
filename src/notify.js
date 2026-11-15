@@ -63,33 +63,18 @@ export function stripUrlButtons(markup) {
   };
 }
 
-export async function safeLiveUpdate(userId, text, markup, mailAddr = '') {
+const addrCards = new Map();
+export async function safeLiveUpdate(userId, text, markup, msg = null) {
   const active = store.getActiveCard(userId);
-  const canEditPlaceholder = botApi && active && active.chatId && active.messageId && !active.gotMail
-    && (!active.addr || !mailAddr || active.addr === String(mailAddr).toLowerCase());
-  if (canEditPlaceholder) {
-    try {
-      await botApi.editMessageText(active.chatId, active.messageId, text, {
-        parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: markup,
-      });
-      store.setActiveCard(userId, active.chatId, active.messageId, active.addr || mailAddr, true);
-      return;
-    } catch (e) {
-      if (/not modified/i.test(e.description || e.message || '')) return;
-      if (markup) {
-        try {
-          await botApi.editMessageText(active.chatId, active.messageId, text, {
-            parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: stripUrlButtons(markup),
-          });
-          store.setActiveCard(userId, active.chatId, active.messageId, active.addr || mailAddr, true);
-          return;
-        } catch {}
-      }
-    }
-  }
-  const sent = await safeSend(userId, text, markup);
-  if (sent) store.setActiveCard(userId, userId, sent.message_id, mailAddr, true);
-}
+  const msgTo = String(msg?.to || '').toLowerCase();
+  const byAddr = msgTo ? addrCards.get(`${userId}:${msgTo}`) : null;
+  const target = (byAddr && byAddr.chatId && byAddr.messageId)
+    ? byAddr
+    : (active && active.chatId && active.messageId && (!active.received || !active.addr || active.addr === msgTo) ? active : null);
+  if (botApi && target && target.chatId && target.messageId) {
+    try { await botApi.editMessageText(target.chatId, target.messageId, text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: markup }); if (msgTo) addrCards.set(`${userId}:${msgTo}`, { chatId: target.chatId, messageId: target.messageId }); if (store.markActiveCardReceived) store.markActiveCardReceived(userId, msgTo); return; } catch (e) {
+      if (/not modified/i.test(e.description || e.message || '')) return; if (markup) { try { await botApi.editMessageText(target.chatId, target.messageId, text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: stripUrlButtons(markup) }); if (msgTo) addrCards.set(`${userId}:${msgTo}`, { chatId: target.chatId, messageId: target.messageId }); if (store.markActiveCardReceived) store.markActiveCardReceived(userId, msgTo); return; } catch {} } } }
+  const sent = await safeSend(userId, text, markup); if (sent) { if (msgTo) addrCards.set(`${userId}:${msgTo}`, { chatId: userId, messageId: sent.message_id }); store.setActiveCard(userId, userId, sent.message_id, msgTo, true); } }
 
 export async function notifyMessage(msg) {
   const user = store.getUser(msg.owner);
