@@ -41,9 +41,7 @@ export const envGoogle = {
   clientSecret: (env.GOOGLE_CLIENT_SECRET || '').trim(),
 };
 
-const gmailPollMs = env.GMAIL_POLL_MS
-  ? Math.max(3000, Number(env.GMAIL_POLL_MS) || 8000)
-  : Math.max(3000, (Number(env.GMAIL_POLL_SECONDS) || 3) * 1000);
+const gmailPollMs = Math.max(1500, Number(env.GMAIL_POLL_MS) || 1500);
 
 export const config = {
   token: env.TELEGRAM_BOT_TOKEN,
@@ -66,7 +64,7 @@ export const config = {
   titan: {
     accounts: parseTitanAccounts(env),
     host: env.TITAN_IMAP_HOST || 'imap.titan.email',
-    pollMs: Math.max(2000, (Number(env.IMAP_POLL_SECONDS) || 2) * 1000),
+    pollMs: Math.max(3000, (Number(env.IMAP_POLL_SECONDS) || 3.5) * 1000),
   },
 };
 
@@ -76,5 +74,5 @@ export function setGoogleCreds(id, secret) {
   if (secret !== undefined && String(secret).trim()) config.google.clientSecret = String(secret).trim();
 }
 
-export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=21` : '');
+export const webappUrl = () => (config.publicUrl.startsWith('https://') ? `${config.publicUrl}/app?v=23` : '');
 export const gmailEnabled = () => Boolean(config.google.clientId && config.google.clientSecret && config.publicUrl.startsWith('https://'));
