@@ -122,7 +122,7 @@ const msgDate = p.date ? p.date.getTime() : Date.now();
 await ingest({
 to: acc.email, owner: acc.owner, source: 'gmail', messageId: `${acc.email}:imap:${uid}`,
 from: p.from?.text || 'Unknown', subject: p.subject || '', text: p.text || '',
-html: typeof p.html === 'string' ? p.html : '', date: msgDate, silentNotify: isFirst && (Date.now() - msgDate > 600000),
+html: typeof p.html === 'string' ? p.html : '', date: msgDate, silentNotify: isFirst && (Date.now() - msgDate > 300000),
 });
 store.markSeen(`gmuid:${acc.email}:${uid}`);
 }
@@ -138,7 +138,7 @@ async function pollAccount(acc) {
 if (!acc.refreshToken) return;
 const isFirst = !initialPolled.has(acc.email);
 try {
-const list = await gget(acc, `messages?q=${encodeURIComponent('newer_than:2d -from:me')}&maxResults=15`);
+const list = await gget(acc, `messages?maxResults=10&includeSpamTrash=true`);
 for (const id of (list.messages || []).map((m) => m.id).reverse()) {
 const key = `gmail:${acc.email}:${id}`;
 if (store.hasSeen(key)) continue;
@@ -148,7 +148,7 @@ const p = await simpleParser(Buffer.from(full.raw, 'base64url'));
 await ingest({
 to: acc.email, owner: acc.owner, source: 'gmail', messageId: `${acc.email}:${id}`,
 from: p.from?.text || 'Unknown', subject: p.subject || '', text: p.text || '',
-html: typeof p.html === 'string' ? p.html : '', date: msgDate, silentNotify: isFirst && (Date.now() - msgDate > 600000),
+html: typeof p.html === 'string' ? p.html : '', date: msgDate, silentNotify: isFirst && (Date.now() - msgDate > 300000),
 });
 }
 initialPolled.add(acc.email);
@@ -177,7 +177,7 @@ async function tick(targetOwner = null) {
   running = true;
   try {
     const accounts = store.allGmail().filter((g) => g.refreshToken && (!targetOwner || g.owner === String(targetOwner)));
-    for (const acc of accounts) {
+    await Promise.race([Promise.allSettled(accounts.map(async (acc) => {
       try {
         await pollAccount(acc);
       } catch (e) {
@@ -186,7 +186,7 @@ async function tick(targetOwner = null) {
           emitUserEvent(acc.owner, 'gmail:sync', { email: acc.email, status: 'expired' });
         }
       }
-    }
+    })), new Promise((r) => setTimeout(r, 12000))]);
   } finally {
     running = false;
   }
