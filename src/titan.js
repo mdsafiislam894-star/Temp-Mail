@@ -82,7 +82,7 @@ async function drain(client, account, isFirstRun = false) {
             messageId: `${account.user}|${uid}|${p.messageId || ''}`,
             date: p.date ? p.date.getTime() : Date.now(),
             source: account.host === 'imap.gmail.com' ? 'gmail' : 'imap',
-            silentNotify: isFirstRun && !wasUnseen,
+            silentNotify: isFirstRun && (Date.now() - (p.date ? p.date.getTime() : Date.now()) > 300000),
           });
           store.markSeen(uidKey);
         }
