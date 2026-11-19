@@ -87,7 +87,7 @@ export class CdpBrowser {
     const bin = findChromiumBinary();
     if (!bin) throw new Error('Chromium binary পাওয়া যায়নি');
     fs.mkdirSync(this.dir, { recursive: true });
-    this.proc = spawn(bin, ['--headless', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--no-first-run', '--no-zygote', '--disable-blink-features=AutomationControlled', '--window-size=412,840', `--user-data-dir=${this.dir}`, '--remote-debugging-port=0', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+    this.proc = spawn(bin, ['--js-flags=--max-old-space-size=256', '--headless', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--no-first-run', '--no-zygote', '--disable-blink-features=AutomationControlled', '--window-size=412,840', `--user-data-dir=${this.dir}`, '--remote-debugging-port=0', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
     const wsUrl = await new Promise((res, rej) => {
       const tm = setTimeout(() => rej(new Error('Chromium timeout')), 12000);
       let s = '';
@@ -197,18 +197,18 @@ async function notifyChallenge(j, cap, extra = []) {
   } catch {}
 }
 
-async function finalizeSuccess(j, secret, verified = true) {
+async function finalizeSuccess(j, secret, verified = true, appPass = '') {
   const clean = secret.replace(/[^A-Za-z2-7]/g, '').toUpperCase();
-  j.secret = clean;
+  j.secret = clean; if (appPass) j.appPass = appPass;
   const item = store.addTotp(j.uid, `Google (${j.email})`, clean, '', { issuer: 'Google', category: 'Personal' });
   j.totpItem = item; j.totpCode = item?.code || store.computeTotp(clean).code; j.status = 'completed'; j.step = 5;
   addJobLog(j, '✅ 2FA Secret Key ভল্টে সেভ ও 2-Step Verification অন সম্পন্ন!');
-  store.upsertGmail({ email: j.email, owner: j.uid, twoFaEnabled: true, totpId: item?.id || '', status: 'active', lastError: '', connectedAt: Date.now() });
-  if (j.password && imapConnectHook) imapConnectHook(j.uid, j.email, j.password).catch(() => {});
+  store.upsertGmail({ email: j.email, owner: j.uid, twoFaEnabled: true, totpId: item?.id || '', ...(appPass ? { imapPass: appPass } : {}),  status: 'active', lastError: '', connectedAt: Date.now() });
+  if (appPass || (j.password) &)& imapConnectHook) imapConnectHook(j.uid, j.email, appPass ||  j.password).catch(() => {});
   if (botPendingHook) botPendingHook(j.uid, null, 'completed');
   const sp = formatSecretSpaced(clean);
-  const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`;
-  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], [btn.cb('🔐 সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success')])).catch(() => {});
+  const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`; + (appPass ? `\n🔑 <b>App Password:</b> <code>${esc(appPass)}</code>` : '')
+  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], ...(appPass ? [[btn.copy('🔑 Copy App Password', appPass, 'primary')]] : []), btn.cb('🔐[ সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success')])).catch(() => {});
 }
 
 async function inspectGooglePage(b) {
@@ -374,7 +374,7 @@ async function runPipeline(j) {
     await b.clickMatching(['^Turn on 2-Step Verification$', '^Turn on$', '^Done$', '^চালু করুন$']); await sleep(700);
     await b.clickMatching(['^Turn on$', '^Confirm$', '^Done$']); await sleep(700);
     j.screenshot = await b.screenshot();
-    await finalizeSuccess(j, sec, true);
+    let appPass = ''; try { await b.goto('https://myaccount.google.com/apppasswords?hl=en', 1800); await b.typeInto(['input[type="text"]', 'input:not([type="hidden"])'], 'ARIYAN MAIL', true); await sleep(400); await b.clickMatching(['^Create$', 'Create']); await sleep(2000); const apSt = await inspectGooglePage(b); const m = (apSt.bodyText || '').match(/[a-z]{4}\s+[a-z]{4}\s+[a-z]{4}\s+[a-z]{4}/i); if (m) appPass = m[0].replace(/\s+/g, ''); } catch {} await finalizeSuccess(j, sec, true, appPass);
   } catch (e) {
     if (j.status !== 'completed') {
       j.status = 'failed'; j.error = e.message || 'অটো 2FA চলাকালীন সমস্যা হয়েছে'; addJobLog(j, `❌ ${j.error}`);
