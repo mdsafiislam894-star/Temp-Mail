@@ -208,7 +208,7 @@ async function finalizeSuccess(j, secret, verified = true, appPass = '') {
   if (botPendingHook) botPendingHook(j.uid, null, 'completed');
   const sp = formatSecretSpaced(clean);
   const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`; + (appPass ? `\n🔑 <b>App Password:</b> <code>${esc(appPass)}</code>` : '')
-  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], ...(appPass ? [[btn.copy('🔑 Copy App Password', appPass, 'primary')]] : []), btn.cb('🔐[ সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success')])).catch(() => {});
+  await safeSend(j.uid, msg, rows([btn.copy(`📋 2FA কোড: ${j.totpCode}`, j.totpCode, 'success'), btn.copy('🔑 Secret Key কপি', sp, 'primary')], ...(appPass ? [[btn.copy('🔑 Copy App Password', appPass, 'primary')]] : []),[ btn.cb('🔐[ সব 2FA কোড', 'totp:list', 'primary'), btn.app('🚀 Open 2FA Vault', '?tab=totp', 'success')])).catch(() => {});
 }
 
 async function inspectGooglePage(b) {
