@@ -204,7 +204,7 @@ async function finalizeSuccess(j, secret, verified = true, appPass = '') {
   j.totpItem = item; j.totpCode = item?.code || store.computeTotp(clean).code; j.status = 'completed'; j.step = 5;
   addJobLog(j, '✅ 2FA Secret Key ভল্টে সেভ ও 2-Step Verification অন সম্পন্ন!');
   store.upsertGmail({ email: j.email, owner: j.uid, twoFaEnabled: true, totpId: item?.id || '', ...(appPass ? { imapPass: appPass } : {}),  status: 'active', lastError: '', connectedAt: Date.now() });
-  if (appPass || (j.password) &)& imapConnectHook) imapConnectHook(j.uid, j.email, appPass ||  j.password).catch(() => {});
+  if ((appPass || (j.password) & && imapConnectHook) imapConnectHook(j.uid, j.email, appPass ||  j.password).catch(() => {});
   if (botPendingHook) botPendingHook(j.uid, null, 'completed');
   const sp = formatSecretSpaced(clean);
   const msg = `✅ <b>ফুল অটোমেটিক 2FA সফলভাবে চালু ও ভেরিফাইড হয়েছে!</b>\n${HR}\n📧 <b>Gmail:</b> <code>${esc(j.email)}</code>\n🔑 <b>2FA Secret Key:</b>\n<code>${esc(sp)}</code>\n🔢 <b>বর্তমান লাইভ কোড:</b> <code>${esc(j.totpCode)}</code>\n🛡️ <b>স্ট্যাটাস:</b> ${verified ? 'Google Authenticator কোড অটো-ভেরিফাই করে 2-Step Verification চালু করা হয়েছে' : '2FA ভল্টে যুক্ত ও সক্রিয় করা হয়েছে'} এবং অ্যাপের <b>2FA Auth</b> ভল্টে সেভ হয়ে গেছে!`; + (appPass ? `\n🔑 <b>App Password:</b> <code>${esc(appPass)}</code>` : '')
