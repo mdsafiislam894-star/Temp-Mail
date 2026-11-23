@@ -1,5 +1,6 @@
-/* Ariyan Temp Mail - Browser Extension Popup Controller
+/* Ariyan Temp Mail — Browser Extension Popup Controller
  * Pure Vanilla JavaScript Manifest V3
+ * Inspired by official temp-mail.io UX
  */
 
 (function () {
@@ -14,6 +15,7 @@
     serverUrl: DEFAULT_SERVER,
     activeAddr: '',
     activeAddrId: '',
+    activeAddrObj: null,
     recentAddrs: [],
     domains: ['safix.tech', 'mdsafiislam.tech'],
     prefDomain: -1,
@@ -25,7 +27,7 @@
     autoCopy: true,
     notify: true,
     sound: true,
-    theme: 'dark',
+    theme: 'light',
     selectedTtl: 0,
     sseToken: '',
     evtSource: null,
@@ -93,6 +95,7 @@
     copyHint: document.getElementById('copyHint'),
     btnQuickGen: document.getElementById('btnQuickGen'),
     btnCustomSheet: document.getElementById('btnCustomSheet'),
+    btnOpenWeb: document.getElementById('btnOpenWeb'),
     btnQrSheet: document.getElementById('btnQrSheet'),
     recentBar: document.getElementById('recentBar'),
     recentChips: document.getElementById('recentChips'),
@@ -162,24 +165,42 @@
     if (!el.toast) return;
     el.toast.textContent = text;
     el.toast.hidden = false;
-    el.toast.classList.add('show');
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
-      el.toast.classList.remove('show');
-      setTimeout(() => { el.toast.hidden = true; }, 220);
+      el.toast.hidden = true;
     }, duration);
   }
 
   // --- Storage Wrappers ---
   function getStorage(keys) {
     return new Promise((resolve) => {
-      chrome.storage.local.get(keys, (data) => resolve(data || {}));
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        chrome.storage.local.get(keys, (data) => resolve(data || {}));
+      } else {
+        const out = {};
+        keys.forEach((k) => {
+          try {
+            const v = localStorage.getItem(k);
+            if (v !== null) out[k] = JSON.parse(v);
+          } catch {}
+        });
+        resolve(out);
+      }
     });
   }
 
   function setStorage(data) {
     return new Promise((resolve) => {
-      chrome.storage.local.set(data, () => resolve());
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        chrome.storage.local.set(data, () => resolve());
+      } else {
+        Object.keys(data).forEach((k) => {
+          try {
+            localStorage.setItem(k, JSON.stringify(data[k]));
+          } catch {}
+        });
+        resolve();
+      }
     });
   }
 
@@ -236,7 +257,7 @@
       if (match) return match;
       return {
         name: service.name,
-        bg: '#6d5dfc',
+        bg: '#6d28d9',
         fg: '#fff',
         abbr: (service.name.slice(0, 2) || 'ML').toUpperCase(),
       };
@@ -278,11 +299,9 @@
   }
 
   // --- Inline Compact QR Code Generator (SVG Vector) ---
-  // Micro QR generator without any CDN or external script dependency
   function renderSvgQr(text, containerEl) {
     if (!containerEl) return;
     try {
-      // Create clean QR matrix representation
       const qrData = encodeSimpleQr(text);
       const size = qrData.length;
       let pathData = '';
@@ -300,14 +319,12 @@
         </svg>
       `;
     } catch {
-      // Fallback
-      containerEl.innerHTML = `<div style="font-size:12px;color:var(--text-sub);padding:20px;">${escapeHtml(text)}</div>`;
+      containerEl.innerHTML = `<div style="font-size:12px;color:var(--text-3);padding:20px;">${escapeHtml(text)}</div>`;
     }
   }
 
-  // Deterministic Micro-Matrix generator with Finder Patterns & RS-like structure
   function encodeSimpleQr(text) {
-    const N = 25; // Standard 25x25 grid
+    const N = 25; // 25x25 grid
     const m = Array.from({ length: N }, () => Array(N).fill(false));
 
     function setFinder(r0, c0) {
@@ -319,17 +336,14 @@
         }
       }
     }
-    // 3 Standard Finder Patterns
     setFinder(0, 0);
     setFinder(0, N - 7);
     setFinder(N - 7, 0);
 
-    // Timing patterns
     for (let i = 8; i < N - 8; i++) {
       m[6][i] = i % 2 === 0;
       m[i][6] = i % 2 === 0;
     }
-    // Alignment pattern
     const ar = 18, ac = 18;
     for (let r = -2; r <= 2; r++) {
       for (let c = -2; c <= 2; c++) {
@@ -339,7 +353,6 @@
       }
     }
 
-    // Data distribution hash
     const bytes = new TextEncoder().encode(text);
     let byteIdx = 0, bitIdx = 0;
     for (let c = N - 1; c > 0; c -= 2) {
@@ -348,7 +361,6 @@
         const r = ((c + 1) / 2) % 2 === 0 ? row : N - 1 - row;
         for (let dc = 0; dc < 2; dc++) {
           const cc = c - dc;
-          // Check if reserved
           const inF1 = r < 9 && cc < 9;
           const inF2 = r < 9 && cc >= N - 8;
           const inF3 = r >= N - 8 && cc < 9;
@@ -365,7 +377,6 @@
               byteIdx++;
             }
           } else {
-            // Masking & padding
             bit = ((r + cc) % 2 === 0) ^ ((r * cc) % 3 === 0);
           }
           m[r][cc] = bit;
@@ -399,9 +410,11 @@
     if (state.activeAddrObj && state.activeAddrObj.ttl > 0) {
       el.ttlBadge.textContent = `${state.activeAddrObj.ttl}m`;
       el.ttlBadge.className = 'badge warn';
+      el.ttlBadge.hidden = false;
     } else {
       el.ttlBadge.textContent = 'স্থায়ী';
       el.ttlBadge.className = 'badge ok';
+      el.ttlBadge.hidden = false;
     }
 
     if (state.activeAddrObj && state.activeAddrObj.label) {
@@ -502,7 +515,7 @@
                 hasOtp
                   ? `
                 <div class="mail-chips">
-                  <div class="otp-pill" data-otp="${escapeHtml(msg.otp)}" title="OTP কোড কপি করুন">
+                  <div class="otp-pill" data-otp="${escapeHtml(msg.otp)}" title="OTP কোড এক ক্লিকে কপি করুন">
                     <svg viewBox="0 0 24 24" class="ic"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <strong>${escapeHtml(msg.otp)}</strong>
                     <span class="otp-action">কপি</span>
@@ -553,15 +566,15 @@
             ${escapeHtml(brand.abbr)}
           </div>
           <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text);">${escapeHtml(brand.name || msg.from)}</div>
-            <div class="mono-sub" style="font-size:11px;color:var(--text-sub);">${escapeHtml(msg.from)}</div>
+            <div style="font-weight:700;font-size:14px;color:var(--text-1);">${escapeHtml(brand.name || msg.from)}</div>
+            <div class="mono-sub" style="font-size:11px;color:var(--text-3);">${escapeHtml(msg.from)}</div>
           </div>
         </div>
         <div class="reader-details-grid">
-          <div><span style="color:var(--text-sub)">কার কাছে:</span> <code>${escapeHtml(msg.to)}</code></div>
-          <div><span style="color:var(--text-sub)">তারিখ:</span> ${escapeHtml(dateFormatted)}</div>
+          <div><span style="color:var(--text-3)">কার কাছে:</span> <code>${escapeHtml(msg.to)}</code></div>
+          <div><span style="color:var(--text-3)">তারিখ:</span> ${escapeHtml(dateFormatted)}</div>
         </div>
-        <h4 style="margin:10px 0 0;font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(msg.subject || '(কোনো বিষয় নেই)')}</h4>
+        <h4 style="margin:10px 0 0;font-size:14px;font-weight:700;color:var(--text-1);">${escapeHtml(msg.subject || '(কোনো বিষয় নেই)')}</h4>
       </div>
     `;
 
@@ -650,7 +663,6 @@
         btn.classList.add('on');
         const mode = btn.dataset.mode;
         if (mode === 'html') {
-          // Render isolated iframe for HTML body
           const iframe = document.createElement('iframe');
           iframe.className = 'html-frame';
           iframe.sandbox = 'allow-same-origin';
@@ -665,7 +677,7 @@
               <meta charset="utf-8">
               <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; padding: 12px; margin: 0; word-break: break-word; }
-                a { color: #6d5dfc; text-decoration: underline; }
+                a { color: #6d28d9; text-decoration: underline; }
                 img { max-width: 100%; height: auto; }
               </style>
             </head>
@@ -713,11 +725,13 @@
     const unread = state.messages.filter((m) => !m.read).length;
     state.unreadCount = unread;
     el.countUnread.textContent = unread;
-    if (chrome.action?.setBadgeText) {
+    if (typeof chrome !== 'undefined' && chrome.action?.setBadgeText) {
       chrome.action.setBadgeText({ text: unread > 0 ? (unread > 99 ? '99+' : String(unread)) : '' });
       chrome.action.setBadgeBackgroundColor({ color: '#10b981' });
     }
-    chrome.runtime?.sendMessage?.({ type: 'REFRESH_BADGE' }).catch(() => {});
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ type: 'REFRESH_BADGE' }).catch(() => {});
+    }
   }
 
   // --- Copy Address Helper ---
@@ -726,10 +740,12 @@
     navigator.clipboard.writeText(state.activeAddr).then(() => {
       el.copyHint.textContent = 'কপি হয়েছে!';
       el.copyBadge.classList.add('copied');
+      el.addrBox.classList.add('copied');
       showToast(`✓ ঠিকানা কপি হয়েছে: ${state.activeAddr}`);
       setTimeout(() => {
         el.copyHint.textContent = 'কপি';
         el.copyBadge.classList.remove('copied');
+        el.addrBox.classList.remove('copied');
       }, 1600);
     }).catch(() => {
       showToast('ক্লিপবোর্ডে কপি করা যায়নি');
@@ -743,7 +759,7 @@
       state.messages = res.messages || [];
       renderMailList();
       updateBadge();
-      if (showFeedback) showToast('ইনবক্স আপডেট হয়েছে');
+      if (showFeedback) showToast('✓ ইনবক্স আপডেট হয়েছে');
     } catch (e) {
       if (showFeedback) showToast('ইনবক্স লোড করতে ব্যর্থ হয়েছে');
     }
@@ -777,7 +793,9 @@
       renderHeroCard();
       copyActiveAddress();
 
-      chrome.runtime?.sendMessage?.({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
+      }
       await fetchMessages();
     } catch (err) {
       showToast(err.message || 'নতুন ঠিকানা তৈরি ব্যর্থ হয়েছে');
@@ -802,11 +820,11 @@
       state.evtSource = es;
 
       es.onopen = () => {
-        el.liveDot.className = 'dot on';
+        el.liveDot.className = 'live-dot on';
         el.liveStatus.textContent = 'Live SSE';
       };
 
-      es.addEventListener('mail:sync', (e) => {
+      es.addEventListener('mail:sync', () => {
         fetchMessages();
       });
 
@@ -818,19 +836,18 @@
       });
 
       es.addEventListener('addresses:changed', () => {
-        // Refresh address status
+        // Address changed event
       });
 
       es.onerror = () => {
-        el.liveDot.className = 'dot';
+        el.liveDot.className = 'live-dot';
         el.liveStatus.textContent = 'Offline (Auto)';
         try { es.close(); } catch {}
         state.evtSource = null;
-        // Schedule fallback reconnect
         setTimeout(connectSSE, 8000);
       };
     } catch (err) {
-      el.liveDot.className = 'dot';
+      el.liveDot.className = 'live-dot';
       el.liveStatus.textContent = 'Offline';
     }
   }
@@ -838,17 +855,14 @@
   // --- Handle Incoming New Message ---
   function handleIncomingMessage(msg) {
     if (!msg) return;
-    // Add to message list if not present
     if (!state.messages.some((m) => m.id === msg.id)) {
       state.messages.unshift(msg);
       renderMailList();
       updateBadge();
     }
 
-    // Play chime sound
     playChime();
 
-    // Auto-Copy OTP if present & enabled
     if (msg.otp && state.autoCopy) {
       navigator.clipboard.writeText(msg.otp).catch(() => {});
       showToast(`🔑 OTP কোড: ${msg.otp} অটো-কপি হয়েছে!`, 3500);
@@ -915,9 +929,11 @@
   function applyTheme(theme) {
     state.theme = theme;
     document.documentElement.setAttribute('data-theme', theme);
-    el.themeSeg.querySelectorAll('button').forEach((b) => {
-      b.classList.toggle('on', b.dataset.theme === theme);
-    });
+    if (el.themeSeg) {
+      el.themeSeg.querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('on', b.dataset.theme === theme);
+      });
+    }
     setStorage({ theme });
   }
 
@@ -946,7 +962,7 @@
     state.notify = st.notify !== undefined ? st.notify : true;
     state.sound = st.sound !== undefined ? st.sound : true;
     state.prefDomain = st.prefDomain !== undefined ? st.prefDomain : -1;
-    state.theme = st.theme || 'dark';
+    state.theme = st.theme || 'light';
 
     // Generate Client ID if missing
     if (!state.clientId) {
@@ -991,7 +1007,6 @@
             recentAddrs: state.recentAddrs,
           });
         } else {
-          // Generate first address
           await quickGenerateAddress();
         }
       }
@@ -1001,7 +1016,7 @@
       await fetchMessages();
     } catch (err) {
       console.warn('Bootstrap fetch failed:', err);
-      el.liveDot.className = 'dot';
+      el.liveDot.className = 'live-dot';
       el.liveStatus.textContent = 'Server Error';
       showToast('সার্ভার কানেকশন এরর: ' + err.message);
     }
@@ -1025,8 +1040,13 @@
     });
 
     // Header buttons
-    el.btnRefresh.addEventListener('click', () => {
-      fetchMessages(true);
+    el.btnRefresh.addEventListener('click', async () => {
+      el.btnRefresh.classList.add('spinning');
+      try {
+        await fetchMessages(true);
+      } finally {
+        setTimeout(() => el.btnRefresh.classList.remove('spinning'), 600);
+      }
     });
 
     el.btnTestOtp.addEventListener('click', () => {
@@ -1036,6 +1056,18 @@
     el.btnEmptyTest.addEventListener('click', () => {
       sendTestOtp();
     });
+
+    // Web App button
+    if (el.btnOpenWeb) {
+      el.btnOpenWeb.addEventListener('click', () => {
+        const url = state.serverUrl || DEFAULT_SERVER;
+        if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+          chrome.tabs.create({ url });
+        } else {
+          window.open(url, '_blank');
+        }
+      });
+    }
 
     // Recent Chips click
     el.recentChips.addEventListener('click', async (e) => {
@@ -1047,7 +1079,9 @@
         await setStorage({ activeAddr: addr });
         renderHeroCard();
         copyActiveAddress();
-        chrome.runtime?.sendMessage?.({ type: 'ADDRESS_CHANGED', addr }).catch(() => {});
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr }).catch(() => {});
+        }
         fetchMessages();
       }
     });
@@ -1091,7 +1125,6 @@
 
     // Mail Item Click (Reader drawer or OTP copy)
     el.mailList.addEventListener('click', (e) => {
-      // 1. Check if OTP copy badge was clicked
       const otpPill = e.target.closest('.otp-pill');
       if (otpPill) {
         e.stopPropagation();
@@ -1104,7 +1137,6 @@
         return;
       }
 
-      // 2. Check if row clicked
       const row = e.target.closest('.mail-item');
       if (row) {
         const id = row.dataset.id;
@@ -1218,7 +1250,9 @@
         el.custLocalInput.value = '';
         el.custLabelInput.value = '';
 
-        chrome.runtime?.sendMessage?.({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
+        }
         showToast(`✨ কাস্টম মেইল তৈরি হয়েছে: ${newAddr}`);
       } catch (err) {
         showToast(err.message || 'কাস্টম ঠিকানা তৈরি ব্যর্থ হয়েছে');
@@ -1251,7 +1285,6 @@
         populateDomains();
         el.domainDrawer.hidden = true;
         showToast(`ডোমেইন সেট হয়েছে: ${domain === 'random' ? 'Auto-Random' : '@' + domain}`);
-        // Immediately generate new address with this domain
         await quickGenerateAddress();
       } catch {
         showToast('ডোমেইন পরিবর্তন করা যায়নি');
@@ -1317,7 +1350,6 @@
         await setStorage({ serverUrl: newUrl });
         showToast('✓ সেটিংস সংরক্ষিত হয়েছে');
         el.settingsDrawer.hidden = true;
-        // Re-bootstrap with new server
         init();
       }
     });

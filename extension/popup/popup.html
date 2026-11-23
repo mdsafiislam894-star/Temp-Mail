@@ -1,78 +1,109 @@
 <!doctype html>
-<html lang="bn" data-theme="dark">
+<html lang="bn" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ariyan Temp Mail</title>
+  <title>Ariyan Temp Mail — Disposable Email</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <!-- Header Bar -->
+  <!-- ================= Purple / Violet Header Bar ================= -->
   <header class="header">
     <div class="brand">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" class="ic"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" class="brand-ic">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="22,6 12,13 2,6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" opacity="0.9" transform="scale(0.42) translate(18, 14)"/>
+        </svg>
       </div>
-      <div class="brand-meta">
-        <strong>ARIYAN MAIL</strong>
-        <span class="live-pill"><i class="dot" id="liveDot"></i><span id="liveStatus">Connecting…</span></span>
+      <div class="brand-text">
+        <div class="brand-title">tempmail <span class="brand-sub-badge">PRO</span></div>
+        <div class="live-pill">
+          <span class="live-dot" id="liveDot"></span>
+          <span id="liveStatus">Connecting…</span>
+        </div>
       </div>
     </div>
+
     <div class="header-actions">
-      <button type="button" class="icon-btn" id="btnTestOtp" title="টেস্ট OTP পাঠান">
+      <button type="button" class="hdr-btn" id="btnTestOtp" title="টেস্ট OTP কোড পাঠান (Send Test OTP)">
         <svg viewBox="0 0 24 24" class="ic"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
       </button>
-      <button type="button" class="icon-btn" id="btnRefresh" title="রিফ্রেশ">
-        <svg viewBox="0 0 24 24" class="ic"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      <button type="button" class="hdr-btn" id="btnRefresh" title="রিফ্রেশ ইনবক্স (Refresh)">
+        <svg viewBox="0 0 24 24" class="ic refresh-icon"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
       </button>
-      <button type="button" class="icon-btn" id="btnSettings" title="সেটিংস">
+      <button type="button" class="hdr-btn" id="btnSettings" title="সেটিংস (Settings)">
         <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- Main Scrollable Content -->
+  <!-- ================= Main Scrollable Body ================= -->
   <main class="content">
     <!-- Active Email Hero Card -->
     <section class="card hero-card">
-      <div class="hero-top">
-        <div class="badges">
-          <span class="badge accent" id="domainBadge">@safix.tech</span>
-          <span class="badge ok" id="ttlBadge">স্থায়ী</span>
-          <span class="badge warn" id="labelBadge" hidden></span>
+      <div class="hero-header">
+        <div class="hero-label-wrap">
+          <span class="hero-subtitle">YOUR TEMPORARY EMAIL</span>
+          <div class="hero-badges">
+            <span class="badge ok" id="ttlBadge">স্থায়ী</span>
+            <span class="badge warn" id="labelBadge" hidden></span>
+          </div>
         </div>
-        <button type="button" class="btn xs ghost" id="btnSwitchDomain" title="ডোমেইন পরিবর্তন">
-          <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <span>ডোমেইন</span>
+        <button type="button" class="domain-switch-btn" id="btnSwitchDomain" title="ডোমেইন পরিবর্তন করুন">
+          <span class="domain-text" id="domainBadge">@safix.tech</span>
+          <svg viewBox="0 0 24 24" class="ic-xs"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
       </div>
 
-      <button type="button" class="addr-box" id="addrBox" title="ট্যাপ করে কপি করুন">
-        <div class="addr-text">
-          <code id="activeAddr">লোড হচ্ছে…</code>
+      <!-- Prominent Address Display Box with Copy Button -->
+      <div class="addr-card" id="addrBox" title="ক্লিক করে সম্পূর্ণ ঠিকানা কপি করুন">
+        <div class="addr-content">
+          <div class="addr-text">
+            <code id="activeAddr">লোড হচ্ছে…</code>
+          </div>
         </div>
-        <span class="copy-badge" id="copyBadge">
+        <button type="button" class="copy-action-btn" id="copyBadge" aria-label="Copy Address">
           <svg viewBox="0 0 24 24" class="ic"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <span id="copyHint">কপি</span>
-        </span>
-      </button>
-
-      <div class="hero-actions">
-        <button type="button" class="btn primary" id="btnQuickGen">
-          <svg viewBox="0 0 24 24" class="ic"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-          <span>নতুন মেইল</span>
-        </button>
-        <button type="button" class="btn soft-primary" id="btnCustomSheet">
-          <svg viewBox="0 0 24 24" class="ic"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>কাস্টম</span>
-        </button>
-        <button type="button" class="icon-btn" id="btnQrSheet" title="QR Code">
-          <svg viewBox="0 0 24 24" class="ic"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>
         </button>
       </div>
 
-      <!-- Recent Addresses switcher -->
+      <!-- Action Pill Buttons (temp-mail.io style 4-pill layout) -->
+      <div class="action-pills-grid">
+        <button type="button" class="pill-btn primary" id="btnQuickGen" title="নতুন র‍্যান্ডম ইমেইল জেনারেট করুন">
+          <span class="pill-icon">
+            <svg viewBox="0 0 24 24" class="ic"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          <span class="pill-label">Random</span>
+        </button>
+
+        <button type="button" class="pill-btn secondary" id="btnCustomSheet" title="পছন্দের নাম ও ডোমেইন নির্বাচন করুন">
+          <span class="pill-icon">
+            <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </span>
+          <span class="pill-label">Change</span>
+        </button>
+
+        <button type="button" class="pill-btn secondary" id="btnOpenWeb" title="ফুলস্ক্রিন ওয়েব অ্যাপ ওপেন করুন">
+          <span class="pill-icon">
+            <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </span>
+          <span class="pill-label">Web App</span>
+        </button>
+
+        <button type="button" class="pill-btn secondary" id="btnQrSheet" title="মোবাইলে ব্যবহার করতে QR কোড দেখুন">
+          <span class="pill-icon">
+            <svg viewBox="0 0 24 24" class="ic"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>
+          </span>
+          <span class="pill-label">QR Code</span>
+        </button>
+      </div>
+
+      <!-- Recent Addresses switcher (if user used multiple) -->
       <div class="recent-bar" id="recentBar" hidden>
+        <div class="recent-label">পূর্ববর্তী ঠিকানা:</div>
         <div class="chip-bar" id="recentChips"></div>
       </div>
     </section>
@@ -80,50 +111,64 @@
     <!-- Search & Filter Controls -->
     <div class="filter-section">
       <div class="search-box">
-        <svg viewBox="0 0 24 24" class="ic"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" id="searchInput" placeholder="সার্চ: OTP, সার্ভিস, বিষয়…">
-        <button type="button" id="searchClear" hidden>
-          <svg viewBox="0 0 24 24" class="ic"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" class="ic search-ic"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="searchInput" placeholder="সার্চ করুন (OTP, প্রেরক, বিষয়)…">
+        <button type="button" class="search-clear-btn" id="searchClear" hidden title="সার্চ মুছুন">
+          <svg viewBox="0 0 24 24" class="ic-xs"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <button type="button" class="icon-btn soft-ok" id="btnMarkAllRead" title="সব পঠিত করুন">
+      <button type="button" class="icon-btn mark-read-btn" id="btnMarkAllRead" title="সব বার্তা পঠিত করুন">
         <svg viewBox="0 0 24 24" class="ic"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
     </div>
 
-    <!-- Filter Pills -->
+    <!-- Filter Pills Bar -->
     <div class="chip-bar" id="filterBar">
       <button type="button" class="chip on" data-filter="all">সব (<span id="countAll">0</span>)</button>
       <button type="button" class="chip" data-filter="unread">অপঠিত (<span id="countUnread">0</span>)</button>
-      <button type="button" class="chip" data-filter="otp">OTP কোড</button>
-      <button type="button" class="chip" data-filter="link">ভেরিফাই লিংক</button>
+      <button type="button" class="chip" data-filter="otp">🔑 OTP কোড</button>
+      <button type="button" class="chip" data-filter="link">🔗 ভেরিফাই লিংক</button>
     </div>
 
-    <!-- Message List -->
+    <!-- Message List & Centered Spinner Empty State -->
     <section class="mail-list" id="mailList">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24" class="ic-lg"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      <!-- Waiting / Empty State (temp-mail.io signature spinner card) -->
+      <div class="empty-state card" id="emptyState">
+        <div class="spinner-container">
+          <div class="pulse-ring"></div>
+          <div class="animated-spinner"></div>
+          <div class="spinner-dot"></div>
         </div>
-        <strong>ইনবক্স সম্পূর্ণ খালি</strong>
-        <p>উপরের ইমেইলটি কপি করে যেকোনো সাইটে ব্যবহার করুন — কোড বা মেইল আসার সাথে সাথে এখানে দেখা যাবে।</p>
-        <button type="button" class="btn sm soft-primary" id="btnEmptyTest">
-          <svg viewBox="0 0 24 24" class="ic"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>টেস্ট OTP পাঠান</span>
+        <strong class="empty-title">নতুন বার্তার অপেক্ষায়…</strong>
+        <p class="empty-desc">Waiting for incoming messages. এই ঠিকানায় মেইল বা ভেরিফিকেশন কোড পাঠানোর সাথে সাথে এখানে দেখাবে।</p>
+        <button type="button" class="btn test-otp-action" id="btnEmptyTest">
+          <svg viewBox="0 0 24 24" class="ic"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>টেস্ট OTP কোড পাঠান</span>
         </button>
       </div>
     </section>
   </main>
 
-  <!-- Message Detail Reader Drawer -->
+  <!-- ================= Footer / Status Bar ================= -->
+  <footer class="footer-status">
+    <div class="footer-left">
+      <span class="status-ping"></span>
+      <span class="footer-text">অটো-রিফ্রেশ ও লাইভ নোটিফিকেশন চালু</span>
+    </div>
+    <div class="footer-right">
+      <span>Ariyan Mail v1.0</span>
+    </div>
+  </footer>
+
+  <!-- ================= Message Detail Reader Drawer ================= -->
   <div class="drawer" id="readerDrawer" hidden>
     <div class="drawer-header">
-      <button type="button" class="icon-btn" id="btnBackToInbox" title="পেছনে">
+      <button type="button" class="icon-btn" id="btnBackToInbox" title="পেছনে ইনবক্সে ফিরুন">
         <svg viewBox="0 0 24 24" class="ic"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <h3 id="readerTitle">বার্তা বিবরণ</h3>
+      <h3 id="readerTitle" class="drawer-title">বার্তা বিবরণ</h3>
       <div class="header-actions">
-        <button type="button" class="icon-btn" id="btnPinMsg" title="পিন">
+        <button type="button" class="icon-btn" id="btnPinMsg" title="পিন করুন">
           <svg viewBox="0 0 24 24" class="ic"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </button>
         <button type="button" class="icon-btn danger" id="btnDeleteMsg" title="মুছে ফেলুন">
@@ -132,28 +177,28 @@
       </div>
     </div>
     <div class="drawer-body" id="readerBody">
-      <!-- Populated via JS -->
+      <!-- Populated dynamically via JS -->
     </div>
   </div>
 
-  <!-- Custom Email Drawer -->
+  <!-- ================= Custom Email Drawer ================= -->
   <div class="drawer" id="customDrawer" hidden>
     <div class="drawer-header">
-      <h3>কাস্টম ইমেইল তৈরি</h3>
-      <button type="button" class="icon-btn" id="btnCloseCustom">
+      <h3 class="drawer-title">কাস্টম ইমেইল তৈরি</h3>
+      <button type="button" class="icon-btn" id="btnCloseCustom" title="বন্ধ করুন">
         <svg viewBox="0 0 24 24" class="ic"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="drawer-body">
       <div class="field">
-        <label>পছন্দের নাম (User Name)</label>
+        <label>পছন্দের নাম (Username Prefix)</label>
         <div class="input-wrap">
           <input type="text" id="custLocalInput" placeholder="যেমন: ariyan.dev">
           <button type="button" class="btn xs soft-primary" id="btnRandLocal">র‍্যান্ডম</button>
         </div>
       </div>
       <div class="field">
-        <label>ডোমেইন সিলেক্ট করুন</label>
+        <label>ডোমেইন নির্বাচন করুন</label>
         <select id="custDomainSelect" class="select"></select>
       </div>
       <div class="field">
@@ -176,39 +221,42 @@
     </div>
   </div>
 
-  <!-- Domain Picker Drawer -->
+  <!-- ================= Domain Picker Drawer ================= -->
   <div class="drawer" id="domainDrawer" hidden>
     <div class="drawer-header">
-      <h3>ডোমেইন নির্বাচন</h3>
-      <button type="button" class="icon-btn" id="btnCloseDomain">
+      <h3 class="drawer-title">ডোমেইন নির্বাচন করুন</h3>
+      <button type="button" class="icon-btn" id="btnCloseDomain" title="বন্ধ করুন">
         <svg viewBox="0 0 24 24" class="ic"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="drawer-body stack" id="domainList">
-      <!-- Populated via JS -->
+      <!-- Populated dynamically via JS -->
     </div>
   </div>
 
-  <!-- QR Code Modal -->
+  <!-- ================= QR Code Modal ================= -->
   <div class="modal" id="qrModal" hidden>
     <div class="modal-card">
-      <div class="drawer-header">
-        <h3>মোবাইলে স্ক্যান করুন</h3>
-        <button type="button" class="icon-btn" id="btnCloseQr">
+      <div class="drawer-header" style="background:transparent; border-bottom:none; padding:4px 0 10px;">
+        <h3 class="drawer-title">মোবাইলে স্ক্যান করুন</h3>
+        <button type="button" class="icon-btn" id="btnCloseQr" title="বন্ধ করুন">
           <svg viewBox="0 0 24 24" class="ic"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <div class="qr-container" id="qrContainer"></div>
       <div class="mono-sub" id="qrText"></div>
-      <button type="button" class="btn primary full" id="btnCopyFromQr">কপি করুন</button>
+      <button type="button" class="btn primary full" id="btnCopyFromQr">
+        <svg viewBox="0 0 24 24" class="ic"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>ঠিকানা কপি করুন</span>
+      </button>
     </div>
   </div>
 
-  <!-- Settings Drawer -->
+  <!-- ================= Settings Drawer ================= -->
   <div class="drawer" id="settingsDrawer" hidden>
     <div class="drawer-header">
-      <h3>এক্সটেনশন সেটিংস</h3>
-      <button type="button" class="icon-btn" id="btnCloseSettings">
+      <h3 class="drawer-title">এক্সটেনশন সেটিংস</h3>
+      <button type="button" class="icon-btn" id="btnCloseSettings" title="বন্ধ করুন">
         <svg viewBox="0 0 24 24" class="ic"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -221,33 +269,33 @@
       <div class="toggle-row">
         <div>
           <strong>স্মার্ট অটো-কপি OTP</strong>
-          <small>নতুন ভেরিফিকেশন কোড এলে সরাসরি কীবোর্ডে কপি হবে</small>
+          <small>নতুন ভেরিফিকেশন কোড এলে সরাসরি ক্লিপবোর্ডে কপি হবে</small>
         </div>
-        <button type="button" class="switch on" id="toggleAutoCopy"></button>
+        <button type="button" class="switch on" id="toggleAutoCopy" aria-label="Auto Copy OTP"></button>
       </div>
 
       <div class="toggle-row">
         <div>
           <strong>ডেস্কটপ নোটিফিকেশন</strong>
-          <small>নতুন মেইল বা কোড আসলে ব্রাউজার পপআপ নোটিফিকেশন দেবে</small>
+          <small>নতুন বার্তা বা কোড এলে ব্রাউজার পপআপ নোটিফিকেশন দেবে</small>
         </div>
-        <button type="button" class="switch on" id="toggleNotify"></button>
+        <button type="button" class="switch on" id="toggleNotify" aria-label="Desktop Notification"></button>
       </div>
 
       <div class="toggle-row">
         <div>
           <strong>সাউন্ড ও অ্যালার্ট</strong>
-          <small>নতুন মেইল আসলে মৃদু চিম সাউন্ড বাজবে</small>
+          <small>নতুন মেইল আসলে মিষ্টি চিম সাউন্ড বাজবে</small>
         </div>
-        <button type="button" class="switch on" id="toggleSound"></button>
+        <button type="button" class="switch on" id="toggleSound" aria-label="Sound Notification"></button>
       </div>
 
       <div class="field">
-        <label>থিম (Theme Mode)</label>
+        <label>থিম মোড (Appearance Theme)</label>
         <div class="seg" id="themeSeg">
-          <button type="button" class="on" data-theme="dark">Dark (Aurora)</button>
-          <button type="button" data-theme="claude">Claude Dark</button>
-          <button type="button" data-theme="light">Light</button>
+          <button type="button" class="on" data-theme="light">Light (Classic)</button>
+          <button type="button" data-theme="dark">Dark (Obsidian)</button>
+          <button type="button" data-theme="claude">Claude Warm</button>
         </div>
       </div>
 
@@ -261,7 +309,7 @@
     </div>
   </div>
 
-  <!-- Floating Toast -->
+  <!-- Floating Toast Notification -->
   <div id="toast" class="toast" hidden></div>
 
   <script src="popup.js"></script>
