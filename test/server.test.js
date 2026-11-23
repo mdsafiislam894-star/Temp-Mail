@@ -157,3 +157,28 @@ test('PATCH /api/addresses rename, PATCH /api/messages/:id note/unread, and PATC
   assert.equal(gmLbl.status, 200);
   assert.equal(gmLbl.body.account.label, 'Primary Mail');
 });
+
+test('browser extension client authenticates via x-ext-id and CORS preflight succeeds', async () => {
+  const extOpts = await fetch(`${baseUrl}/api/bootstrap`, { method: 'OPTIONS' });
+  assert.equal(extOpts.status, 204);
+  assert.equal(extOpts.headers.get('access-control-allow-origin'), '*');
+
+  const extRes = await fetch(`${baseUrl}/api/bootstrap`, {
+    headers: { 'x-ext-id': 'client_uuid_test_123' },
+  });
+  assert.equal(extRes.status, 200);
+  const data = await extRes.json();
+  assert.ok(data.user);
+  assert.equal(data.user.id, 'ext_client_uuid_test_123');
+  assert.ok(Array.isArray(data.domains));
+  assert.ok(data.sseToken);
+
+  const newMail = await fetch(`${baseUrl}/api/addresses`, {
+    method: 'POST',
+    headers: { 'x-ext-id': 'client_uuid_test_123', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'extbox', domain: 'safix.tech' }),
+  });
+  assert.equal(newMail.status, 200);
+  const addrData = await newMail.json();
+  assert.equal(addrData.address.addr, 'extbox@safix.tech');
+});

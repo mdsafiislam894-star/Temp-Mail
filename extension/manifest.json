@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Ariyan Temp Mail — Disposable Email & OTP",
+  "short_name": "Ariyan Mail",
+  "version": "1.0.0",
+  "description": "Lightning-fast disposable temporary email with instant verification OTP detection, auto-copy, and right-click autofill.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Ariyan Temp Mail",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "all_frames": true,
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "notifications",
+    "contextMenus",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://temp-mail-pks1.onrender.com/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "*://*/*"
+  ]
+}
