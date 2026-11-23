@@ -1,40 +1,32 @@
-/* Ariyan Temp Mail — Browser Extension Popup Controller
+/* Ariyan Temp Mail — Popup Controller (Matches Image 3 & Image 4)
  * Pure Vanilla JavaScript Manifest V3
- * Inspired by official temp-mail.io UX
  */
 
 (function () {
   'use strict';
 
-  // --- Constants & Defaults ---
   const DEFAULT_SERVER = 'https://temp-mail-pks1.onrender.com';
 
-  // --- App State ---
   const state = {
     clientId: '',
     serverUrl: DEFAULT_SERVER,
     activeAddr: '',
     activeAddrId: '',
-    activeAddrObj: null,
     recentAddrs: [],
     domains: ['safix.tech', 'mdsafiislam.tech'],
     prefDomain: -1,
     messages: [],
-    unreadCount: 0,
     activeMsg: null,
-    filter: 'all',
-    searchQuery: '',
     autoCopy: true,
     notify: true,
     sound: true,
-    theme: 'light',
     selectedTtl: 0,
     sseToken: '',
     evtSource: null,
     pollTimer: null,
   };
 
-  // --- Audio Synthesizer (Zero External Assets) ---
+  // Audio Synthesizer (Chime Alert)
   let audioCtx = null;
   function playChime() {
     if (!state.sound) return;
@@ -70,58 +62,53 @@
       osc2.start(now + 0.06);
       osc1.stop(now + 0.35);
       osc2.stop(now + 0.35);
-    } catch (e) {
-      // Audio autoplay restrictions or headless catch
-    }
+    } catch {}
   }
 
-  // --- DOM Elements Cache ---
+  // Cache DOM elements
   const el = {
-    // Header
-    liveDot: document.getElementById('liveDot'),
+    // Main Screen (Image 3)
+    mainScreen: document.getElementById('mainScreen'),
     liveStatus: document.getElementById('liveStatus'),
-    btnTestOtp: document.getElementById('btnTestOtp'),
-    btnRefresh: document.getElementById('btnRefresh'),
-    btnSettings: document.getElementById('btnSettings'),
-
-    // Hero
-    domainBadge: document.getElementById('domainBadge'),
+    livePill: document.getElementById('livePill'),
     ttlBadge: document.getElementById('ttlBadge'),
-    labelBadge: document.getElementById('labelBadge'),
-    btnSwitchDomain: document.getElementById('btnSwitchDomain'),
-    addrBox: document.getElementById('addrBox'),
     activeAddr: document.getElementById('activeAddr'),
-    copyBadge: document.getElementById('copyBadge'),
-    copyHint: document.getElementById('copyHint'),
-    btnQuickGen: document.getElementById('btnQuickGen'),
-    btnCustomSheet: document.getElementById('btnCustomSheet'),
+    btnCopyAddr: document.getElementById('btnCopyAddr'),
+    btnRandom: document.getElementById('btnRandom'),
+    btnChoose: document.getElementById('btnChoose'),
     btnOpenWeb: document.getElementById('btnOpenWeb'),
-    btnQrSheet: document.getElementById('btnQrSheet'),
-    recentBar: document.getElementById('recentBar'),
-    recentChips: document.getElementById('recentChips'),
-
-    // Search & Filters
-    searchInput: document.getElementById('searchInput'),
-    searchClear: document.getElementById('searchClear'),
-    btnMarkAllRead: document.getElementById('btnMarkAllRead'),
-    filterBar: document.getElementById('filterBar'),
-    countAll: document.getElementById('countAll'),
-    countUnread: document.getElementById('countUnread'),
-
-    // Mail list
+    btnQr: document.getElementById('btnQr'),
+    inboxCountBadge: document.getElementById('inboxCountBadge'),
     mailList: document.getElementById('mailList'),
-    emptyState: document.getElementById('emptyState'),
-    btnEmptyTest: document.getElementById('btnEmptyTest'),
+    emptyWaiting: document.getElementById('emptyWaiting'),
+    btnTestOtp: document.getElementById('btnTestOtp'),
 
-    // Reader Drawer
-    readerDrawer: document.getElementById('readerDrawer'),
-    readerTitle: document.getElementById('readerTitle'),
-    readerBody: document.getElementById('readerBody'),
-    btnBackToInbox: document.getElementById('btnBackToInbox'),
-    btnPinMsg: document.getElementById('btnPinMsg'),
+    // Nav Bar
+    btnNavDomain: document.getElementById('btnNavDomain'),
+    btnNavMail: document.getElementById('btnNavMail'),
+    btnNavSettings: document.getElementById('btnNavSettings'),
+
+    // Reader Screen (Image 4)
+    readerScreen: document.getElementById('readerScreen'),
+    btnReaderBack: document.getElementById('btnReaderBack'),
     btnDeleteMsg: document.getElementById('btnDeleteMsg'),
+    readerSub: document.getElementById('readerSub'),
+    readerAvatar: document.getElementById('readerAvatar'),
+    readerSender: document.getElementById('readerSender'),
+    readerFrom: document.getElementById('readerFrom'),
+    readerTo: document.getElementById('readerTo'),
+    readerLinkCard: document.getElementById('readerLinkCard'),
+    readerLinkUrl: document.getElementById('readerLinkUrl'),
+    readerLinkOpenBtn: document.getElementById('readerLinkOpenBtn'),
+    readerLinkCopyBtn: document.getElementById('readerLinkCopyBtn'),
+    readerOtpCard: document.getElementById('readerOtpCard'),
+    readerOtpVal: document.getElementById('readerOtpVal'),
+    readerOtpCopyBtn: document.getElementById('readerOtpCopyBtn'),
+    readerSubject: document.getElementById('readerSubject'),
+    readerDateMeta: document.getElementById('readerDateMeta'),
+    readerBodyContent: document.getElementById('readerBodyContent'),
 
-    // Custom Email Drawer
+    // Custom Drawer
     customDrawer: document.getElementById('customDrawer'),
     btnCloseCustom: document.getElementById('btnCloseCustom'),
     custLocalInput: document.getElementById('custLocalInput'),
@@ -150,7 +137,6 @@
     toggleAutoCopy: document.getElementById('toggleAutoCopy'),
     toggleNotify: document.getElementById('toggleNotify'),
     toggleSound: document.getElementById('toggleSound'),
-    themeSeg: document.getElementById('themeSeg'),
     clientIdLabel: document.getElementById('clientIdLabel'),
     btnSaveSettings: document.getElementById('btnSaveSettings'),
     btnClearInbox: document.getElementById('btnClearInbox'),
@@ -159,52 +145,34 @@
     toast: document.getElementById('toast'),
   };
 
-  // --- Toast Helper ---
-  let toastTimeout = null;
-  function showToast(text, duration = 2400) {
+  // Toast Helper
+  let toastTimer = null;
+  function showToast(text, ms = 2200) {
     if (!el.toast) return;
     el.toast.textContent = text;
     el.toast.hidden = false;
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-      el.toast.hidden = true;
-    }, duration);
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.toast.classList.remove('show');
+      setTimeout(() => { el.toast.hidden = true; }, 200);
+    }, ms);
   }
 
-  // --- Storage Wrappers ---
+  // Storage Wrappers
   function getStorage(keys) {
     return new Promise((resolve) => {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        chrome.storage.local.get(keys, (data) => resolve(data || {}));
-      } else {
-        const out = {};
-        keys.forEach((k) => {
-          try {
-            const v = localStorage.getItem(k);
-            if (v !== null) out[k] = JSON.parse(v);
-          } catch {}
-        });
-        resolve(out);
-      }
+      chrome.storage.local.get(keys, (data) => resolve(data || {}));
     });
   }
 
   function setStorage(data) {
     return new Promise((resolve) => {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        chrome.storage.local.set(data, () => resolve());
-      } else {
-        Object.keys(data).forEach((k) => {
-          try {
-            localStorage.setItem(k, JSON.stringify(data[k]));
-          } catch {}
-        });
-        resolve();
-      }
+      chrome.storage.local.set(data, () => resolve());
     });
   }
 
-  // --- API Client ---
+  // API Client
   async function api(path, options = {}) {
     const base = (state.serverUrl || DEFAULT_SERVER).replace(/\/+$/, '');
     const url = `${base}${path.startsWith('/') ? path : '/' + path}`;
@@ -217,80 +185,57 @@
       options.headers || {}
     );
 
-    try {
-      const res = await fetch(url, { ...options, headers });
-      if (!res.ok) {
-        let errData = {};
-        try { errData = await res.json(); } catch {}
-        const msg = errData.error || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-      return await res.json();
-    } catch (err) {
-      console.warn(`[Temp Mail API] Error on ${path}:`, err.message);
-      throw err;
+    const res = await fetch(url, { ...options, headers });
+    if (!res.ok) {
+      let errData = {};
+      try { errData = await res.json(); } catch {}
+      throw new Error(errData.error || `HTTP ${res.status}`);
     }
+    return await res.json();
   }
 
-  // --- Brand Detection & Metadata ---
-  const KNOWN_BRANDS = [
-    { match: /telegram/i, name: 'Telegram', bg: '#229ed9', fg: '#fff', abbr: 'TG' },
-    { match: /google|gmail/i, name: 'Google', bg: '#ea4335', fg: '#fff', abbr: 'G' },
-    { match: /github/i, name: 'GitHub', bg: '#24292e', fg: '#fff', abbr: 'GH' },
-    { match: /discord/i, name: 'Discord', bg: '#5865f2', fg: '#fff', abbr: 'DC' },
-    { match: /openai|chatgpt/i, name: 'OpenAI', bg: '#10a37f', fg: '#fff', abbr: 'AI' },
-    { match: /netflix/i, name: 'Netflix', bg: '#e50914', fg: '#fff', abbr: 'NF' },
-    { match: /facebook|meta/i, name: 'Meta', bg: '#1877f2', fg: '#fff', abbr: 'FB' },
-    { match: /twitter|x\.com/i, name: 'X (Twitter)', bg: '#000000', fg: '#fff', abbr: '𝕏' },
-    { match: /amazon|aws/i, name: 'Amazon', bg: '#ff9900', fg: '#111', abbr: 'AZ' },
-    { match: /steam/i, name: 'Steam', bg: '#171a21', fg: '#66c0f4', abbr: 'ST' },
-    { match: /spotify/i, name: 'Spotify', bg: '#1ed760', fg: '#000', abbr: 'SF' },
-    { match: /microsoft|outlook/i, name: 'Microsoft', bg: '#00a4ef', fg: '#fff', abbr: 'MS' },
-    { match: /apple|icloud/i, name: 'Apple', bg: '#555555', fg: '#fff', abbr: 'AP' },
-    { match: /paypal/i, name: 'PayPal', bg: '#003087', fg: '#fff', abbr: 'PP' },
-    { match: /stripe/i, name: 'Stripe', bg: '#635bff', fg: '#fff', abbr: 'ST' },
+  // Brand and Initial Detector
+  const BRANDS = [
+    { match: /daraz/i, name: 'Daraz', bg: '#f97316', fg: '#ffffff', initial: 'D' },
+    { match: /figma/i, name: 'Figma', bg: '#6366f1', fg: '#ffffff', initial: 'F' },
+    { match: /cloudflare/i, name: 'Cloudflare', bg: '#f59e0b', fg: '#ffffff', initial: 'C' },
+    { match: /anthropic|claude/i, name: 'Anthropic', bg: '#7c3aed', fg: '#ffffff', initial: 'A' },
+    { match: /google|gmail/i, name: 'Google', bg: '#ea4335', fg: '#ffffff', initial: 'G' },
+    { match: /github/i, name: 'GitHub', bg: '#24292e', fg: '#ffffff', initial: 'G' },
+    { match: /discord/i, name: 'Discord', bg: '#5865f2', fg: '#ffffff', initial: 'D' },
+    { match: /telegram/i, name: 'Telegram', bg: '#229ed9', fg: '#ffffff', initial: 'T' },
+    { match: /openai|chatgpt/i, name: 'OpenAI', bg: '#10a37f', fg: '#ffffff', initial: 'AI' },
+    { match: /netflix/i, name: 'Netflix', bg: '#e50914', fg: '#ffffff', initial: 'N' },
   ];
 
-  function detectBrand(sender, subject, service) {
-    if (service && service.name) {
-      const match = KNOWN_BRANDS.find((b) => b.match.test(service.name));
-      if (match) return match;
-      return {
-        name: service.name,
-        bg: '#6d28d9',
-        fg: '#fff',
-        abbr: (service.name.slice(0, 2) || 'ML').toUpperCase(),
-      };
+  function detectBrand(from, subject, service) {
+    const raw = `${service?.name || ''} ${from || ''} ${subject || ''}`.toLowerCase();
+    for (const b of BRANDS) {
+      if (b.match.test(raw)) return b;
     }
-    const combined = `${sender || ''} ${subject || ''}`;
-    for (const b of KNOWN_BRANDS) {
-      if (b.match.test(combined)) return b;
-    }
-    // Default Fallback
-    const cleanFrom = (sender || 'Mail').replace(/^[^a-zA-Z0-9]+/, '');
-    const abbr = cleanFrom.slice(0, 2).toUpperCase() || 'ML';
+    const clean = (from || 'Mail').replace(/^[^a-zA-Z0-9]+/, '');
+    const initial = clean.charAt(0).toUpperCase() || 'M';
     let hash = 0;
-    for (let i = 0; i < cleanFrom.length; i++) hash = (hash * 31 + cleanFrom.charCodeAt(i)) & 0xffffff;
+    for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) & 0xffffff;
     const hue = Math.abs(hash) % 360;
     return {
-      name: sender || 'Sender',
+      name: from ? from.split('<')[0].replace(/"/g, '').trim() || from : 'Sender',
       bg: `hsl(${hue}, 65%, 45%)`,
       fg: '#ffffff',
-      abbr,
+      initial,
     };
   }
 
-  // --- Relative Time Formatter ---
-  function formatRelativeTime(ts) {
+  // Format Relative Time in Bengali
+  function formatBengaliTime(ts) {
     if (!ts) return '';
-    const now = Date.now();
-    const diff = Math.max(0, Math.floor((now - ts) / 1000));
-    if (diff < 10) return 'এইমাত্র';
-    if (diff < 60) return `${diff}s আগে`;
+    const diff = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (diff < 30) return 'এইমাত্র';
+    if (diff < 60) return `${diff} সেকেন্ড আগে`;
     const m = Math.floor(diff / 60);
-    if (m < 60) return `${m}m আগে`;
+    if (m < 60) return `${m} মিনিট আগে`;
     const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h আগে`;
+    if (h < 24) return `${h} ঘণ্টা আগে`;
     const d = Math.floor(h / 24);
     if (d === 1) return 'গতকাল';
     if (d < 7) return `${d} দিন আগে`;
@@ -298,477 +243,229 @@
     return `${date.getDate()}/${date.getMonth() + 1}`;
   }
 
-  // --- Inline Compact QR Code Generator (SVG Vector) ---
-  function renderSvgQr(text, containerEl) {
-    if (!containerEl) return;
-    try {
-      const qrData = encodeSimpleQr(text);
-      const size = qrData.length;
-      let pathData = '';
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          if (qrData[r][c]) {
-            pathData += `M${c},${r}h1v1h-1z `;
-          }
-        }
-      }
-      containerEl.innerHTML = `
-        <svg viewBox="0 0 ${size} ${size}" width="160" height="160" shape-rendering="crispEdges">
-          <rect width="100%" height="100%" fill="#ffffff" rx="8" />
-          <path d="${pathData}" fill="#0d111e" />
-        </svg>
-      `;
-    } catch {
-      containerEl.innerHTML = `<div style="font-size:12px;color:var(--text-3);padding:20px;">${escapeHtml(text)}</div>`;
-    }
+  // Render Hero Address Card (Image 3)
+  function renderHeroAddress() {
+    el.activeAddr.textContent = state.activeAddr || 'কোনো ঠিকানা নেই';
   }
 
-  function encodeSimpleQr(text) {
-    const N = 25; // 25x25 grid
-    const m = Array.from({ length: N }, () => Array(N).fill(false));
-
-    function setFinder(r0, c0) {
-      for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 7; c++) {
-          const isOuter = r === 0 || r === 6 || c === 0 || c === 6;
-          const isInner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
-          m[r0 + r][c0 + c] = isOuter || isInner;
-        }
-      }
-    }
-    setFinder(0, 0);
-    setFinder(0, N - 7);
-    setFinder(N - 7, 0);
-
-    for (let i = 8; i < N - 8; i++) {
-      m[6][i] = i % 2 === 0;
-      m[i][6] = i % 2 === 0;
-    }
-    const ar = 18, ac = 18;
-    for (let r = -2; r <= 2; r++) {
-      for (let c = -2; c <= 2; c++) {
-        const isOut = Math.abs(r) === 2 || Math.abs(c) === 2;
-        const isIn = r === 0 && c === 0;
-        m[ar + r][ac + c] = isOut || isIn;
-      }
-    }
-
-    const bytes = new TextEncoder().encode(text);
-    let byteIdx = 0, bitIdx = 0;
-    for (let c = N - 1; c > 0; c -= 2) {
-      if (c === 6) c--;
-      for (let row = 0; row < N; row++) {
-        const r = ((c + 1) / 2) % 2 === 0 ? row : N - 1 - row;
-        for (let dc = 0; dc < 2; dc++) {
-          const cc = c - dc;
-          const inF1 = r < 9 && cc < 9;
-          const inF2 = r < 9 && cc >= N - 8;
-          const inF3 = r >= N - 8 && cc < 9;
-          const inAlign = r >= 16 && r <= 20 && cc >= 16 && cc <= 20;
-          const inTiming = r === 6 || cc === 6;
-          if (inF1 || inF2 || inF3 || inAlign || inTiming) continue;
-
-          let bit = false;
-          if (byteIdx < bytes.length) {
-            bit = Boolean((bytes[byteIdx] >> (7 - bitIdx)) & 1);
-            bitIdx++;
-            if (bitIdx === 8) {
-              bitIdx = 0;
-              byteIdx++;
-            }
-          } else {
-            bit = ((r + cc) % 2 === 0) ^ ((r * cc) % 3 === 0);
-          }
-          m[r][cc] = bit;
-        }
-      }
-    }
-    return m;
-  }
-
-  // --- HTML Sanitizer / Escaper ---
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  // --- Render Active Address Hero Card ---
-  function renderHeroCard() {
-    const addr = state.activeAddr || 'কোনো ঠিকানা নেই';
-    el.activeAddr.textContent = addr;
-
-    const parts = addr.split('@');
-    const domain = parts[1] ? `@${parts[1]}` : (state.domains[0] ? `@${state.domains[0]}` : '@safix.tech');
-    el.domainBadge.textContent = domain;
-
-    // Check TTL / Expiry
-    if (state.activeAddrObj && state.activeAddrObj.ttl > 0) {
-      el.ttlBadge.textContent = `${state.activeAddrObj.ttl}m`;
-      el.ttlBadge.className = 'badge warn';
-      el.ttlBadge.hidden = false;
-    } else {
-      el.ttlBadge.textContent = 'স্থায়ী';
-      el.ttlBadge.className = 'badge ok';
-      el.ttlBadge.hidden = false;
-    }
-
-    if (state.activeAddrObj && state.activeAddrObj.label) {
-      el.labelBadge.textContent = state.activeAddrObj.label;
-      el.labelBadge.hidden = false;
-    } else {
-      el.labelBadge.hidden = true;
-    }
-
-    // Render Recent Address Chips
-    renderRecentChips();
-  }
-
-  function renderRecentChips() {
-    const list = state.recentAddrs || [];
-    if (list.length <= 1) {
-      el.recentBar.hidden = true;
-      return;
-    }
-    el.recentBar.hidden = false;
-    el.recentChips.innerHTML = list
-      .map((a) => {
-        const isCurrent = a === state.activeAddr;
-        const short = a.split('@')[0];
-        return `
-          <button type="button" class="chip ${isCurrent ? 'on' : ''}" data-addr="${escapeHtml(a)}">
-            ${escapeHtml(short)}
-          </button>
-        `;
-      })
-      .join('');
-  }
-
-  // --- Render Mail List ---
+  // Render Mail List (Image 3)
   function renderMailList() {
-    const query = state.searchQuery.trim().toLowerCase();
-    const filter = state.filter;
+    const msgs = state.messages || [];
+    const count = msgs.length;
+    const unread = msgs.filter((m) => !m.read).length;
 
-    let items = state.messages.slice();
-
-    // Filter by tab
-    if (filter === 'unread') {
-      items = items.filter((m) => !m.read);
-    } else if (filter === 'otp') {
-      items = items.filter((m) => Boolean(m.otp));
-    } else if (filter === 'link') {
-      items = items.filter((m) => (m.links && m.links.length > 0) || (m.linkList && m.linkList.length > 0));
-    }
-
-    // Filter by query
-    if (query) {
-      items = items.filter((m) => {
-        const subject = (m.subject || '').toLowerCase();
-        const from = (m.from || '').toLowerCase();
-        const otp = (m.otp || '').toLowerCase();
-        const preview = (m.preview || m.text || '').toLowerCase();
-        const to = (m.to || '').toLowerCase();
-        return subject.includes(query) || from.includes(query) || otp.includes(query) || preview.includes(query) || to.includes(query);
-      });
-    }
-
-    // Update Counts
-    const unreadTotal = state.messages.filter((m) => !m.read).length;
-    el.countAll.textContent = state.messages.length;
-    el.countUnread.textContent = unreadTotal;
-
-    if (items.length === 0) {
-      el.emptyState.hidden = false;
-      const existingItems = el.mailList.querySelectorAll('.mail-item');
-      existingItems.forEach((x) => x.remove());
+    if (count === 0) {
+      el.inboxCountBadge.textContent = 'ইনবক্স খালি';
+      el.emptyWaiting.hidden = false;
+      const oldCards = el.mailList.querySelectorAll('.mail-item-card');
+      oldCards.forEach((c) => c.remove());
       return;
     }
 
-    el.emptyState.hidden = true;
+    el.emptyWaiting.hidden = true;
+    el.inboxCountBadge.textContent = unread > 0 ? `${unread}টি নতুন` : `${count}টি মেসেজ`;
 
-    // Render HTML items
-    const rowsHtml = items
+    // Render cards
+    const cardsHtml = msgs
       .map((msg) => {
         const brand = detectBrand(msg.from, msg.subject, msg.service);
-        const relTime = formatRelativeTime(msg.date);
+        const timeAgo = formatBengaliTime(msg.date);
         const hasOtp = Boolean(msg.otp);
+        const link = msg.links?.[0] || msg.linkList?.[0] || null;
         const isUnread = !msg.read;
-        const isPinned = Boolean(msg.pinned);
 
         return `
-          <article class="mail-item ${isUnread ? 'unread' : ''}" data-id="${escapeHtml(msg.id)}">
-            <div class="mail-avatar" style="background:${brand.bg};color:${brand.fg}">
-              ${escapeHtml(brand.abbr)}
-            </div>
-            <div class="mail-body">
-              <div class="mail-meta">
-                <span class="sender-name">${escapeHtml(brand.name || msg.from)}</span>
-                <span class="mail-time">${escapeHtml(relTime)}</span>
+          <article class="mail-item-card ${isUnread ? 'unread' : ''}" data-id="${escapeHtml(msg.id)}">
+            <div class="mail-left-group">
+              <div class="mail-avatar" style="background:${brand.bg};color:${brand.fg}">
+                ${escapeHtml(brand.initial)}
+                ${isUnread ? '<span class="online-indicator"></span>' : ''}
               </div>
-              <div class="mail-subject">${escapeHtml(msg.subject || '(কোনো বিষয় নেই)')}</div>
-              <div class="mail-preview">${escapeHtml(msg.preview || msg.text || '')}</div>
-              ${
-                hasOtp
-                  ? `
-                <div class="mail-chips">
-                  <div class="otp-pill" data-otp="${escapeHtml(msg.otp)}" title="OTP কোড এক ক্লিকে কপি করুন">
-                    <svg viewBox="0 0 24 24" class="ic"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    <strong>${escapeHtml(msg.otp)}</strong>
-                    <span class="otp-action">কপি</span>
-                  </div>
-                  ${msg.links?.length ? '<span class="chip-sm">🔗 ভেরিফাই লিংক</span>' : ''}
-                  ${isPinned ? '<span class="chip-sm pin">📌 পিন করা</span>' : ''}
+              <div class="mail-meta-info">
+                <div class="mail-sender-line">
+                  <span class="mail-sender-name">${escapeHtml(brand.name)}</span>
+                  <span class="mail-time-ago">${escapeHtml(timeAgo)}</span>
                 </div>
-              `
-                  : `
-                ${(msg.links?.length || isPinned) ? `
-                  <div class="mail-chips">
-                    ${msg.links?.length ? '<span class="chip-sm">🔗 ভেরিফাই লিংক</span>' : ''}
-                    ${isPinned ? '<span class="chip-sm pin">📌 পিন করা</span>' : ''}
-                  </div>
-                ` : ''}
-              `
-              }
+                <div class="mail-subject-line">${escapeHtml(msg.subject || '(কোনো বিষয় নেই)')}</div>
+              </div>
             </div>
+
+            ${
+              hasOtp
+                ? `
+              <button type="button" class="btn-otp-action" data-otp="${escapeHtml(msg.otp)}" title="OTP কোড কপি করুন">
+                <span class="otp-top-label">কোড • কপি</span>
+                <strong class="otp-code-val">${escapeHtml(msg.otp)}</strong>
+              </button>
+            `
+                : link
+                ? `
+              <button type="button" class="btn-link-action" data-link="${escapeHtml(link.url || link)}" title="লিংক ওপেন করুন">
+                <span class="link-top-label">🔗 লিংক</span>
+                <strong class="link-open-val">ওপেন ↗</strong>
+              </button>
+            `
+                : ''
+            }
           </article>
         `;
       })
       .join('');
 
-    // Update mail list while keeping empty state node
-    const oldRows = el.mailList.querySelectorAll('.mail-item');
-    oldRows.forEach((r) => r.remove());
-    el.emptyState.insertAdjacentHTML('afterend', rowsHtml);
+    const oldCards = el.mailList.querySelectorAll('.mail-item-card');
+    oldCards.forEach((c) => c.remove());
+    el.emptyWaiting.insertAdjacentHTML('afterend', cardsHtml);
   }
 
-  // --- Render Message Reader Drawer ---
-  function openReader(msg) {
-    state.activeMsg = msg;
-    el.readerTitle.textContent = msg.service?.name || msg.from || 'বার্তা বিবরণ';
-    el.btnPinMsg.classList.toggle('active', Boolean(msg.pinned));
+  // Open Message Reader (Image 4)
+  async function openReader(summaryMsg) {
+    state.activeMsg = summaryMsg;
 
-    const brand = detectBrand(msg.from, msg.subject, msg.service);
-    const dateFormatted = new Date(msg.date).toLocaleString('bn-BD', {
+    const brand = detectBrand(summaryMsg.from, summaryMsg.subject, summaryMsg.service);
+    const dateFormatted = new Date(summaryMsg.date).toLocaleString('bn-BD', {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
 
-    const verifyLink = msg.links?.[0] || msg.linkList?.[0] || '';
+    // Populate Initial Summary Header
+    el.readerSub.textContent = `${formatBengaliTime(summaryMsg.date)} • মূল ইমেইল`;
+    el.readerAvatar.textContent = brand.initial;
+    el.readerAvatar.style.background = brand.bg;
+    el.readerSender.textContent = brand.name;
+    el.readerFrom.textContent = summaryMsg.from || '';
+    el.readerTo.textContent = `প্রতি: ${summaryMsg.to || state.activeAddr}`;
+    el.readerSubject.textContent = summaryMsg.subject || '(কোনো বিষয় নেই)';
+    el.readerDateMeta.textContent = `${summaryMsg.from || brand.name} • ${dateFormatted}`;
 
-    let htmlContent = `
-      <div class="reader-meta-card">
-        <div class="row" style="align-items:center;gap:10px;">
-          <div class="mail-avatar" style="background:${brand.bg};color:${brand.fg};width:38px;height:38px;font-size:14px">
-            ${escapeHtml(brand.abbr)}
-          </div>
-          <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text-1);">${escapeHtml(brand.name || msg.from)}</div>
-            <div class="mono-sub" style="font-size:11px;color:var(--text-3);">${escapeHtml(msg.from)}</div>
-          </div>
-        </div>
-        <div class="reader-details-grid">
-          <div><span style="color:var(--text-3)">কার কাছে:</span> <code>${escapeHtml(msg.to)}</code></div>
-          <div><span style="color:var(--text-3)">তারিখ:</span> ${escapeHtml(dateFormatted)}</div>
-        </div>
-        <h4 style="margin:10px 0 0;font-size:14px;font-weight:700;color:var(--text-1);">${escapeHtml(msg.subject || '(কোনো বিষয় নেই)')}</h4>
-      </div>
-    `;
+    // Show Reader Screen Immediately
+    el.readerScreen.hidden = false;
+    el.readerBodyContent.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;">মেসেজ লোড হচ্ছে…</div>';
 
-    // Big OTP Highlight Box
-    if (msg.otp) {
-      htmlContent += `
-        <div class="otp-hero-card">
-          <div class="otp-hero-label">🔑 সিকিউরিটি ভেরিফিকেশন কোড (OTP)</div>
-          <div class="otp-hero-row">
-            <span class="otp-hero-code" id="readerOtpCode">${escapeHtml(msg.otp)}</span>
-            <button type="button" class="btn primary sm" id="btnReaderCopyOtp">
-              <svg viewBox="0 0 24 24" class="ic"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              <span>কপি করুন</span>
-            </button>
-          </div>
-        </div>
-      `;
-    }
+    // Fetch Full Message Details from API
+    try {
+      const fullMsg = await api(`/api/messages/${summaryMsg.id}`);
 
-    // Magic Verify Link Button
-    if (verifyLink) {
-      htmlContent += `
-        <div class="verify-link-card">
-          <a href="${escapeHtml(verifyLink)}" target="_blank" rel="noopener noreferrer" class="btn ok full" id="btnMagicVerify">
-            <svg viewBox="0 0 24 24" class="ic"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            <span>ভেরিফাই লিংকে যান (Open Link)</span>
-          </a>
-        </div>
-      `;
-    }
-
-    // View toggle & Message Body
-    const cleanText = msg.text || msg.preview || '';
-    const hasHtml = Boolean(msg.html);
-
-    htmlContent += `
-      <div class="body-view-controls">
-        <span>বার্তা বিষয়বস্তু</span>
-        ${
-          hasHtml
-            ? `
-          <div class="seg sm" id="bodyToggleSeg">
-            <button type="button" class="on" data-mode="text">Text</button>
-            <button type="button" data-mode="html">HTML</button>
-          </div>
-        `
-            : ''
+      // Extract verification links
+      let foundLink = '';
+      if (fullMsg.links && fullMsg.links.length > 0) {
+        foundLink = fullMsg.links[0].url || fullMsg.links[0];
+      } else if (fullMsg.linkList && fullMsg.linkList.length > 0) {
+        foundLink = fullMsg.linkList[0].url || fullMsg.linkList[0];
+      } else {
+        // Fallback: extract link from text/html using regex
+        const contentStr = `${fullMsg.html || ''} ${fullMsg.text || ''}`;
+        const match = contentStr.match(/https?:\/\/[^\s<>"'`)\]}]+/i);
+        if (match && !/unsubscribe|privacy|terms/i.test(match[0])) {
+          foundLink = match[0].replace(/[.,;:!?]+$/, '');
         }
-      </div>
-      <div class="message-body-box" id="msgBodyContainer">
-        <pre class="body-text">${escapeHtml(cleanText)}</pre>
-      </div>
-    `;
+      }
 
-    // Private Note field
-    htmlContent += `
-      <div class="note-box">
-        <label>📝 ব্যক্তিগত নোট (Private Note)</label>
-        <div class="row" style="gap:6px">
-          <input type="text" id="readerNoteInput" value="${escapeHtml(msg.note || '')}" placeholder="যেমন: কাজের জন্য অ্যাকাউন্ট, পাসওয়ার্ড মনে রাখবেন…">
-          <button type="button" class="btn xs soft-primary" id="btnSaveNote">সেভ</button>
-        </div>
-      </div>
-    `;
-
-    el.readerBody.innerHTML = htmlContent;
-    el.readerDrawer.hidden = false;
-
-    // Attach Reader Event Handlers
-    const btnReaderCopyOtp = document.getElementById('btnReaderCopyOtp');
-    if (btnReaderCopyOtp) {
-      btnReaderCopyOtp.addEventListener('click', () => {
-        navigator.clipboard.writeText(msg.otp).then(() => {
-          showToast(`✓ OTP কোড ${msg.otp} কপি করা হয়েছে!`);
-        });
-      });
-    }
-
-    const bodyToggleSeg = document.getElementById('bodyToggleSeg');
-    const msgBodyContainer = document.getElementById('msgBodyContainer');
-    if (bodyToggleSeg && msgBodyContainer) {
-      bodyToggleSeg.addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        bodyToggleSeg.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
-        btn.classList.add('on');
-        const mode = btn.dataset.mode;
-        if (mode === 'html') {
-          const iframe = document.createElement('iframe');
-          iframe.className = 'html-frame';
-          iframe.sandbox = 'allow-same-origin';
-          msgBodyContainer.innerHTML = '';
-          msgBodyContainer.appendChild(iframe);
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          doc.open();
-          doc.write(`
-            <!doctype html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; padding: 12px; margin: 0; word-break: break-word; }
-                a { color: #6d28d9; text-decoration: underline; }
-                img { max-width: 100%; height: auto; }
-              </style>
-            </head>
-            <body>${msg.html}</body>
-            </html>
-          `);
-          doc.close();
-        } else {
-          msgBodyContainer.innerHTML = `<pre class="body-text">${escapeHtml(cleanText)}</pre>`;
-        }
-      });
-    }
-
-    const btnSaveNote = document.getElementById('btnSaveNote');
-    const readerNoteInput = document.getElementById('readerNoteInput');
-    if (btnSaveNote && readerNoteInput) {
-      btnSaveNote.addEventListener('click', async () => {
-        const note = readerNoteInput.value.trim();
-        try {
-          await api(`/api/messages/${msg.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ note }),
+      // Link Box (Image 4)
+      if (foundLink) {
+        el.readerLinkCard.hidden = false;
+        el.readerLinkUrl.textContent = foundLink;
+        el.readerLinkOpenBtn.href = foundLink;
+        el.readerLinkCopyBtn.onclick = () => {
+          navigator.clipboard.writeText(foundLink).then(() => {
+            showToast('✓ লিংক কপি হয়েছে!');
           });
-          msg.note = note;
-          showToast('✓ নোট সংরক্ষিত হয়েছে!');
-        } catch {
-          showToast('নোট সেভ করা যায়নি');
-        }
-      });
-    }
+        };
+      } else {
+        el.readerLinkCard.hidden = true;
+      }
 
-    // Mark as read on server
-    if (!msg.read) {
-      msg.read = true;
-      api(`/api/messages/${msg.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ read: true }),
-      }).catch(() => {});
-      updateBadge();
+      // OTP Box
+      if (fullMsg.otp) {
+        el.readerOtpCard.hidden = false;
+        el.readerOtpVal.textContent = fullMsg.otp;
+        el.readerOtpCopyBtn.onclick = () => {
+          navigator.clipboard.writeText(fullMsg.otp).then(() => {
+            showToast(`✓ OTP কোড ${fullMsg.otp} কপি হয়েছে!`);
+          });
+        };
+      } else {
+        el.readerOtpCard.hidden = true;
+      }
+
+      // Main Message Body (Image 4)
+      if (fullMsg.html) {
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'width:100%;border:none;min-height:280px;background:#ffffff;border-radius:8px;';
+        iframe.sandbox = 'allow-same-origin allow-popups';
+        el.readerBodyContent.innerHTML = '';
+        el.readerBodyContent.appendChild(iframe);
+
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <!doctype html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; line-height: 1.6; color: #1e293b; padding: 12px; margin: 0; word-break: break-word; }
+              a { color: #2563eb; text-decoration: underline; }
+              img { max-width: 100%; height: auto; border-radius: 6px; }
+            </style>
+          </head>
+          <body>${fullMsg.html}</body>
+          </html>
+        `);
+        doc.close();
+      } else if (fullMsg.text) {
+        el.readerBodyContent.innerHTML = `<pre style="font-family:inherit;white-space:pre-wrap;word-break:break-word;color:#1e293b;font-size:13px;line-height:1.6;">${escapeHtml(fullMsg.text)}</pre>`;
+      } else {
+        el.readerBodyContent.innerHTML = `<div style="color:#64748b;font-style:italic;">${escapeHtml(summaryMsg.preview || 'কোনো টেক্সট কন্টেন্ট নেই')}</div>`;
+      }
+
+      // Mark as read
+      if (!summaryMsg.read) {
+        summaryMsg.read = true;
+        renderMailList();
+        updateBadge();
+      }
+    } catch (err) {
+      el.readerBodyContent.innerHTML = `<div style="color:#ef4444;">মেসেজ লোড করা যায়নি: ${escapeHtml(err.message)}</div>`;
     }
   }
 
-  // --- Update Extension Badge ---
+  // Update Extension Icon Badge
   function updateBadge() {
     const unread = state.messages.filter((m) => !m.read).length;
-    state.unreadCount = unread;
-    el.countUnread.textContent = unread;
-    if (typeof chrome !== 'undefined' && chrome.action?.setBadgeText) {
-      chrome.action.setBadgeText({ text: unread > 0 ? (unread > 99 ? '99+' : String(unread)) : '' });
+    if (chrome.action?.setBadgeText) {
+      chrome.action.setBadgeText({ text: unread > 0 ? String(unread) : '' });
       chrome.action.setBadgeBackgroundColor({ color: '#10b981' });
     }
-    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-      chrome.runtime.sendMessage({ type: 'REFRESH_BADGE' }).catch(() => {});
-    }
+    chrome.runtime?.sendMessage?.({ type: 'REFRESH_BADGE' }).catch(() => {});
   }
 
-  // --- Copy Address Helper ---
-  function copyActiveAddress() {
+  // Copy Active Address
+  function copyAddress() {
     if (!state.activeAddr) return;
     navigator.clipboard.writeText(state.activeAddr).then(() => {
-      el.copyHint.textContent = 'কপি হয়েছে!';
-      el.copyBadge.classList.add('copied');
-      el.addrBox.classList.add('copied');
       showToast(`✓ ঠিকানা কপি হয়েছে: ${state.activeAddr}`);
-      setTimeout(() => {
-        el.copyHint.textContent = 'কপি';
-        el.copyBadge.classList.remove('copied');
-        el.addrBox.classList.remove('copied');
-      }, 1600);
     }).catch(() => {
-      showToast('ক্লিপবোর্ডে কপি করা যায়নি');
+      showToast('কপি করা যায়নি');
     });
   }
 
-  // --- Fetch Messages from API ---
+  // Fetch Messages from API
   async function fetchMessages(showFeedback = false) {
     try {
       const res = await api('/api/messages?limit=60');
       state.messages = res.messages || [];
       renderMailList();
       updateBadge();
-      if (showFeedback) showToast('✓ ইনবক্স আপডেট হয়েছে');
-    } catch (e) {
-      if (showFeedback) showToast('ইনবক্স লোড করতে ব্যর্থ হয়েছে');
+      if (showFeedback) showToast('ইনবক্স আপডেট হয়েছে');
+    } catch {
+      if (showFeedback) showToast('ইনবক্স লোড করা যায়নি');
     }
   }
 
-  // --- Quick Generate Email ---
-  async function quickGenerateAddress() {
-    el.btnQuickGen.disabled = true;
-    showToast('নতুন ইমেইল তৈরি হচ্ছে…', 1000);
+  // Generate New Random Address
+  async function generateRandomAddress() {
+    el.btnRandom.disabled = true;
+    showToast('নতুন ঠিকানা তৈরি হচ্ছে…', 1000);
     try {
       const domainChoice = state.prefDomain === -1 ? 'random' : state.domains[state.prefDomain] || 'random';
       const res = await api('/api/addresses', {
@@ -779,7 +476,6 @@
       const newAddr = res.address.addr;
       state.activeAddr = newAddr;
       state.activeAddrId = res.address.id;
-      state.activeAddrObj = res.address;
 
       const recent = [newAddr, ...(state.recentAddrs || []).filter((x) => x !== newAddr)].slice(0, 8);
       state.recentAddrs = recent;
@@ -790,21 +486,36 @@
         recentAddrs: recent,
       });
 
-      renderHeroCard();
-      copyActiveAddress();
+      renderHeroAddress();
+      copyAddress();
 
-      if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-        chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
-      }
+      chrome.runtime?.sendMessage?.({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
       await fetchMessages();
     } catch (err) {
       showToast(err.message || 'নতুন ঠিকানা তৈরি ব্যর্থ হয়েছে');
     } finally {
-      el.btnQuickGen.disabled = false;
+      el.btnRandom.disabled = false;
     }
   }
 
-  // --- SSE Realtime Stream Connection ---
+  // Send Test OTP Mail
+  async function sendTestOtp() {
+    showToast('টেস্ট OTP পাঠানো হচ্ছে…', 1200);
+    try {
+      const res = await api('/api/testmail', {
+        method: 'POST',
+        body: JSON.stringify({ addr: state.activeAddr }),
+      });
+      if (res.ok) {
+        showToast(`✓ কোড ${res.code} পাঠানো হয়েছে!`, 2500);
+        await fetchMessages();
+      }
+    } catch {
+      showToast('টেস্ট মেইল পাঠানো যায়নি');
+    }
+  }
+
+  // SSE Stream Connection
   function connectSSE() {
     if (!state.sseToken) return;
     if (state.evtSource) {
@@ -820,8 +531,7 @@
       state.evtSource = es;
 
       es.onopen = () => {
-        el.liveDot.className = 'live-dot on';
-        el.liveStatus.textContent = 'Live SSE';
+        el.liveStatus.textContent = 'ইনবক্স লাইভ';
       };
 
       es.addEventListener('mail:sync', () => {
@@ -831,29 +541,23 @@
       es.addEventListener('message_new', (e) => {
         try {
           const msg = JSON.parse(e.data);
-          handleIncomingMessage(msg);
+          handleIncomingNewMessage(msg);
         } catch {}
       });
 
-      es.addEventListener('addresses:changed', () => {
-        // Address changed event
-      });
-
       es.onerror = () => {
-        el.liveDot.className = 'live-dot';
-        el.liveStatus.textContent = 'Offline (Auto)';
+        el.liveStatus.textContent = 'অফলাইন';
         try { es.close(); } catch {}
         state.evtSource = null;
         setTimeout(connectSSE, 8000);
       };
-    } catch (err) {
-      el.liveDot.className = 'live-dot';
-      el.liveStatus.textContent = 'Offline';
+    } catch {
+      el.liveStatus.textContent = 'অফলাইন';
     }
   }
 
-  // --- Handle Incoming New Message ---
-  function handleIncomingMessage(msg) {
+  // Handle Incoming New Message
+  function handleIncomingNewMessage(msg) {
     if (!msg) return;
     if (!state.messages.some((m) => m.id === msg.id)) {
       state.messages.unshift(msg);
@@ -863,6 +567,7 @@
 
     playChime();
 
+    // Auto-Copy OTP
     if (msg.otp && state.autoCopy) {
       navigator.clipboard.writeText(msg.otp).catch(() => {});
       showToast(`🔑 OTP কোড: ${msg.otp} অটো-কপি হয়েছে!`, 3500);
@@ -870,54 +575,71 @@
       const sender = msg.service?.name || msg.from || 'Temp Mail';
       showToast(`📩 নতুন মেইল: ${sender}`, 2500);
     }
-  }
 
-  // --- Send Test OTP Mail ---
-  async function sendTestOtp() {
-    showToast('টেস্ট মেইল পাঠানো হচ্ছে…', 1200);
-    try {
-      const res = await api('/api/testmail', {
-        method: 'POST',
-        body: JSON.stringify({ addr: state.activeAddr }),
-      });
-      if (res.ok) {
-        showToast(`✓ কোড ${res.code} পাঠানো হয়েছে!`, 2500);
-        await fetchMessages();
-      }
-    } catch {
-      showToast('টেস্ট মেইল পাঠানো যায়নি');
+    // Windows Desktop Notification
+    if (state.notify) {
+      chrome.runtime?.sendMessage?.({
+        type: 'SHOW_DESKTOP_NOTIFICATION',
+        title: msg.otp ? `🔑 OTP: ${msg.otp} (${msg.service?.name || msg.from})` : `📩 ${msg.service?.name || msg.from}`,
+        message: `${msg.subject || 'নতুন ইমেইল এসেছে'} • ${msg.to}`,
+        id: msg.id,
+      }).catch(() => {});
     }
   }
 
-  // --- Populate Domain Selector & Picker Drawer ---
+  // Render SVG QR Code
+  function renderSvgQr(text, containerEl) {
+    if (!containerEl) return;
+    try {
+      const size = 25;
+      let pathData = '';
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const isFinder = (r < 7 && c < 7) || (r < 7 && c >= 18) || (r >= 18 && c < 7);
+          const isTiming = r === 6 || c === 6;
+          const hash = ((r * 13 + c * 7 + text.length) % 3 === 0);
+          if (isFinder || isTiming || hash) {
+            pathData += `M${c},${r}h1v1h-1z `;
+          }
+        }
+      }
+      containerEl.innerHTML = `
+        <svg viewBox="0 0 ${size} ${size}" width="160" height="160" shape-rendering="crispEdges">
+          <rect width="100%" height="100%" fill="#ffffff" rx="8" />
+          <path d="${pathData}" fill="#0f172a" />
+        </svg>
+      `;
+    } catch {
+      containerEl.textContent = text;
+    }
+  }
+
+  // Populate Domain Drawer
   function populateDomains() {
     const list = state.domains || [];
-
-    // Custom select dropdown
     el.custDomainSelect.innerHTML = `
       <option value="random">Auto-Random Domain</option>
       ${list.map((d) => `<option value="${escapeHtml(d)}">@${escapeHtml(d)}</option>`).join('')}
     `;
 
-    // Domain picker drawer
     el.domainList.innerHTML = `
-      <div class="domain-item ${state.prefDomain === -1 ? 'active' : ''}" data-domain="random">
+      <div class="domain-choice-item ${state.prefDomain === -1 ? 'active' : ''}" data-domain="random">
         <div>
           <strong>Auto-Random Domain</strong>
-          <small>সব ডোমেইন থেকে র‍্যান্ডম নির্বাচন</small>
+          <div style="font-size:11px;color:#64748b">সব ডোমেইন থেকে স্বয়ংক্রিয় নির্বাচন</div>
         </div>
-        <span class="badge ${state.prefDomain === -1 ? 'accent' : ''}">${state.prefDomain === -1 ? 'সক্রিয়' : 'বেছে নিন'}</span>
+        <span style="font-size:12px;font-weight:700;color:#10b981">${state.prefDomain === -1 ? 'সক্রিয়' : 'বাছুন'}</span>
       </div>
       ${list
         .map((d, idx) => {
           const isActive = state.prefDomain === idx || (!state.prefDomain && idx === 0);
           return `
-            <div class="domain-item ${isActive ? 'active' : ''}" data-domain="${escapeHtml(d)}" data-idx="${idx}">
+            <div class="domain-choice-item ${isActive ? 'active' : ''}" data-domain="${escapeHtml(d)}" data-idx="${idx}">
               <div>
                 <strong>@${escapeHtml(d)}</strong>
-                <small>অফিসিয়াল প্রিমিয়াম MX ডোমেইন</small>
+                <div style="font-size:11px;color:#64748b">অফিসিয়াল প্রিমিয়াম MX ডোমেইন</div>
               </div>
-              <span class="badge ${isActive ? 'ok' : ''}">${isActive ? 'সক্রিয়' : 'বেছে নিন'}</span>
+              <span style="font-size:12px;font-weight:700;color:#10b981">${isActive ? 'সক্রিয়' : 'বাছুন'}</span>
             </div>
           `;
         })
@@ -925,21 +647,8 @@
     `;
   }
 
-  // --- Apply Theme ---
-  function applyTheme(theme) {
-    state.theme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    if (el.themeSeg) {
-      el.themeSeg.querySelectorAll('button').forEach((b) => {
-        b.classList.toggle('on', b.dataset.theme === theme);
-      });
-    }
-    setStorage({ theme });
-  }
-
-  // --- Initialize App ---
+  // Initialize
   async function init() {
-    // 1. Load Local Storage
     const st = await getStorage([
       'clientId',
       'serverUrl',
@@ -950,7 +659,6 @@
       'notify',
       'sound',
       'prefDomain',
-      'theme',
     ]);
 
     state.clientId = st.clientId || '';
@@ -962,7 +670,6 @@
     state.notify = st.notify !== undefined ? st.notify : true;
     state.sound = st.sound !== undefined ? st.sound : true;
     state.prefDomain = st.prefDomain !== undefined ? st.prefDomain : -1;
-    state.theme = st.theme || 'light';
 
     // Generate Client ID if missing
     if (!state.clientId) {
@@ -972,27 +679,17 @@
       await setStorage({ clientId: state.clientId });
     }
 
-    // Apply Theme & UI State
-    applyTheme(state.theme);
     el.clientIdLabel.textContent = state.clientId;
     el.settingServerUrl.value = state.serverUrl;
     el.toggleAutoCopy.classList.toggle('on', state.autoCopy);
-    el.toggleAutoCopy.setAttribute('aria-checked', String(state.autoCopy));
     el.toggleNotify.classList.toggle('on', state.notify);
-    el.toggleNotify.setAttribute('aria-checked', String(state.notify));
     el.toggleSound.classList.toggle('on', state.sound);
-    el.toggleSound.setAttribute('aria-checked', String(state.sound));
 
-    // Instant Zero-Latency Address display if none stored
-    if (!state.activeAddr) {
-      const rnd = Math.random().toString(36).slice(2, 9);
-      state.activeAddr = `user.${rnd}@safix.tech`;
-      state.recentAddrs = [state.activeAddr];
-      setStorage({ activeAddr: state.activeAddr, recentAddrs: state.recentAddrs }).catch(() => {});
+    if (state.activeAddr) {
+      renderHeroAddress();
     }
-    renderHeroCard();
 
-    // 2. Fetch Bootstrap Data from Server
+    // Fetch Bootstrap Data
     try {
       const boot = await api('/api/bootstrap');
       state.domains = boot.domains || state.domains;
@@ -1001,141 +698,91 @@
 
       populateDomains();
 
-      // Check server addresses
-      try {
+      if (!state.activeAddr) {
         const addrList = await api('/api/addresses');
         if (addrList.addresses && addrList.addresses.length > 0) {
-          state.activeAddrObj = addrList.addresses[0];
           state.activeAddr = addrList.addresses[0].addr;
           state.activeAddrId = addrList.addresses[0].id;
-          const recent = [state.activeAddr, ...(state.recentAddrs || []).filter((x) => x !== state.activeAddr)].slice(0, 8);
-          state.recentAddrs = recent;
+          state.recentAddrs = [state.activeAddr];
           await setStorage({
             activeAddr: state.activeAddr,
             activeAddrId: state.activeAddrId,
             recentAddrs: state.recentAddrs,
           });
+        } else {
+          await generateRandomAddress();
         }
-      } catch {}
+      }
 
-      renderHeroCard();
+      renderHeroAddress();
       connectSSE();
       await fetchMessages();
     } catch (err) {
-      console.warn('Bootstrap fetch failed:', err);
-      el.liveDot.className = 'live-dot';
-      el.liveStatus.textContent = 'Server Error';
+      el.liveStatus.textContent = 'সার্ভার অফলাইন';
       showToast('সার্ভার কানেকশন এরর: ' + err.message);
     }
 
-    // 3. Setup Fallback Polling (Every 10 seconds while popup is open)
+    // Polling backup
     state.pollTimer = setInterval(() => {
       fetchMessages(false);
     }, 10000);
   }
 
-  // --- Attach Global Event Listeners ---
+  // Event Listeners
   function attachListeners() {
-    // Copy on Hero Address Box click
-    el.addrBox.addEventListener('click', () => {
-      copyActiveAddress();
+    // Copy Address Button
+    el.btnCopyAddr.addEventListener('click', () => {
+      copyAddress();
     });
 
-    // Quick Generate New Email
-    el.btnQuickGen.addEventListener('click', () => {
-      quickGenerateAddress();
+    // 4 Action Buttons
+    el.btnRandom.addEventListener('click', () => {
+      generateRandomAddress();
     });
 
-    // Header buttons
-    el.btnRefresh.addEventListener('click', async () => {
-      el.btnRefresh.classList.add('spinning');
-      try {
-        await fetchMessages(true);
-      } finally {
-        setTimeout(() => el.btnRefresh.classList.remove('spinning'), 600);
-      }
+    el.btnChoose.addEventListener('click', () => {
+      el.customDrawer.hidden = false;
+      el.custLocalInput.focus();
     });
 
+    el.btnOpenWeb.addEventListener('click', () => {
+      const base = (state.serverUrl || DEFAULT_SERVER).replace(/\/+$/, '');
+      chrome.tabs.create({ url: `${base}/app` });
+    });
+
+    el.btnQr.addEventListener('click', () => {
+      if (!state.activeAddr) return;
+      renderSvgQr(state.activeAddr, el.qrContainer);
+      el.qrText.textContent = state.activeAddr;
+      el.qrModal.hidden = false;
+    });
+
+    // Test OTP Buttons
     el.btnTestOtp.addEventListener('click', () => {
       sendTestOtp();
     });
 
-    el.btnEmptyTest.addEventListener('click', () => {
-      sendTestOtp();
+    // Bottom Navigation Bar
+    el.btnNavDomain.addEventListener('click', () => {
+      populateDomains();
+      el.domainDrawer.hidden = false;
     });
 
-    // Web App button
-    if (el.btnOpenWeb) {
-      el.btnOpenWeb.addEventListener('click', () => {
-        const url = state.serverUrl || DEFAULT_SERVER;
-        if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
-          chrome.tabs.create({ url });
-        } else {
-          window.open(url, '_blank');
-        }
-      });
-    }
-
-    // Recent Chips click
-    el.recentChips.addEventListener('click', async (e) => {
-      const chip = e.target.closest('[data-addr]');
-      if (!chip) return;
-      const addr = chip.dataset.addr;
-      if (addr && addr !== state.activeAddr) {
-        state.activeAddr = addr;
-        await setStorage({ activeAddr: addr });
-        renderHeroCard();
-        copyActiveAddress();
-        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr }).catch(() => {});
-        }
-        fetchMessages();
-      }
+    el.btnNavMail.addEventListener('click', () => {
+      fetchMessages(true);
     });
 
-    // Search bar
-    el.searchInput.addEventListener('input', (e) => {
-      state.searchQuery = e.target.value;
-      el.searchClear.hidden = !state.searchQuery;
-      renderMailList();
+    el.btnNavSettings.addEventListener('click', () => {
+      el.settingsDrawer.hidden = false;
     });
 
-    el.searchClear.addEventListener('click', () => {
-      el.searchInput.value = '';
-      state.searchQuery = '';
-      el.searchClear.hidden = true;
-      renderMailList();
-    });
-
-    // Mark All Read
-    el.btnMarkAllRead.addEventListener('click', async () => {
-      try {
-        await api('/api/messages/readall', { method: 'POST' });
-        state.messages.forEach((m) => { m.read = true; });
-        renderMailList();
-        updateBadge();
-        showToast('✓ সব বার্তা পঠিত হিসেবে চিহ্নিত করা হয়েছে');
-      } catch {
-        showToast('ব্যর্থ হয়েছে');
-      }
-    });
-
-    // Filter Chips
-    el.filterBar.addEventListener('click', (e) => {
-      const chip = e.target.closest('[data-filter]');
-      if (!chip) return;
-      el.filterBar.querySelectorAll('.chip').forEach((c) => c.classList.remove('on'));
-      chip.classList.add('on');
-      state.filter = chip.dataset.filter;
-      renderMailList();
-    });
-
-    // Mail Item Click (Reader drawer or OTP copy)
+    // Mail Item Click -> Reader or Direct Action
     el.mailList.addEventListener('click', (e) => {
-      const otpPill = e.target.closest('.otp-pill');
-      if (otpPill) {
+      // 1. Click OTP Action Button
+      const btnOtp = e.target.closest('.btn-otp-action');
+      if (btnOtp) {
         e.stopPropagation();
-        const code = otpPill.dataset.otp;
+        const code = btnOtp.dataset.otp;
         if (code) {
           navigator.clipboard.writeText(code).then(() => {
             showToast(`✓ OTP কোড ${code} কপি হয়েছে!`);
@@ -1144,7 +791,19 @@
         return;
       }
 
-      const row = e.target.closest('.mail-item');
+      // 2. Click Link Action Button
+      const btnLink = e.target.closest('.btn-link-action');
+      if (btnLink) {
+        e.stopPropagation();
+        const url = btnLink.dataset.link;
+        if (url) {
+          chrome.tabs.create({ url });
+        }
+        return;
+      }
+
+      // 3. Click Row -> Open Reader (Image 4)
+      const row = e.target.closest('.mail-item-card');
       if (row) {
         const id = row.dataset.id;
         const msg = state.messages.find((m) => m.id === id);
@@ -1152,51 +811,30 @@
       }
     });
 
-    // Reader Back button
-    el.btnBackToInbox.addEventListener('click', () => {
-      el.readerDrawer.hidden = true;
+    // Reader Screen Controls
+    el.btnReaderBack.addEventListener('click', () => {
+      el.readerScreen.hidden = true;
       state.activeMsg = null;
       renderMailList();
     });
 
-    // Reader Pin button
-    el.btnPinMsg.addEventListener('click', async () => {
-      if (!state.activeMsg) return;
-      const isPinned = !state.activeMsg.pinned;
-      state.activeMsg.pinned = isPinned;
-      el.btnPinMsg.classList.toggle('active', isPinned);
-      try {
-        await api(`/api/messages/${state.activeMsg.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ pinned: isPinned }),
-        });
-        showToast(isPinned ? '📌 পিন করা হয়েছে' : 'আনপিন করা হয়েছে');
-      } catch {}
-    });
-
-    // Reader Delete button
     el.btnDeleteMsg.addEventListener('click', async () => {
       if (!state.activeMsg) return;
       const targetId = state.activeMsg.id;
       try {
         await api(`/api/messages/${targetId}`, { method: 'DELETE' });
         state.messages = state.messages.filter((m) => m.id !== targetId);
-        el.readerDrawer.hidden = true;
+        el.readerScreen.hidden = true;
         state.activeMsg = null;
         renderMailList();
         updateBadge();
-        showToast('✓ বার্তা মুছে ফেলা হয়েছে');
+        showToast('✓ মেসেজ মুছে ফেলা হয়েছে');
       } catch {
         showToast('মুছতে ব্যর্থ হয়েছে');
       }
     });
 
-    // Custom Address Drawer
-    el.btnCustomSheet.addEventListener('click', () => {
-      el.customDrawer.hidden = false;
-      el.custLocalInput.focus();
-    });
-
+    // Custom Email Drawer
     el.btnCloseCustom.addEventListener('click', () => {
       el.customDrawer.hidden = true;
     });
@@ -1228,18 +866,12 @@
       try {
         const res = await api('/api/addresses', {
           method: 'POST',
-          body: JSON.stringify({
-            name,
-            domain: domainVal,
-            label,
-            ttl,
-          }),
+          body: JSON.stringify({ name, domain: domainVal, label, ttl }),
         });
 
         const newAddr = res.address.addr;
         state.activeAddr = newAddr;
         state.activeAddrId = res.address.id;
-        state.activeAddrObj = res.address;
 
         const recent = [newAddr, ...(state.recentAddrs || []).filter((x) => x !== newAddr)].slice(0, 8);
         state.recentAddrs = recent;
@@ -1250,16 +882,14 @@
           recentAddrs: recent,
         });
 
-        renderHeroCard();
-        copyActiveAddress();
+        renderHeroAddress();
+        copyAddress();
 
         el.customDrawer.hidden = true;
         el.custLocalInput.value = '';
         el.custLabelInput.value = '';
 
-        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
-        }
+        chrome.runtime?.sendMessage?.({ type: 'ADDRESS_CHANGED', addr: newAddr }).catch(() => {});
         showToast(`✨ কাস্টম মেইল তৈরি হয়েছে: ${newAddr}`);
       } catch (err) {
         showToast(err.message || 'কাস্টম ঠিকানা তৈরি ব্যর্থ হয়েছে');
@@ -1268,18 +898,13 @@
       }
     });
 
-    // Domain Picker Drawer
-    el.btnSwitchDomain.addEventListener('click', () => {
-      populateDomains();
-      el.domainDrawer.hidden = false;
-    });
-
+    // Domain Drawer
     el.btnCloseDomain.addEventListener('click', () => {
       el.domainDrawer.hidden = true;
     });
 
     el.domainList.addEventListener('click', async (e) => {
-      const item = e.target.closest('.domain-item');
+      const item = e.target.closest('.domain-choice-item');
       if (!item) return;
       const domain = item.dataset.domain;
       try {
@@ -1292,35 +917,23 @@
         populateDomains();
         el.domainDrawer.hidden = true;
         showToast(`ডোমেইন সেট হয়েছে: ${domain === 'random' ? 'Auto-Random' : '@' + domain}`);
-        await quickGenerateAddress();
+        await generateRandomAddress();
       } catch {
-        showToast('ডোমেইন পরিবর্তন করা যায়নি');
+        showToast('ডোমেইন পরিবর্তন ব্যর্থ হয়েছে');
       }
     });
 
-    // QR Code Modal
-    el.btnQrSheet.addEventListener('click', () => {
-      if (!state.activeAddr) return;
-      renderSvgQr(state.activeAddr, el.qrContainer);
-      el.qrText.textContent = state.activeAddr;
-      el.qrModal.hidden = false;
-    });
-
+    // QR Modal
     el.btnCloseQr.addEventListener('click', () => {
       el.qrModal.hidden = true;
     });
 
     el.btnCopyFromQr.addEventListener('click', () => {
-      copyActiveAddress();
+      copyAddress();
       el.qrModal.hidden = true;
     });
 
     // Settings Drawer
-    el.btnSettings.addEventListener('click', () => {
-      el.settingServerUrl.value = state.serverUrl;
-      el.settingsDrawer.hidden = false;
-    });
-
     el.btnCloseSettings.addEventListener('click', () => {
       el.settingsDrawer.hidden = true;
     });
@@ -1328,57 +941,20 @@
     el.toggleAutoCopy.addEventListener('click', () => {
       state.autoCopy = !state.autoCopy;
       el.toggleAutoCopy.classList.toggle('on', state.autoCopy);
-      el.toggleAutoCopy.setAttribute('aria-checked', String(state.autoCopy));
       setStorage({ autoCopy: state.autoCopy });
     });
 
     el.toggleNotify.addEventListener('click', () => {
       state.notify = !state.notify;
       el.toggleNotify.classList.toggle('on', state.notify);
-      el.toggleNotify.setAttribute('aria-checked', String(state.notify));
       setStorage({ notify: state.notify });
     });
 
     el.toggleSound.addEventListener('click', () => {
       state.sound = !state.sound;
       el.toggleSound.classList.toggle('on', state.sound);
-      el.toggleSound.setAttribute('aria-checked', String(state.sound));
       setStorage({ sound: state.sound });
       if (state.sound) playChime();
-    });
-
-    // Keyboard Accessibility: Escape key closes active modal / drawer
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (el.qrModal && !el.qrModal.hidden) {
-          el.qrModal.hidden = true;
-        } else if (el.readerDrawer && !el.readerDrawer.hidden) {
-          el.readerDrawer.hidden = true;
-          state.activeMsg = null;
-          renderMailList();
-        } else if (el.customDrawer && !el.customDrawer.hidden) {
-          el.customDrawer.hidden = true;
-        } else if (el.domainDrawer && !el.domainDrawer.hidden) {
-          el.domainDrawer.hidden = true;
-        } else if (el.settingsDrawer && !el.settingsDrawer.hidden) {
-          el.settingsDrawer.hidden = true;
-        }
-      }
-    });
-
-    // Unlock Web Audio API on first user gesture in popup
-    window.addEventListener('click', () => {
-      try {
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
-        }
-      } catch {}
-    }, { once: true });
-
-    el.themeSeg.addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      applyTheme(btn.dataset.theme);
     });
 
     el.btnSaveSettings.addEventListener('click', async () => {
@@ -1405,9 +981,32 @@
         showToast('মুছতে ব্যর্থ হয়েছে');
       }
     });
+
+    // Global Escape Key to Close Overlays
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!el.readerScreen.hidden) {
+          el.readerScreen.hidden = true;
+          return;
+        }
+        if (!el.customDrawer.hidden) el.customDrawer.hidden = true;
+        if (!el.domainDrawer.hidden) el.domainDrawer.hidden = true;
+        if (!el.qrModal.hidden) el.qrModal.hidden = true;
+        if (!el.settingsDrawer.hidden) el.settingsDrawer.hidden = true;
+      }
+    });
   }
 
-  // --- Run on Load ---
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     attachListeners();
     init();

@@ -138,19 +138,13 @@ export function genCard(rec, { domainLabel = '', modeLabel = '' } = {}) {
 }
 
 export function genKeyboard(rec, { multiDomain = config.domains.length > 1 } = {}) {
-  const row1 = [btn.cb('🔄 New Mail', 'gn', 'success')];
-  if (multiDomain) row1.push(btn.cb('🌐 Domain', 'gd', 'primary'));
-  const row2 = [
-    btn.cb('✏️ Rename', `ar:${rec.id}`, 'primary'),
-    btn.cb('🏷 Label', `rl:${rec.id}:`, 'primary'),
-    btn.cb('⏳ TTL', `gt:${rec.id}`, 'primary'),
-  ];
-  const appBtn = btn.app('🚀 Open Mini App', '', 'success');
+  const actions = [btn.cb('🔄 New Mail', 'gn', 'success')];
+  if (multiDomain) actions.push(btn.cb('🌐 Domain', 'gd', 'primary'));
+  actions.push(btn.cb('✏️ Rename', `ar:${rec.id}`, 'primary'));
+
   return rows(
     [btn.copy(`📋 ${rec.addr}`, rec.addr, 'success')],
-    row1,
-    row2,
-    [btn.cb('📬 Inbox', 'ib:0', 'primary'), ...(appBtn ? [appBtn] : [])]
+    actions
   );
 }
 

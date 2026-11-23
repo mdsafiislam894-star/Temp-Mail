@@ -105,7 +105,7 @@ export function extractOtp(subject = '', text = '') {
 
 // ---------- links ----------
 const BAD_URL = /unsubscribe|opt-?out|privacy|terms|legal|policies|preferences|\.(png|jpe?g|gif|svg|webp|css|ico)(\?|$)|w3\.org|schema\.org|pixel|open\.gif|beacon/i;
-const GOOD = /verify|confirm|activate|validate|magic|log-?in|sign-?in|auth|token|reset|password|unblock|approve|accept/i;
+const GOOD = /verify|confirm|activate|validate|magic|log-?in|sign-?in|auth|token|reset|password|unblock|approve|accept|secure|claude|anthropic|onboarding|finish/i;
 
 export function extractLinks(html = '', text = '', max = 4) {
   const found = new Map();

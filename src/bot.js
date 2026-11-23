@@ -172,18 +172,11 @@ export function createBot() {
     const ex = store.listAddresses(ctx.from.id).find((a) => !a.expired) || makeAddress(ctx.from.id);
     const domLabel = ex.addr.split('@')[1] || config.domains[0];
     const modeLabel = pickDomain(ctx.from.id) === 'random' ? '🎲 Auto' : '';
-    const appInline = btn.app('🚀 Launch Mini App', '', 'success');
-    await ctx.reply(
-      `⚡ <b>${esc(config.brand)} Ready</b>\n` +
-      `মিনিমাল ডিসপোজেবল মেইল, ইনস্ট্যান্ট OTP এবং লাইভ 2FA ভল্ট প্রস্তুত।`,
-      { ...HTML, reply_markup: mainMenu(isAdmin(ctx.from.id)) }
-    ).catch(() => {});
     const s = await ctx.reply(genCard(ex, { domainLabel: domLabel, modeLabel }), {
       ...HTML,
       reply_markup: genKeyboard(ex, { multiDomain: config.domains.length > 1 }),
     }).catch(() => null);
     if (s) store.setActiveCard(ctx.from.id, s.chat.id, s.message_id, ex.addr, false);
-    if (!s && appInline) await ctx.reply('📱 Open App:', { reply_markup: rows([appInline]) }).catch(() => {});
   });
 
   // ---------- quick panel & stats ----------

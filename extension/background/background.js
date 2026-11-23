@@ -238,7 +238,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Runtime messages from popup
+// Runtime messages from popup & content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'REFRESH_BADGE') {
     checkMailSync().then(() => sendResponse({ ok: true }));
@@ -246,6 +246,43 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === 'ADDRESS_CHANGED') {
     if (msg.addr) updateContextMenuTitle(msg.addr);
+    sendResponse({ ok: true });
+    return true;
+  }
+  if (msg.type === 'GENERATE_NEW_ADDR') {
+    (async () => {
+      const st = await getStorage();
+      const server = (st.serverUrl || DEFAULT_SERVER).replace(/\/+$/, '');
+      const res = await fetch(`${server}/api/addresses`, {
+        method: 'POST',
+        headers: { 'x-ext-id': st.clientId, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: 'random' }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const activeAddr = d.address.addr;
+        const recent = [activeAddr, ...(st.recentAddrs || []).filter((x) => x !== activeAddr)].slice(0, 8);
+        await setStorage({ activeAddr, activeAddrId: d.address.id, recentAddrs: recent });
+        updateContextMenuTitle(activeAddr);
+        notifyUser('✨ New Temp Mail Created', activeAddr);
+        sendResponse({ ok: true, addr: activeAddr });
+      } else {
+        sendResponse({ ok: false, error: 'Failed to create email' });
+      }
+    })().catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
+  if (msg.type === 'OPEN_DASHBOARD') {
+    (async () => {
+      const st = await getStorage();
+      const server = (st.serverUrl || DEFAULT_SERVER).replace(/\/+$/, '');
+      chrome.tabs.create({ url: `${server}/app` });
+      sendResponse({ ok: true });
+    })();
+    return true;
+  }
+  if (msg.type === 'SHOW_DESKTOP_NOTIFICATION') {
+    notifyUser(msg.title || '📩 Temp Mail', msg.message || '', msg.id || '');
     sendResponse({ ok: true });
     return true;
   }
