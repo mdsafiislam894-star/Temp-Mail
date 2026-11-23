@@ -169,6 +169,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 body {
   width: 384px;
   height: 576px;
@@ -589,6 +594,14 @@ body {
   display: none;
 }
 
+#filterBar.chip-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: visible;
+  width: 100%;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -605,6 +618,15 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
   transition: all 0.14s ease;
+}
+
+#filterBar .chip {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px;
+  justify-content: center;
+  text-align: center;
 }
 
 .chip:hover {
@@ -709,8 +731,9 @@ body {
   text-align: center;
   padding: 24px 16px;
   background: var(--card-bg);
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--card-border);
   border-radius: var(--r-md);
+  box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;

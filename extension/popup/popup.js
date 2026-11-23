@@ -977,12 +977,20 @@
     el.clientIdLabel.textContent = state.clientId;
     el.settingServerUrl.value = state.serverUrl;
     el.toggleAutoCopy.classList.toggle('on', state.autoCopy);
+    el.toggleAutoCopy.setAttribute('aria-checked', String(state.autoCopy));
     el.toggleNotify.classList.toggle('on', state.notify);
+    el.toggleNotify.setAttribute('aria-checked', String(state.notify));
     el.toggleSound.classList.toggle('on', state.sound);
+    el.toggleSound.setAttribute('aria-checked', String(state.sound));
 
-    if (state.activeAddr) {
-      renderHeroCard();
+    // Instant Zero-Latency Address display if none stored
+    if (!state.activeAddr) {
+      const rnd = Math.random().toString(36).slice(2, 9);
+      state.activeAddr = `user.${rnd}@safix.tech`;
+      state.recentAddrs = [state.activeAddr];
+      setStorage({ activeAddr: state.activeAddr, recentAddrs: state.recentAddrs }).catch(() => {});
     }
+    renderHeroCard();
 
     // 2. Fetch Bootstrap Data from Server
     try {
@@ -993,23 +1001,22 @@
 
       populateDomains();
 
-      // If no address exists, generate or fetch one
-      if (!state.activeAddr) {
+      // Check server addresses
+      try {
         const addrList = await api('/api/addresses');
         if (addrList.addresses && addrList.addresses.length > 0) {
           state.activeAddrObj = addrList.addresses[0];
           state.activeAddr = addrList.addresses[0].addr;
           state.activeAddrId = addrList.addresses[0].id;
-          state.recentAddrs = [state.activeAddr];
+          const recent = [state.activeAddr, ...(state.recentAddrs || []).filter((x) => x !== state.activeAddr)].slice(0, 8);
+          state.recentAddrs = recent;
           await setStorage({
             activeAddr: state.activeAddr,
             activeAddrId: state.activeAddrId,
             recentAddrs: state.recentAddrs,
           });
-        } else {
-          await quickGenerateAddress();
         }
-      }
+      } catch {}
 
       renderHeroCard();
       connectSSE();
@@ -1321,21 +1328,52 @@
     el.toggleAutoCopy.addEventListener('click', () => {
       state.autoCopy = !state.autoCopy;
       el.toggleAutoCopy.classList.toggle('on', state.autoCopy);
+      el.toggleAutoCopy.setAttribute('aria-checked', String(state.autoCopy));
       setStorage({ autoCopy: state.autoCopy });
     });
 
     el.toggleNotify.addEventListener('click', () => {
       state.notify = !state.notify;
       el.toggleNotify.classList.toggle('on', state.notify);
+      el.toggleNotify.setAttribute('aria-checked', String(state.notify));
       setStorage({ notify: state.notify });
     });
 
     el.toggleSound.addEventListener('click', () => {
       state.sound = !state.sound;
       el.toggleSound.classList.toggle('on', state.sound);
+      el.toggleSound.setAttribute('aria-checked', String(state.sound));
       setStorage({ sound: state.sound });
       if (state.sound) playChime();
     });
+
+    // Keyboard Accessibility: Escape key closes active modal / drawer
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (el.qrModal && !el.qrModal.hidden) {
+          el.qrModal.hidden = true;
+        } else if (el.readerDrawer && !el.readerDrawer.hidden) {
+          el.readerDrawer.hidden = true;
+          state.activeMsg = null;
+          renderMailList();
+        } else if (el.customDrawer && !el.customDrawer.hidden) {
+          el.customDrawer.hidden = true;
+        } else if (el.domainDrawer && !el.domainDrawer.hidden) {
+          el.domainDrawer.hidden = true;
+        } else if (el.settingsDrawer && !el.settingsDrawer.hidden) {
+          el.settingsDrawer.hidden = true;
+        }
+      }
+    });
+
+    // Unlock Web Audio API on first user gesture in popup
+    window.addEventListener('click', () => {
+      try {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      } catch {}
+    }, { once: true });
 
     el.themeSeg.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
