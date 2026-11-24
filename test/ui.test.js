@@ -30,15 +30,15 @@ test('smart card is two short lines', () => {
   assert.equal(mailCard({ ...base, otp: '1' }, null, 'smart').split('\n').length, 3);
 });
 
-test('genCard & genKeyboard show domain, TTL, copy_text button, and domain switcher', () => {
+test('genCard & genKeyboard show copy_text button and Change Name button (Image 1)', () => {
   const rec = { id: 'a1', addr: 'gojo42@mdsafiislam.tech', label: 'Dev', ttl: 60, expiresAt: Date.now() + 3600000 };
-  const text = genCard(rec, { domainLabel: 'mdsafiislam.tech' });
-  assert.match(text, /mdsafiislam\.tech/);
-  assert.match(text, /Dev/);
-  const kb = genKeyboard(rec, { multiDomain: true }).inline_keyboard;
+  const text = genCard(rec);
+  assert.match(text, /Your Instant Disposable Email/);
+  const kb = genKeyboard(rec).inline_keyboard;
   assert.equal(kb[0][0].copy_text.text, 'gojo42@mdsafiislam.tech');
   assert.equal(kb[0][0].style, 'success');
-  assert.ok(kb.flat().some((b) => b.callback_data === 'gd'));
+  assert.equal(kb[1][0].callback_data, 'gn');
+  assert.equal(kb[1][0].text, '🔄 Change Name');
 });
 
 test('totpVaultView renders formatted codes and native copy_text buttons', () => {
@@ -55,7 +55,7 @@ test('totpVaultView renders formatted codes and native copy_text buttons', () =>
 test('inline keyboards use colorful styles and bot mainMenu keeps only 3 buttons', async () => {
   const gk = genKeyboard({ id: 'a9', addr: 'neo9@safix.tech', domain: 'safix.tech', ttl: 0, pinned: false }).inline_keyboard.flat();
   assert.ok(gk.some((b) => b.copy_text?.text === 'neo9@safix.tech' && b.style === 'success'));
-  assert.ok(gk.some((b) => b.callback_data === 'ar:a9' && b.style === 'primary'));
+  assert.ok(gk.some((b) => b.callback_data === 'gn' && b.style === 'primary'));
 
   const botSrc = (await import('fs')).readFileSync(new URL('../src/bot.js', import.meta.url), 'utf8');
   const menuBlock = botSrc.match(/const mainMenu = [\s\S]*?\n\};/)?.[0] || '';

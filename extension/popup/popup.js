@@ -317,6 +317,40 @@
     el.emptyWaiting.insertAdjacentHTML('afterend', cardsHtml);
   }
 
+  // Sanitize Email HTML for safe in-popup rendering without iframe SecurityErrors
+  function sanitizeEmailHtml(rawHtml) {
+    if (!rawHtml) return '';
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawHtml, 'text/html');
+
+      // Strip scripts and dangerous tags
+      doc.querySelectorAll('script, style, iframe, object, embed, meta, head, base, link').forEach((el) => el.remove());
+
+      // Clean attributes and ensure links open in new tabs
+      const allEls = doc.body.querySelectorAll('*');
+      allEls.forEach((el) => {
+        Array.from(el.attributes).forEach((attr) => {
+          if (/^on/i.test(attr.name) || attr.name === 'formaction' || attr.name === 'srcdoc') {
+            el.removeAttribute(attr.name);
+          }
+        });
+        if (el.tagName.toLowerCase() === 'a') {
+          const href = el.getAttribute('href') || '';
+          if (!/^https?:\/\//i.test(href) && !/^mailto:/i.test(href)) {
+            el.removeAttribute('href');
+          } else {
+            el.setAttribute('target', '_blank');
+            el.setAttribute('rel', 'noopener noreferrer');
+          }
+        }
+      });
+      return doc.body.innerHTML;
+    } catch {
+      return escapeHtml(rawHtml);
+    }
+  }
+
   // Open Message Reader (Image 4)
   async function openReader(summaryMsg) {
     state.activeMsg = summaryMsg;
@@ -345,17 +379,21 @@
     try {
       const fullMsg = await api(`/api/messages/${summaryMsg.id}`);
 
-      // Extract verification links
+      // Extract verification links (prioritizing sign-in links over support)
       let foundLink = '';
-      if (fullMsg.links && fullMsg.links.length > 0) {
-        foundLink = fullMsg.links[0].url || fullMsg.links[0];
+      if (fullMsg.firstLink?.url) {
+        foundLink = fullMsg.firstLink.url;
+      } else if (fullMsg.links && fullMsg.links.length > 0) {
+        const best = fullMsg.links.find((l) => !/support|help|contact|docs|faq|terms|privacy/i.test(l.url || l)) || fullMsg.links[0];
+        foundLink = best.url || best;
       } else if (fullMsg.linkList && fullMsg.linkList.length > 0) {
-        foundLink = fullMsg.linkList[0].url || fullMsg.linkList[0];
+        const best = fullMsg.linkList.find((l) => !/support|help|contact|docs|faq|terms|privacy/i.test(l.url || l)) || fullMsg.linkList[0];
+        foundLink = best.url || best;
       } else {
         // Fallback: extract link from text/html using regex
         const contentStr = `${fullMsg.html || ''} ${fullMsg.text || ''}`;
         const match = contentStr.match(/https?:\/\/[^\s<>"'`)\]}]+/i);
-        if (match && !/unsubscribe|privacy|terms/i.test(match[0])) {
+        if (match && !/unsubscribe|privacy|terms|support|help/i.test(match[0])) {
           foundLink = match[0].replace(/[.,;:!?]+$/, '');
         }
       }
@@ -364,7 +402,11 @@
       if (foundLink) {
         el.readerLinkCard.hidden = false;
         el.readerLinkUrl.textContent = foundLink;
-        el.readerLinkOpenBtn.href = foundLink;
+        el.readerLinkOpenBtn.onclick = (e) => {
+          e.preventDefault();
+          if (chrome.tabs?.create) chrome.tabs.create({ url: foundLink });
+          else window.open(foundLink, '_blank');
+        };
         el.readerLinkCopyBtn.onclick = () => {
           navigator.clipboard.writeText(foundLink).then(() => {
             showToast('✓ লিংক কপি হয়েছে!');
@@ -387,36 +429,26 @@
         el.readerOtpCard.hidden = true;
       }
 
-      // Main Message Body (Image 4)
+      // Main Message Body (Image 4) — Direct sanitized rendering with working links
       if (fullMsg.html) {
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'width:100%;border:none;min-height:280px;background:#ffffff;border-radius:8px;';
-        iframe.sandbox = 'allow-same-origin allow-popups';
-        el.readerBodyContent.innerHTML = '';
-        el.readerBodyContent.appendChild(iframe);
-
-        const doc = iframe.contentDocument || iframe.contentWindow.document;
-        doc.open();
-        doc.write(`
-          <!doctype html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; line-height: 1.6; color: #1e293b; padding: 12px; margin: 0; word-break: break-word; }
-              a { color: #2563eb; text-decoration: underline; }
-              img { max-width: 100%; height: auto; border-radius: 6px; }
-            </style>
-          </head>
-          <body>${fullMsg.html}</body>
-          </html>
-        `);
-        doc.close();
+        el.readerBodyContent.innerHTML = `<div class="reader-email-rendered">${sanitizeEmailHtml(fullMsg.html)}</div>`;
       } else if (fullMsg.text) {
-        el.readerBodyContent.innerHTML = `<pre style="font-family:inherit;white-space:pre-wrap;word-break:break-word;color:#1e293b;font-size:13px;line-height:1.6;">${escapeHtml(fullMsg.text)}</pre>`;
+        el.readerBodyContent.innerHTML = `<pre class="reader-plain-text" style="font-family:inherit;white-space:pre-wrap;word-break:break-word;color:#1e293b;font-size:13px;line-height:1.6;margin:0;">${escapeHtml(fullMsg.text)}</pre>`;
       } else {
         el.readerBodyContent.innerHTML = `<div style="color:#64748b;font-style:italic;">${escapeHtml(summaryMsg.preview || 'কোনো টেক্সট কন্টেন্ট নেই')}</div>`;
       }
+
+      // Safe Click Handlers for all Links in Message Body
+      el.readerBodyContent.querySelectorAll('a').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const href = a.getAttribute('href');
+          if (href && /^https?:\/\//i.test(href)) {
+            if (chrome.tabs?.create) chrome.tabs.create({ url: href });
+            else window.open(href, '_blank');
+          }
+        });
+      });
 
       // Mark as read
       if (!summaryMsg.read) {
@@ -425,7 +457,7 @@
         updateBadge();
       }
     } catch (err) {
-      el.readerBodyContent.innerHTML = `<div style="color:#ef4444;">মেসেজ লোড করা যায়নি: ${escapeHtml(err.message)}</div>`;
+      el.readerBodyContent.innerHTML = `<div style="color:#ef4444;padding:12px;">মেসেজ লোড করা যায়নি: ${escapeHtml(err.message)}</div>`;
     }
   }
 
@@ -578,10 +610,23 @@
 
     // Windows Desktop Notification
     if (state.notify) {
+      try {
+        const sName = msg.service?.name || msg.from || 'Temp Mail';
+        const title = msg.otp ? `🔑 OTP: ${msg.otp} (${sName})` : `📩 ${sName}`;
+        const noteMsg = msg.subject || (msg.otp ? `Verification code: ${msg.otp}` : 'New email received');
+        chrome.notifications?.create(`msg_${msg.id || Date.now()}`, {
+          type: 'basic',
+          iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+          title,
+          message: `${noteMsg} • ${msg.to || state.activeAddr}`,
+          priority: 2,
+        });
+      } catch {}
+
       chrome.runtime?.sendMessage?.({
         type: 'SHOW_DESKTOP_NOTIFICATION',
         title: msg.otp ? `🔑 OTP: ${msg.otp} (${msg.service?.name || msg.from})` : `📩 ${msg.service?.name || msg.from}`,
-        message: `${msg.subject || 'নতুন ইমেইল এসেছে'} • ${msg.to}`,
+        message: `${msg.subject || 'নতুন ইমেইল এসেছে'} • ${msg.to || state.activeAddr}`,
         id: msg.id,
       }).catch(() => {});
     }

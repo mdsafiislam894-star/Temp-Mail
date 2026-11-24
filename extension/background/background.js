@@ -109,37 +109,33 @@ async function checkMailSync() {
 
     // Check for fresh incoming messages to notify
     if (messages.length > 0 && st.notify) {
-      const newest = messages[0];
-      const lastSeen = st.lastSeenMsgId;
-      const isNew = newest && newest.id !== lastSeen && (Date.now() - newest.date < 180000);
+      let seenIds = Array.isArray(st.seenMsgIds) ? st.seenMsgIds : [];
+      if (!st.seenInitialized) {
+        seenIds = messages.map((m) => m.id);
+        await setStorage({ seenMsgIds: seenIds, seenInitialized: true, lastSeenMsgId: messages[0]?.id || '' });
+      } else {
+        const freshMsgs = messages.filter((m) => !seenIds.includes(m.id) && !m.read);
+        if (freshMsgs.length > 0) {
+          for (const newest of freshMsgs.slice(0, 3)) {
+            const serviceName = newest.service?.name || newest.from || 'Temp Mail';
+            const otpCode = newest.otp;
 
-      if (isNew && !newest.read) {
-        await setStorage({ lastSeenMsgId: newest.id });
-
-        const serviceName = newest.service?.name || newest.from || 'Temp Mail';
-        const otpCode = newest.otp;
-
-        if (otpCode) {
-          if (st.autoCopy) {
-            // Write to clipboard if allowed or notify
-            notifyUser(
-              `🔑 OTP Code: ${otpCode}`,
-              `${serviceName} • Click to open email (${newest.to})`,
-              newest.id
-            );
-          } else {
-            notifyUser(
-              `🔑 OTP Code: ${otpCode}`,
-              `${serviceName}: ${newest.subject || 'Verification code received'}`,
-              newest.id
-            );
+            if (otpCode) {
+              notifyUser(
+                `🔑 OTP Code: ${otpCode} (${serviceName})`,
+                `${newest.subject || 'Verification code received'} • ${newest.to}`,
+                `msg_${newest.id}`
+              );
+            } else {
+              notifyUser(
+                `📩 ${serviceName}`,
+                `${newest.subject || '(No subject)'} • ${newest.to}`,
+                `msg_${newest.id}`
+              );
+            }
           }
-        } else {
-          notifyUser(
-            `📩 ${serviceName}`,
-            `${newest.subject || '(No subject)'}`,
-            newest.id
-          );
+          const updatedSeen = Array.from(new Set([...freshMsgs.map((m) => m.id), ...seenIds])).slice(0, 100);
+          await setStorage({ seenMsgIds: updatedSeen, lastSeenMsgId: messages[0].id });
         }
       }
     }
@@ -150,11 +146,12 @@ async function checkMailSync() {
 
 function notifyUser(title, message, id = '') {
   try {
-    chrome.notifications.create(id || `msg_${Date.now()}`, {
+    const notifId = id || `msg_${Date.now()}`;
+    chrome.notifications.create(notifId, {
       type: 'basic',
-      iconUrl: 'icons/icon128.png',
+      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
       title,
-      message,
+      message: String(message || '').slice(0, 200),
       priority: 2,
     });
   } catch (e) {}

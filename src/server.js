@@ -77,7 +77,8 @@ const summary = (m) => ({
   pinned: Boolean(m.pinned),
   note: m.note || '',
   source: m.source,
-  links: (m.links || []).length,
+  links: m.links || [],
+  linkCount: (m.links || []).length,
   firstLink: mainLink(m) ? { url: mainLink(m).url, label: mainLink(m).label || mainLink(m).host } : null,
 });
 

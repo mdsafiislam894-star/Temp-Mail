@@ -89,7 +89,7 @@ export function mailKeyboard(msg, { back = false, style = 'smart' } = {}) {
   if (style === 'compact') {
     r.push([btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
   } else {
-    r.push([btn.cb('⚡ New Mail', 'gn', 'success'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
+    r.push([btn.cb('🔄 Change Name', 'gn', 'primary'), btn.cb('📄 Full Message', `fm:${msg.id}`, 'primary')]);
   }
   if (back) r.push([btn.cb('⬅️ Inbox', 'ib:0', 'primary')]);
   return rows(...r);
@@ -125,26 +125,17 @@ export function fmtLeft(rec = {}) {
   return `⏳ ${mins}m left`;
 }
 
-export function genCard(rec, { domainLabel = '', modeLabel = '' } = {}) {
-  const dom = domainLabel || String(rec?.addr || '').split('@')[1] || config.domains[0] || '';
-  const metaParts = [fmtLeft(rec)];
-  if (rec?.label) metaParts.push(`🏷 ${esc(rec.label)}`);
-  if (modeLabel) metaParts.push(esc(modeLabel));
+export function genCard(rec) {
   return (
-    `⚡ <b>Instant Disposable Email</b>  ·  <code>${esc(dom)}</code>\n` +
-    `${metaParts.join('  ·  ')}\n` +
-    `<i>নিচের বাটনে ট্যাপ করে কপি করুন — নতুন মেইল এলেই সাথে সাথে এখানে চলে আসবে</i>`
+    `🚀 <b>Your Instant Disposable Email:</b>\n` +
+    `✨ <i>Tap the box below to copy:</i> 👇`
   );
 }
 
-export function genKeyboard(rec, { multiDomain = config.domains.length > 1 } = {}) {
-  const actions = [btn.cb('🔄 New Mail', 'gn', 'success')];
-  if (multiDomain) actions.push(btn.cb('🌐 Domain', 'gd', 'primary'));
-  actions.push(btn.cb('✏️ Rename', `ar:${rec.id}`, 'primary'));
-
+export function genKeyboard(rec) {
   return rows(
     [btn.copy(`📋 ${rec.addr}`, rec.addr, 'success')],
-    actions
+    [btn.cb('🔄 Change Name', 'gn', 'primary')]
   );
 }
 

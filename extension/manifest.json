@@ -39,7 +39,8 @@
     "contextMenus",
     "alarms",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "https://temp-mail-pks1.onrender.com/*",

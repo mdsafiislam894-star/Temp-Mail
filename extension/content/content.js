@@ -64,7 +64,7 @@
 
   // Check if an input element is likely an email field
   function isEmailInput(input) {
-    if (!input || input.type === 'hidden' || input.type === 'password' || input.type === 'submit') return false;
+    if (!input || input.type === 'hidden' || input.type === 'password' || input.type === 'submit' || input.type === 'checkbox' || input.type === 'radio') return false;
     if (input.type === 'email') return true;
 
     const name = (input.name || '').toLowerCase();
@@ -72,9 +72,11 @@
     const placeholder = (input.placeholder || '').toLowerCase();
     const autocomplete = (input.autocomplete || '').toLowerCase();
     const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
+    const testId = (input.getAttribute('data-testid') || '').toLowerCase();
 
     return (
       autocomplete === 'email' ||
+      autocomplete === 'username' ||
       name.includes('email') ||
       name.includes('mail') ||
       id.includes('email') ||
@@ -82,13 +84,16 @@
       placeholder.includes('email') ||
       placeholder.includes('ইমেইল') ||
       placeholder.includes('mail') ||
-      ariaLabel.includes('email')
+      placeholder.includes('enter your') ||
+      ariaLabel.includes('email') ||
+      ariaLabel.includes('mail') ||
+      testId.includes('email')
     );
   }
 
   // Create or update the small [t] icon button next to or inside the email input
   function attachAutofillIcon(input) {
-    if (input.dataset.tmIconAttached === 'true') return;
+    if (!input || input.dataset.tmIconAttached === 'true') return;
     input.dataset.tmIconAttached = 'true';
 
     const btn = document.createElement('div');
@@ -100,24 +105,24 @@
       </svg>
     `;
     btn.style.cssText = `
-      position: absolute;
+      position: fixed;
       width: 24px;
       height: 24px;
-      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 2147483640;
-      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+      box-shadow: 0 2px 6px rgba(109, 40, 217, 0.4);
       transition: transform 0.15s ease, background 0.15s ease;
       user-select: none;
       box-sizing: border-box;
     `;
 
     btn.addEventListener('mouseenter', () => {
-      btn.style.transform = 'scale(1.08)';
+      btn.style.transform = 'scale(1.1)';
     });
     btn.addEventListener('mouseleave', () => {
       btn.style.transform = 'scale(1)';
@@ -131,24 +136,18 @@
         return;
       }
       const rect = input.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0 || window.getComputedStyle(input).display === 'none') {
+      if (rect.width === 0 || rect.height === 0 || window.getComputedStyle(input).display === 'none' || window.getComputedStyle(input).visibility === 'hidden') {
         btn.style.display = 'none';
         return;
       }
       btn.style.display = 'flex';
-      const scrollX = window.scrollX || window.pageXOffset;
-      const scrollY = window.scrollY || window.pageYOffset;
-
-      const top = scrollY + rect.top + (rect.height - 24) / 2;
-      const left = scrollX + rect.right - 32;
-
-      btn.style.top = `${top}px`;
-      btn.style.left = `${left}px`;
+      btn.style.top = `${rect.top + (rect.height - 24) / 2}px`;
+      btn.style.left = `${rect.right - 32}px`;
     }
 
     updatePos();
     window.addEventListener('resize', updatePos, { passive: true });
-    window.addEventListener('scroll', updatePos, { passive: true });
+    window.addEventListener('scroll', updatePos, true);
 
     // Handle Click on Icon -> Show Dropdown Menu (Image 6)
     btn.addEventListener('click', (e) => {
@@ -277,11 +276,15 @@
     // Position dropdown below input
     function positionDropdown() {
       const rect = input.getBoundingClientRect();
-      const scrollX = window.scrollX || window.pageXOffset;
-      const scrollY = window.scrollY || window.pageYOffset;
-
-      dropdown.style.top = `${scrollY + rect.bottom + 6}px`;
-      dropdown.style.left = `${Math.max(10, scrollX + rect.right - 280)}px`;
+      dropdown.style.position = 'fixed';
+      const dropdownHeight = 150;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+        dropdown.style.top = `${rect.top - dropdownHeight - 6}px`;
+      } else {
+        dropdown.style.top = `${rect.bottom + 6}px`;
+      }
+      dropdown.style.left = `${Math.max(10, Math.min(window.innerWidth - 290, rect.right - 280))}px`;
     }
     positionDropdown();
 
@@ -371,8 +374,22 @@
     });
   }
 
-  // Initial Scan
+  // Initial Scan & Periodic Fallback for dynamic SPAs
   scanInputs();
+  setInterval(scanInputs, 1500);
+
+  // Focus listener to attach icon immediately when user clicks into an email input
+  document.addEventListener('focusin', (e) => {
+    const el = e.target;
+    if (el && el.tagName === 'INPUT') {
+      const type = (el.type || 'text').toLowerCase();
+      if (['text', 'email', 'search', ''].includes(type)) {
+        if (isEmailInput(el) || /email|mail/i.test(el.placeholder || el.name || el.id || el.getAttribute('aria-label') || '')) {
+          attachAutofillIcon(el);
+        }
+      }
+    }
+  }, true);
 
   // MutationObserver for SPA / dynamic forms
   const observer = new MutationObserver(() => {

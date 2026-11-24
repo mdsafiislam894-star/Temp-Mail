@@ -170,11 +170,13 @@ export function createBot() {
   bot.command('start', async (ctx) => {
     pending.delete(ctx.from.id);
     const ex = store.listAddresses(ctx.from.id).find((a) => !a.expired) || makeAddress(ctx.from.id);
-    const domLabel = ex.addr.split('@')[1] || config.domains[0];
-    const modeLabel = pickDomain(ctx.from.id) === 'random' ? '🎲 Auto' : '';
-    const s = await ctx.reply(genCard(ex, { domainLabel: domLabel, modeLabel }), {
+    await ctx.reply(`⚡ <b>${esc(config.brand)}</b>`, {
       ...HTML,
-      reply_markup: genKeyboard(ex, { multiDomain: config.domains.length > 1 }),
+      reply_markup: mainMenu(isAdmin(ctx.from.id)),
+    }).catch(() => {});
+    const s = await ctx.reply(genCard(ex), {
+      ...HTML,
+      reply_markup: genKeyboard(ex),
     }).catch(() => null);
     if (s) store.setActiveCard(ctx.from.id, s.chat.id, s.message_id, ex.addr, false);
   });
@@ -374,10 +376,8 @@ export function createBot() {
     if (!rec) {
       return ctx.reply('⚠️ এই নামটি অন্য কেউ ব্যবহার করছে। অন্য নাম দিন।', { reply_markup: mainMenu(isAdmin(ctx.from.id)) });
     }
-    const domLabel = rec.addr.split('@')[1] || '';
-    const modeLabel = chosenDom === 'random' ? '🎲 Auto' : '';
-    const cardText = genCard(rec, { domainLabel, modeLabel });
-    const opts = genKeyboard(rec, { multiDomain: config.domains.length > 1 });
+    const cardText = genCard(rec);
+    const opts = genKeyboard(rec);
 
     if (asEdit) return edit(ctx, cardText, opts, rec.addr);
 
@@ -948,7 +948,7 @@ export function createBot() {
       pending.delete(ctx.from.id);
       const a = store.setLabel(p.id, text);
       if (!a) return ctx.reply('❌ অ্যাড্রেস পাওয়া যায়নি।', HTML);
-      return ctx.reply(genCard(a), { ...HTML, reply_markup: genKeyboard(a, { multiDomain: config.domains.length > 1 }) });
+      return ctx.reply(genCard(a), { ...HTML, reply_markup: genKeyboard(a) });
     }
 
     if (p.type === 'addr_rename') {
@@ -963,7 +963,7 @@ export function createBot() {
       await delUserMsg(ctx);
       pending.delete(ctx.from.id);
       const rec = r.address;
-      const s = await ctx.reply(genCard(rec), { ...HTML, reply_markup: genKeyboard(rec, { multiDomain: config.domains.length > 1 }) }).catch(() => null);
+      const s = await ctx.reply(genCard(rec), { ...HTML, reply_markup: genKeyboard(rec) }).catch(() => null);
       if (s) store.setActiveCard(ctx.from.id, s.chat.id, s.message_id, rec.addr, false);
       return;
     }

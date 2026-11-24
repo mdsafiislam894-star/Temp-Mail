@@ -879,10 +879,41 @@ button, input, select {
   word-break: break-word;
 }
 
-.reader-full-content iframe {
-  width: 100%;
-  border: none;
-  min-height: 220px;
+.reader-email-rendered {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.reader-email-rendered img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 6px;
+}
+
+.reader-email-rendered a {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reader-email-rendered a:hover {
+  color: #1d4ed8 !important;
+}
+
+.reader-plain-text {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1e293b;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface-alt);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
 }
 
 /* ================= Drawers & Modals ================= */

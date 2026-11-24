@@ -104,24 +104,36 @@ export function extractOtp(subject = '', text = '') {
 }
 
 // ---------- links ----------
-const BAD_URL = /unsubscribe|opt-?out|privacy|terms|legal|policies|preferences|\.(png|jpe?g|gif|svg|webp|css|ico)(\?|$)|w3\.org|schema\.org|pixel|open\.gif|beacon/i;
-const GOOD = /verify|confirm|activate|validate|magic|log-?in|sign-?in|auth|token|reset|password|unblock|approve|accept|secure|claude|anthropic|onboarding|finish/i;
+const BAD_URL = /unsubscribe|opt-?out|privacy|terms|legal|policies|preferences|support|help|contact|docs|faq|status\.|feedback|\.(png|jpe?g|gif|svg|webp|css|ico)(\?|$)|w3\.org|schema\.org|pixel|open\.gif|beacon/i;
+const GOOD = /verify|confirm|activate|validate|magic|log-?in|sign-?in|auth|token|reset|password|unblock|approve|accept|secure-?link/i;
 
 export function extractLinks(html = '', text = '', max = 4) {
   const found = new Map();
   const add = (rawUrl, rawLabel = '', order = 0) => {
     const url = decodeEntities(rawUrl).trim();
     if (!/^https?:\/\//i.test(url) || url.length > 1900 || BAD_URL.test(url)) return;
-    const label = htmlToText(rawLabel).replace(/\s+/g, ' ').slice(0, 26);
+    const label = htmlToText(rawLabel).replace(/\s+/g, ' ').slice(0, 40);
+    if (/support|help|contact|privacy|terms|legal|unsubscribe|feedback|policy|policies/i.test(label)) return;
+
     let score = 0;
-    if (GOOD.test(url)) score += 3;
-    if (GOOD.test(label)) score += 2;
-    if (/click|get started|open|continue|view/i.test(label)) score += 1;
+    if (GOOD.test(url)) score += 5;
+    if (/sign.?in|log.?in|approve|verify|confirm|activate|magic/i.test(label)) score += 15;
+    else if (GOOD.test(label)) score += 8;
+    if (/button|btn|primary/i.test(rawLabel)) score += 4;
+    if (/click|get started|open|continue|view/i.test(label)) score += 2;
+
+    let displayLabel = label;
+    if (/sign.?in/i.test(label)) displayLabel = 'Sign in';
+    else if (/log.?in/i.test(label)) displayLabel = 'Log in';
+    else if (/verify/i.test(label)) displayLabel = 'Verify';
+    else if (/confirm/i.test(label)) displayLabel = 'Confirm';
+    else if (/approve/i.test(label)) displayLabel = 'Approve Login';
+
     const prev = found.get(url);
     if (!prev || score > prev.score) {
       let host = '';
       try { host = new URL(url).hostname.replace(/^www\./, ''); } catch { return; }
-      found.set(url, { url, label: label || host, host, score, order: prev ? prev.order : order });
+      found.set(url, { url, label: displayLabel || host, host, score, order: prev ? prev.order : order });
     }
   };
   let n = 0;
